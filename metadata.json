@@ -1,0 +1,7 @@
+{
+  "name": "SARIB TV",
+  "description": "SARIB TV - Premium live sports, channels, movies, series, and entertainment streaming platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

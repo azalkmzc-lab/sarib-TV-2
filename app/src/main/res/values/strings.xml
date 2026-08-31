@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">SARIB TV</string>
+    <string name="connecting_to_server">جارٍ تجهيز الاتصال...</string>
+    <string name="connection_failed">تعذر الاتصال بالخادم</string>
+    <string name="retry">إعادة المحاولة</string>
+    <string name="press_again_to_exit">اضغط مرة أخرى للخروج</string>
+    <string name="no_content_available">لا يوجد محتوى متاح حالياً</string>
+    <string name="home">الرئيسية</string>
+    <string name="channels">القنوات</string>
+    <string name="matches">المباريات</string>
+    <string name="favorites">المفضلة</string>
+    <string name="more">المزيد</string>
+    <string name="entertainment">الترفيه</string>
+    <string name="watch_now">مشاهدة الآن</string>
+    <string name="view_all">عرض الكل</string>
+    <string name="search">البحث</string>
+    <string name="view_mode">الشكل</string>
+    <string name="categories">الأصناف</string>
+    <string name="movies">الأفلام</string>
+    <string name="series">المسلسلات</string>
+    <string name="anime">الأنمي</string>
+    <string name="most_watched_channels">القنوات الأكثر مشاهدة</string>
+    <string name="todays_matches">أهم مباريات اليوم</string>
+    <string name="featured_movies">أفلام مختارة</string>
+    <string name="recommended_series">مسلسلات تستحق المشاهدة</string>
+    <string name="anime_picks">اختيارات الأنمي</string>
+    <string name="kids_and_family">للأطفال والعائلة</string>
+    <string name="no_favorites_title">لا توجد عناصر في المفضلة</string>
+    <string name="no_favorites_subtitle">أضف القنوات أو المحتوى إلى المفضلة لتظهر هنا.</string>
+</resources>
+
