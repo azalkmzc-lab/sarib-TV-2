@@ -103,7 +103,7 @@ fun SearchScreen(
                     onValueChange = onQueryChange,
                     placeholder = {
                         Text(
-                            text = "ابحث عن قناة، فيلم، مسلسل، أو كود...",
+                            text = "ابحث عن قناة، فيلم، مسلسل...",
                             color = SaribTextMuted,
                             style = MaterialTheme.typography.bodyMedium
                         )

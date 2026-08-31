@@ -31,30 +31,32 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.example.R
 import com.example.data.model.MatchItem
 import com.example.ui.components.MatchCardItem
 import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribTopHeader
 import com.example.ui.components.SectionHeader
 import com.example.ui.theme.SaribCardBg
-import com.example.ui.theme.SaribCardBorder
 import com.example.ui.theme.SaribCardBorderSubtle
 import com.example.ui.theme.SaribCyanAccent
 import com.example.ui.theme.SaribDarkBackground
 import com.example.ui.theme.SaribElectricBlue
 import com.example.ui.theme.SaribTextMuted
 import com.example.ui.theme.SaribTextPrimary
-import com.example.ui.theme.SaribTextSecondary
+
+data class MatchDateFilter(
+    val dayName: String,
+    val dateLabel: String,
+    val offset: Int
+)
 
 @Composable
 fun MatchesScreen(
     matches: List<MatchItem>,
     selectedDate: String,
-    onDateSelected: (String) -> Unit,
+    onDateSelected: (String, Int) -> Unit,
     onMatchClick: (MatchItem) -> Unit,
     onMenuClick: () -> Unit,
     onTelegramClick: () -> Unit,
@@ -64,12 +66,11 @@ fun MatchesScreen(
     onTabSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dates = listOf(
-        Pair("الأحد", "30 أغسطس"),
-        Pair("الإثنين", "31 أغسطس"),
-        Pair("الثلاثاء", "01 سبتمبر"),
-        Pair("الأربعاء", "02 سبتمبر"),
-        Pair("الخميس", "03 سبتمبر")
+    val dateFilters = listOf(
+        MatchDateFilter("أمس", "مباريات الأمس", -1),
+        MatchDateFilter("اليوم", "مباريات اليوم", 0),
+        MatchDateFilter("غداً", "مباريات الغد", 1),
+        MatchDateFilter("بعد غد", "بعد يومين", 2)
     )
 
     Scaffold(
@@ -116,7 +117,7 @@ fun MatchesScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "جدول المباريات",
+                            text = "جدول المباريات المباشرة",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = SaribTextPrimary
@@ -125,14 +126,14 @@ fun MatchesScreen(
                     }
 
                     Text(
-                        text = "اختر التاريخ",
+                        text = "تحديث لحظي",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = SaribTextMuted
+                            color = SaribCyanAccent
                         )
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 // Date Pills
                 LazyRow(
@@ -140,8 +141,8 @@ fun MatchesScreen(
                     contentPadding = PaddingValues(horizontal = 14.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(dates) { (day, dateStr) ->
-                        val isSelected = dateStr == selectedDate
+                    items(dateFilters) { filter ->
+                        val isSelected = filter.dayName == selectedDate || filter.dateLabel == selectedDate
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
@@ -151,19 +152,19 @@ fun MatchesScreen(
                                     if (isSelected) SaribCyanAccent else SaribCardBorderSubtle,
                                     RoundedCornerShape(16.dp)
                                 )
-                                .clickable { onDateSelected(dateStr) }
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                .clickable { onDateSelected(filter.dayName, filter.offset) }
+                                .padding(horizontal = 18.dp, vertical = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text(
-                                    text = day,
+                                    text = filter.dayName,
                                     style = MaterialTheme.typography.labelSmall.copy(
-                                        color = if (isSelected) Color.White.copy(alpha = 0.8f) else SaribTextMuted
+                                        color = if (isSelected) Color.White.copy(alpha = 0.85f) else SaribTextMuted
                                     )
                                 )
                                 Text(
-                                    text = dateStr,
+                                    text = filter.dateLabel,
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         color = if (isSelected) Color.White else SaribTextPrimary,
                                         fontWeight = FontWeight.Bold
@@ -176,21 +177,46 @@ fun MatchesScreen(
                 Spacer(modifier = Modifier.height(14.dp))
             }
 
-            // Matches List
+            // Matches List Header
             item {
                 SectionHeader(
-                    title = "أهم مباريات اليوم",
+                    title = "مباريات الدوريات والبطولات الكبرى",
                     onViewAllClick = { }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            items(matches) { match ->
-                Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)) {
-                    MatchCardItem(
-                        match = match,
-                        onClick = onMatchClick
-                    )
+            if (matches.isEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = Icons.Default.SportsSoccer,
+                                contentDescription = null,
+                                tint = SaribTextMuted,
+                                modifier = Modifier.size(48.dp)
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            Text(
+                                text = "لا توجد مباريات متوفرة حالياً لهذا التاريخ",
+                                style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextMuted)
+                            )
+                        }
+                    }
+                }
+            } else {
+                items(matches) { match ->
+                    Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)) {
+                        MatchCardItem(
+                            match = match,
+                            onClick = onMatchClick
+                        )
+                    }
                 }
             }
         }

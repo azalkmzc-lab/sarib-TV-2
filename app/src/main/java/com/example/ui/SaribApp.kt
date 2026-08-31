@@ -8,7 +8,6 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -24,14 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ui.components.SaribDrawerContent
-import com.example.ui.screens.AdminAuthScreen
-import com.example.ui.screens.AdminDashboardScreen
 import com.example.ui.screens.CategoryDetailScreen
-import com.example.ui.screens.ChannelsScreen
 import com.example.ui.screens.EntertainmentScreen
 import com.example.ui.screens.FavoritesScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MatchesScreen
+import com.example.ui.screens.ChannelsScreen
 import com.example.ui.screens.PlayerScreen
 import com.example.ui.screens.SearchScreen
 import com.example.ui.screens.SplashScreen
@@ -61,7 +58,6 @@ fun SaribApp(
     val animePicks by viewModel.animePicks.collectAsState()
     val favorites by viewModel.favorites.collectAsState()
 
-    val selectedCategory by viewModel.selectedCategory.collectAsState()
     val categoryChannels by viewModel.categoryChannels.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
     val selectedMatchDate by viewModel.selectedMatchDate.collectAsState()
@@ -69,11 +65,6 @@ fun SaribApp(
 
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
-
-    val adminStats by viewModel.adminStats.collectAsState()
-    val apiSources by viewModel.apiSources.collectAsState()
-    val adminLogs by viewModel.adminLogs.collectAsState()
-    val allChannels by viewModel.allChannels.collectAsState()
 
     var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
@@ -103,12 +94,6 @@ fun SaribApp(
                 }
                 is AppScreen.Search -> {
                     viewModel.navigateTo(AppScreen.Main)
-                }
-                is AppScreen.AdminAuth -> {
-                    viewModel.navigateTo(AppScreen.Main)
-                }
-                is AppScreen.AdminDashboard -> {
-                    viewModel.logoutAdmin()
                 }
                 is AppScreen.Main -> {
                     if (currentTab != "home") {
@@ -156,10 +141,6 @@ fun SaribApp(
                     onTelegramClick = {
                         scope.launch { drawerState.close() }
                         openTelegram()
-                    },
-                    onAdminClick = {
-                        scope.launch { drawerState.close() }
-                        viewModel.navigateTo(AppScreen.AdminAuth)
                     }
                 )
             }
@@ -261,7 +242,7 @@ fun SaribApp(
                             MatchesScreen(
                                 matches = allMatches,
                                 selectedDate = selectedMatchDate,
-                                onDateSelected = { viewModel.selectMatchDate(it) },
+                                onDateSelected = { date, offset -> viewModel.selectMatchDate(date, offset) },
                                 onMatchClick = { match ->
                                     viewModel.playMedia(
                                         title = "${match.homeTeam} vs ${match.awayTeam}",
@@ -393,29 +374,6 @@ fun SaribApp(
                             )
                         },
                         onBackClick = { viewModel.navigateTo(AppScreen.Main) }
-                    )
-                }
-
-                is AppScreen.AdminAuth -> {
-                    AdminAuthScreen(
-                        onAuthenticate = { pin -> viewModel.authenticateAdmin(pin) },
-                        onCancel = { viewModel.navigateTo(AppScreen.Main) }
-                    )
-                }
-
-                is AppScreen.AdminDashboard -> {
-                    AdminDashboardScreen(
-                        stats = adminStats,
-                        channels = allChannels,
-                        apiSources = apiSources,
-                        logs = adminLogs,
-                        onAddChannel = { viewModel.addChannel(it) },
-                        onDeleteChannel = { viewModel.deleteChannel(it) },
-                        onAddApiSource = { viewModel.addApiSource(it) },
-                        onTestApiConnection = { base, endpoint, cb ->
-                            viewModel.testApiConnection(base, endpoint, cb)
-                        },
-                        onLogout = { viewModel.logoutAdmin() }
                     )
                 }
             }

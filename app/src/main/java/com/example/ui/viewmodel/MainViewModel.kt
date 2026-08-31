@@ -4,15 +4,12 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.local.FavoriteEntity
-import com.example.data.model.AdminLog
-import com.example.data.model.ApiSourceConfig
 import com.example.data.model.ChannelCategory
 import com.example.data.model.ChannelItem
 import com.example.data.model.ContentType
 import com.example.data.model.HeroBannerItem
 import com.example.data.model.MatchItem
 import com.example.data.model.MediaItem
-import com.example.data.model.ServerStats
 import com.example.data.model.ViewMode
 import com.example.data.repository.SaribRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,8 +26,6 @@ sealed interface AppScreen {
     data class CategoryDetail(val category: ChannelCategory) : AppScreen
     data class Player(val title: String, val subtitle: String, val streamUrl: String, val isLive: Boolean = false) : AppScreen
     object Search : AppScreen
-    object AdminAuth : AppScreen
-    object AdminDashboard : AppScreen
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -90,7 +85,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val viewMode: StateFlow<ViewMode> = _viewMode.asStateFlow()
 
     // Matches Date Selector
-    private val _selectedMatchDate = MutableStateFlow("31 أغسطس")
+    private val _selectedMatchDate = MutableStateFlow("اليوم")
     val selectedMatchDate: StateFlow<String> = _selectedMatchDate.asStateFlow()
 
     // Category chips in Home
@@ -117,19 +112,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Pair(matchedChannels, matchedMedia)
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(emptyList(), emptyList()))
-
-    // Admin State
-    private val _isAdminAuthenticated = MutableStateFlow(false)
-    val isAdminAuthenticated: StateFlow<Boolean> = _isAdminAuthenticated.asStateFlow()
-
-    private val _adminStats = MutableStateFlow(ServerStats())
-    val adminStats: StateFlow<ServerStats> = _adminStats.asStateFlow()
-
-    val apiSources: StateFlow<List<ApiSourceConfig>> = repository.getApiSources()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-
-    private val _adminLogs = MutableStateFlow<List<AdminLog>>(emptyList())
-    val adminLogs: StateFlow<List<AdminLog>> = _adminLogs.asStateFlow()
 
     init {
         startConnectionFlow()
@@ -173,8 +155,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _viewMode.value = if (_viewMode.value == ViewMode.GRID) ViewMode.LIST else ViewMode.GRID
     }
 
-    fun selectMatchDate(date: String) {
+    fun selectMatchDate(date: String, dayOffset: Int = 0) {
         _selectedMatchDate.value = date
+        viewModelScope.launch {
+            repository.fetchMatchesForDay(dayOffset)
+        }
     }
 
     fun selectHomeChip(chip: String) {
@@ -183,10 +168,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateSearchQuery(query: String) {
         _searchQuery.value = query
-        // Check for hidden admin code trigger
-        if (query.trim() == "k4569870" || query.trim() == "admin77") {
-            _currentScreen.value = AppScreen.AdminAuth
-        }
     }
 
     fun playMedia(title: String, subtitle: String, streamUrl: String, isLive: Boolean = false) {
@@ -201,64 +182,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun toggleFavorite(itemId: String, title: String, subtitle: String, type: String, streamUrl: String, isFav: Boolean) {
         viewModelScope.launch {
             repository.toggleFavorite(itemId, title, subtitle, type, streamUrl, isFav)
-        }
-    }
-
-    // Admin Functions
-    fun authenticateAdmin(pin: String): Boolean {
-        if (pin == "456987" || pin == "admin" || pin == "1234") {
-            _isAdminAuthenticated.value = true
-            _currentScreen.value = AppScreen.AdminDashboard
-            loadAdminStats()
-            return true
-        }
-        return false
-    }
-
-    fun logoutAdmin() {
-        _isAdminAuthenticated.value = false
-        _currentScreen.value = AppScreen.Main
-    }
-
-    fun loadAdminStats() {
-        viewModelScope.launch {
-            _adminStats.value = repository.getAdminServerStats()
-            _adminLogs.value = repository.getAdminLogs()
-        }
-    }
-
-    fun addChannel(channel: ChannelItem) {
-        viewModelScope.launch {
-            repository.addChannel(channel)
-            loadAdminStats()
-        }
-    }
-
-    fun updateChannel(channel: ChannelItem) {
-        viewModelScope.launch {
-            repository.updateChannel(channel)
-            loadAdminStats()
-        }
-    }
-
-    fun deleteChannel(channelId: String) {
-        viewModelScope.launch {
-            repository.deleteChannel(channelId)
-            loadAdminStats()
-        }
-    }
-
-    fun addApiSource(api: ApiSourceConfig) {
-        viewModelScope.launch {
-            repository.addApiSource(api)
-            loadAdminStats()
-        }
-    }
-
-    fun testApiConnection(baseUrl: String, endpoint: String, onResult: (Boolean) -> Unit) {
-        viewModelScope.launch {
-            val success = repository.testApiConnection(baseUrl, endpoint)
-            onResult(success)
         }
     }
 }

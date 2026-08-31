@@ -21,14 +21,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material.icons.filled.AdminPanelSettings
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Tv
-import androidx.compose.material3.Divider
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -47,15 +44,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.ui.theme.SaribCardBg
 import com.example.ui.theme.SaribCardBorder
 import com.example.ui.theme.SaribCyanAccent
 import com.example.ui.theme.SaribDarkBackground
-import com.example.ui.theme.SaribDarkSurface
-import com.example.ui.theme.SaribElectricBlue
 import com.example.ui.theme.SaribTextMuted
 import com.example.ui.theme.SaribTextPrimary
-import com.example.ui.theme.SaribTextSecondary
 
 @Composable
 fun SaribDrawerContent(
@@ -65,7 +58,6 @@ fun SaribDrawerContent(
     onNavigateToEntertainment: () -> Unit,
     onNavigateToFavorites: () -> Unit,
     onTelegramClick: () -> Unit,
-    onAdminClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -187,15 +179,6 @@ fun SaribDrawerContent(
                         title = "قناة التليجرام الرسمية",
                         tint = SaribCyanAccent,
                         onClick = onTelegramClick
-                    )
-                }
-
-                item {
-                    DrawerItem(
-                        icon = Icons.Default.AdminPanelSettings,
-                        title = "الوصول الإداري السري",
-                        tint = SaribTextMuted,
-                        onClick = onAdminClick
                     )
                 }
             }
