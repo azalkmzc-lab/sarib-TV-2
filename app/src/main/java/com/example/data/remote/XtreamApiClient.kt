@@ -10,24 +10,29 @@ import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
-import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class XtreamApiClient(
-    val serverHost: String = "http://cliccck52258.club:2082",
-    val username: String = "khaledsliman",
-    val password: String = "755246419856"
+    var serverHost: String = "http://cliccck52258.club:2082",
+    var username: String = "khaledsliman",
+    var password: String = "755246419856"
 ) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(20, TimeUnit.SECONDS)
         .build()
 
-    private val baseUrl = "${serverHost.trimEnd('/')}/player_api.php?username=$username&password=$password"
+    private fun getBaseUrl() = "${serverHost.trimEnd('/')}/player_api.php?username=$username&password=$password"
+
+    fun updateCredentials(host: String, user: String, pass: String) {
+        this.serverHost = host
+        this.username = user
+        this.password = pass
+    }
 
     suspend fun fetchLiveCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
         try {
-            val url = "$baseUrl&action=get_live_categories"
+            val url = "${getBaseUrl()}&action=get_live_categories"
             val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
             val jsonStr = response.body?.string().orEmpty()
@@ -64,9 +69,9 @@ class XtreamApiClient(
     suspend fun fetchLiveStreams(categoryId: String? = null): List<ChannelItem> = withContext(Dispatchers.IO) {
         try {
             val url = if (categoryId.isNullOrBlank()) {
-                "$baseUrl&action=get_live_streams"
+                "${getBaseUrl()}&action=get_live_streams"
             } else {
-                "$baseUrl&action=get_live_streams&category_id=$categoryId"
+                "${getBaseUrl()}&action=get_live_streams&category_id=$categoryId"
             }
             val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
@@ -115,7 +120,7 @@ class XtreamApiClient(
 
     suspend fun fetchVodStreams(): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
-            val url = "$baseUrl&action=get_vod_streams"
+            val url = "${getBaseUrl()}&action=get_vod_streams"
             val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
             val jsonStr = response.body?.string().orEmpty()
@@ -163,7 +168,7 @@ class XtreamApiClient(
 
     suspend fun fetchSeries(): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
-            val url = "$baseUrl&action=get_series"
+            val url = "${getBaseUrl()}&action=get_series"
             val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
             val jsonStr = response.body?.string().orEmpty()

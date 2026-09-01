@@ -14,7 +14,7 @@ android {
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.aistudio.saribtv.wvxq"
+    applicationId = "com.aistudio.saribtv.kxmpzq"
     minSdk = 24
     targetSdk = 36
     versionCode = 1
@@ -105,8 +105,8 @@ dependencies {
   implementation(libs.androidx.media3.exoplayer.hls)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)
-  // Uncomment to use Firestore:
-  // implementation(libs.firebase.firestore)
+  // Firestore for remote stream config and live management
+  implementation(libs.firebase.firestore)
 
   // Uncomment ALL FOUR of the following dependencies together to use Firebase Auth and Google
   // Sign-In via Credential Manager:

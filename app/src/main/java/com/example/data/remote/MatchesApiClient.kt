@@ -10,7 +10,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
-class MatchesApiClient {
+class MatchesApiClient(
+    var apiUrlBase: String = "https://bab-elmoshahd.online/api/index.php?path=matches&day="
+) {
 
     private val client = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -19,7 +21,14 @@ class MatchesApiClient {
 
     suspend fun fetchMatches(day: Int = 0): List<MatchItem> = withContext(Dispatchers.IO) {
         try {
-            val url = "https://bab-elmoshahd.online/api/index.php?path=matches&day=$day"
+            val url = if (apiUrlBase.endsWith("=") || apiUrlBase.endsWith("&day=")) {
+                "$apiUrlBase$day"
+            } else if (apiUrlBase.contains("day=")) {
+                apiUrlBase.replace(Regex("day=[-0-9]+"), "day=$day")
+            } else {
+                "${apiUrlBase.trimEnd('&', '?')}&day=$day"
+            }
+
             val request = Request.Builder()
                 .url(url)
                 .addHeader("User-Agent", "Mozilla/5.0 (Android; SARIB TV App)")

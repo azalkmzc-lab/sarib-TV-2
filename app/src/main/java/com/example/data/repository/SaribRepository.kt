@@ -14,7 +14,9 @@ import com.example.data.model.ContentType
 import com.example.data.model.HeroBannerItem
 import com.example.data.model.MatchItem
 import com.example.data.model.MediaItem
+import com.example.data.remote.FirebaseStreamManager
 import com.example.data.remote.MatchesApiClient
+import com.example.data.remote.RemoteStreamConfig
 import com.example.data.remote.XtreamApiClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -29,12 +31,17 @@ class SaribRepository(context: Context) {
     private val db = SaribDatabase.getDatabase(context)
     private val dao = db.saribDao()
 
+    private val firebaseStreamManager = FirebaseStreamManager(context)
+    private var currentRemoteConfig = RemoteStreamConfig()
+
     private val xtreamClient = XtreamApiClient(
-        serverHost = "http://cliccck52258.club:2082",
-        username = "khaledsliman",
-        password = "755246419856"
+        serverHost = currentRemoteConfig.serverHost,
+        username = currentRemoteConfig.username,
+        password = currentRemoteConfig.password
     )
-    private val matchesClient = MatchesApiClient()
+    private val matchesClient = MatchesApiClient(
+        apiUrlBase = currentRemoteConfig.matchesApiUrl
+    )
 
     companion object {
         const val SAMPLE_STREAM_HLS_1 = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
@@ -49,7 +56,22 @@ class SaribRepository(context: Context) {
                 seedInitialData()
             }
 
-            // 2. Fetch live data from Xtream Server and Matches API asynchronously
+            // 2. Fetch remote config from Firebase Firestore if available
+            try {
+                val firebaseConfig = firebaseStreamManager.fetchRemoteConfig()
+                currentRemoteConfig = firebaseConfig
+                xtreamClient.updateCredentials(
+                    host = firebaseConfig.serverHost,
+                    user = firebaseConfig.username,
+                    pass = firebaseConfig.password
+                )
+                matchesClient.apiUrlBase = firebaseConfig.matchesApiUrl
+                Log.d("SaribRepository", "Applied remote stream config from Firebase: ${firebaseConfig.serverHost}")
+            } catch (e: Exception) {
+                Log.w("SaribRepository", "Could not load Firebase config: ${e.message}")
+            }
+
+            // 3. Fetch live data from Xtream Server and Matches API asynchronously
             coroutineScope {
                 val liveCategoriesDeferred = async { xtreamClient.fetchLiveCategories() }
                 val liveStreamsDeferred = async { xtreamClient.fetchLiveStreams() }
@@ -83,7 +105,6 @@ class SaribRepository(context: Context) {
             Result.success(true)
         } catch (e: Exception) {
             Log.e("SaribRepository", "Init backend sync error: ${e.message}", e)
-            // Even if network has hiccups, app will work using stored cached data
             Result.success(true)
         }
     }
@@ -193,11 +214,11 @@ class SaribRepository(context: Context) {
     fun getHeroBanner(): HeroBannerItem {
         return HeroBannerItem(
             id = "hero_from",
-            title = "بلدة الضياع S1-S4",
-            subtitle = "مسلسل • دراما • رعب • أحجية",
+            title = currentRemoteConfig.heroTitle,
+            subtitle = currentRemoteConfig.heroSubtitle,
             backdropUrl = "",
             genreTags = listOf("مسلسل", "دراما", "رعب", "أحجية"),
-            streamUrl = "http://cliccck52258.club:2082/series/khaledsliman/755246419856/1.mp4",
+            streamUrl = currentRemoteConfig.heroStreamUrl,
             contentType = ContentType.SERIES
         )
     }
