@@ -64,6 +64,7 @@ fun MatchesScreen(
     onSearchClick: () -> Unit,
     currentTab: String,
     onTabSelected: (String) -> Unit,
+    listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
     val dateFilters = listOf(
@@ -92,6 +93,7 @@ fun MatchesScreen(
         }
     ) { innerPadding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)

@@ -37,6 +37,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,9 +81,10 @@ fun EntertainmentScreen(
     onSearchClick: () -> Unit,
     currentTab: String,
     onTabSelected: (String) -> Unit,
+    listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
-    var selectedFilterIndex by remember { mutableStateOf(0) }
+    var selectedFilterIndex by rememberSaveable { mutableStateOf(0) }
     val filterTabs = listOf("الكل", "الأفلام", "المسلسلات", "تصنيفات الترفيه")
 
     Scaffold(
@@ -104,6 +106,7 @@ fun EntertainmentScreen(
         }
     ) { innerPadding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)

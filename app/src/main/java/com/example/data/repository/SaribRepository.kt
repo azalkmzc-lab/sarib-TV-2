@@ -85,7 +85,7 @@ class SaribRepository(private val context: Context) {
                 Log.w("SaribRepository", "Could not load Firebase sliders: ${e.message}")
             }
 
-            // 4. Fast Startup: Fetch Categories & Home essentials only (On-demand loading for channel streams!)
+            // 4. Fast Startup: Fetch Categories & Home essentials only (8 items max for preview, on-demand loading for rest!)
             val syncResult = coroutineScope {
                 val liveCategoriesDeferred = async { xtreamClient.fetchLiveCategories() }
                 val vodCategoriesDeferred = async { xtreamClient.fetchVodCategories() }
@@ -94,10 +94,10 @@ class SaribRepository(private val context: Context) {
                 val customChannelsDeferred = async { firebaseStreamManager.fetchCustomChannels() }
                 val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies() }
                 val matchesDeferred = async { matchesClient.fetchMatches(0) }
-                // Fetch only top preview streams for Home screen carousel/most watched
-                val topLiveStreamsDeferred = async { xtreamClient.fetchLiveStreams(limit = 15) }
-                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 12) }
-                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 12) }
+                // Fetch only 8 preview items for Home screen carousel to ensure ultra-fast startup
+                val topLiveStreamsDeferred = async { xtreamClient.fetchLiveStreams(limit = 8) }
+                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 8) }
+                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 8) }
 
                 val remoteCategories = liveCategoriesDeferred.await()
                 val vodCategories = vodCategoriesDeferred.await()
@@ -114,19 +114,26 @@ class SaribRepository(private val context: Context) {
                 val allChans = (customChannels + topStreams).distinctBy { it.id }
                 val allMovs = (customMovies + topMovies).distinctBy { it.id }
 
+                // Clear previous server's cached categories and content if fresh categories received
                 if (allCats.isNotEmpty()) {
+                    dao.clearAllCategories()
                     dao.insertCategories(allCats.map { it.toEntity() })
                 }
                 if (allChans.isNotEmpty()) {
+                    dao.clearAllChannels()
                     dao.insertChannels(allChans.map { it.toEntity() })
                 }
-                if (allMovs.isNotEmpty()) {
-                    dao.insertMediaItems(allMovs.map { it.toEntity() })
-                }
-                if (topSeries.isNotEmpty()) {
-                    dao.insertMediaItems(topSeries.map { it.toEntity() })
+                if (allMovs.isNotEmpty() || topSeries.isNotEmpty()) {
+                    dao.clearAllMedia()
+                    if (allMovs.isNotEmpty()) {
+                        dao.insertMediaItems(allMovs.map { it.toEntity() })
+                    }
+                    if (topSeries.isNotEmpty()) {
+                        dao.insertMediaItems(topSeries.map { it.toEntity() })
+                    }
                 }
                 if (remoteMatches.isNotEmpty()) {
+                    dao.clearAllMatches()
                     dao.insertMatches(remoteMatches.map { it.toEntity() })
                 }
 

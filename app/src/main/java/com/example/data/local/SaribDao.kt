@@ -45,6 +45,9 @@ interface SaribDao {
     @Query("DELETE FROM channels WHERE id = :id")
     suspend fun deleteChannelById(id: String)
 
+    @Query("DELETE FROM channels")
+    suspend fun clearAllChannels()
+
     // Categories
     @Query("SELECT * FROM categories")
     fun getAllCategories(): Flow<List<CategoryEntity>>
@@ -63,6 +66,9 @@ interface SaribDao {
 
     @Delete
     suspend fun deleteCategory(category: CategoryEntity)
+
+    @Query("DELETE FROM categories")
+    suspend fun clearAllCategories()
 
     // Matches
     @Query("SELECT * FROM matches ORDER BY matchDate ASC, matchTime ASC")
@@ -83,6 +89,9 @@ interface SaribDao {
     @Delete
     suspend fun deleteMatch(match: MatchEntity)
 
+    @Query("DELETE FROM matches")
+    suspend fun clearAllMatches()
+
     // Media (Movies, Series, Anime)
     @Query("SELECT * FROM media_items WHERE type = :type")
     fun getMediaByType(type: String): Flow<List<MediaEntity>>
@@ -101,6 +110,9 @@ interface SaribDao {
 
     @Delete
     suspend fun deleteMediaItem(item: MediaEntity)
+
+    @Query("DELETE FROM media_items")
+    suspend fun clearAllMedia()
 
     // Favorites
     @Query("SELECT * FROM favorites ORDER BY addedAt DESC")

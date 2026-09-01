@@ -57,6 +57,7 @@ fun HomeScreen(
     onViewAllMoviesClick: () -> Unit,
     currentTab: String,
     onTabSelected: (String) -> Unit,
+    listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
     val homeCategoryChips = listOf("الكل", "مسلسل", "دراما", "رعب", "أكشن", "أجنبية", "أحجية", "وثائقي", "كوميدي")
@@ -80,6 +81,7 @@ fun HomeScreen(
         }
     ) { innerPadding ->
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)

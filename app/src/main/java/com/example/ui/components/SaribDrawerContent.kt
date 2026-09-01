@@ -185,10 +185,11 @@ fun SaribDrawerContent(
 
             // Footer
             Text(
-                text = "جميع الحقوق محفوظة لـ SARIB TV © 2024",
+                text = "جميع حقوق محفوظة مطور 𝐍𝐈𝐆𝐇𝐓𝐌𝐀𝐑𝐄_𝕏𝐍𝐕𝐑",
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = SaribTextMuted,
-                    fontSize = 10.sp
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium
                 )
             )
         }

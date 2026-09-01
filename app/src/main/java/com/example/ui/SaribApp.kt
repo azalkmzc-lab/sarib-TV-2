@@ -8,6 +8,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -18,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -64,6 +67,13 @@ fun SaribApp(
     val featuredSeries by viewModel.featuredSeries.collectAsState()
     val animePicks by viewModel.animePicks.collectAsState()
     val favorites by viewModel.favorites.collectAsState()
+
+    // Persistent scroll states across navigation and category exits
+    val homeListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+    val channelsListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+    val matchesListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+    val entertainmentListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+    val favoritesListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
 
     val categoryChannels by viewModel.categoryChannels.collectAsState()
     val categoryMediaList by viewModel.categoryMediaList.collectAsState()
@@ -223,7 +233,8 @@ fun SaribApp(
                                 onViewAllMatchesClick = { viewModel.selectTab("matches") },
                                 onViewAllMoviesClick = { viewModel.selectTab("entertainment") },
                                 currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) }
+                                onTabSelected = { viewModel.selectTab(it) },
+                                listState = homeListState
                             )
                         }
 
@@ -238,7 +249,8 @@ fun SaribApp(
                                 viewMode = viewMode,
                                 onToggleViewMode = { viewModel.toggleViewMode() },
                                 currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) }
+                                onTabSelected = { viewModel.selectTab(it) },
+                                listState = channelsListState
                             )
                         }
 
@@ -260,7 +272,8 @@ fun SaribApp(
                                 onFavoritesClick = { viewModel.selectTab("favorites") },
                                 onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
                                 currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) }
+                                onTabSelected = { viewModel.selectTab(it) },
+                                listState = matchesListState
                             )
                         }
 
@@ -279,7 +292,8 @@ fun SaribApp(
                                 onFavoritesClick = { viewModel.selectTab("favorites") },
                                 onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
                                 currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) }
+                                onTabSelected = { viewModel.selectTab(it) },
+                                listState = entertainmentListState
                             )
                         }
 
@@ -309,7 +323,8 @@ fun SaribApp(
                                 onFavoritesClick = { viewModel.selectTab("favorites") },
                                 onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
                                 currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) }
+                                onTabSelected = { viewModel.selectTab(it) },
+                                listState = favoritesListState
                             )
                         }
                     }

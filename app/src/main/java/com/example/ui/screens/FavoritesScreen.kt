@@ -67,6 +67,7 @@ fun FavoritesScreen(
     onSearchClick: () -> Unit,
     currentTab: String,
     onTabSelected: (String) -> Unit,
+    listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -143,6 +144,7 @@ fun FavoritesScreen(
             }
         } else {
             LazyColumn(
+                state = listState,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
