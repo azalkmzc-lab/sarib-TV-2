@@ -43,10 +43,14 @@ data class HeroBannerItem(
     val id: String,
     val title: String,
     val subtitle: String,
-    val backdropUrl: String,
-    val genreTags: List<String>,
-    val streamUrl: String,
-    val contentType: ContentType = ContentType.SERIES
+    val backdropUrl: String = "",
+    val badge: String = "حصري",
+    val genreTags: List<String> = listOf("مسلسل", "دراما"),
+    val streamUrl: String = "",
+    val contentType: ContentType = ContentType.SERIES,
+    val isLive: Boolean = false,
+    val sortOrder: Int = 0,
+    val isActive: Boolean = true
 )
 
 data class MatchItem(

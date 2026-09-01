@@ -2,6 +2,8 @@ package com.example.data.remote
 
 import android.content.Context
 import android.util.Log
+import com.example.data.model.ContentType
+import com.example.data.model.HeroBannerItem
 import com.google.firebase.FirebaseApp
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
@@ -9,6 +11,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
@@ -109,5 +112,225 @@ class FirebaseStreamManager(private val context: Context) {
 
         // Strategy 3: Default fallback
         RemoteStreamConfig()
+    }
+
+    /**
+     * Fetches dynamic sliders from Firebase Firestore collection 'sliders' or Realtime Database path '/sliders.json'.
+     * This path is independent from the Xtream account and allows managing multiple custom sliders from the HTML dashboard.
+     */
+    suspend fun fetchSliders(): List<HeroBannerItem> = withContext(Dispatchers.IO) {
+        val resultList = mutableListOf<HeroBannerItem>()
+
+        // 1. Try Firebase Firestore ('sliders' collection)
+        if (isFirebaseAvailable()) {
+            try {
+                val firestore = FirebaseFirestore.getInstance()
+                val snapshot = firestore.collection("sliders")
+                    .get()
+                    .await()
+
+                if (snapshot != null && !snapshot.isEmpty) {
+                    for (doc in snapshot.documents) {
+                        val isActive = doc.getBoolean("isActive") ?: doc.getBoolean("is_active") ?: true
+                        if (!isActive) continue
+
+                        val id = doc.id
+                        val title = doc.getString("title").orEmpty()
+                        val subtitle = doc.getString("subtitle").orEmpty()
+                        val backdropUrl = doc.getString("backdropUrl") 
+                            ?: doc.getString("backdrop_url") 
+                            ?: doc.getString("imageUrl") 
+                            ?: doc.getString("image_url") 
+                            ?: ""
+                        val badge = doc.getString("badge") ?: "حصري"
+                        val streamUrl = doc.getString("streamUrl") ?: doc.getString("stream_url") ?: ""
+                        val isLive = doc.getBoolean("isLive") ?: doc.getBoolean("is_live") ?: false
+                        val sortOrder = doc.getLong("sortOrder")?.toInt() 
+                            ?: doc.getLong("sort_order")?.toInt() 
+                            ?: 0
+                        val typeStr = doc.getString("contentType") ?: doc.getString("type") ?: "SERIES"
+                        val contentType = when (typeStr.uppercase()) {
+                            "MOVIE" -> ContentType.MOVIE
+                            "CHANNEL", "LIVE" -> ContentType.CHANNEL
+                            "MATCH" -> ContentType.MATCH
+                            else -> ContentType.SERIES
+                        }
+                        
+                        val tagsList = mutableListOf<String>()
+                        val tagsObj = doc.get("genreTags") ?: doc.get("tags")
+                        if (tagsObj is List<*>) {
+                            tagsList.addAll(tagsObj.mapNotNull { it?.toString() })
+                        } else if (tagsObj is String && tagsObj.isNotEmpty()) {
+                            tagsList.addAll(tagsObj.split(",", "•", "-").map { it.trim() })
+                        }
+                        if (tagsList.isEmpty()) {
+                            tagsList.addAll(listOf("مميز", "عالي الدقة"))
+                        }
+
+                        if (title.isNotEmpty()) {
+                            resultList.add(
+                                HeroBannerItem(
+                                    id = id,
+                                    title = title,
+                                    subtitle = subtitle,
+                                    backdropUrl = backdropUrl,
+                                    badge = badge,
+                                    genreTags = tagsList,
+                                    streamUrl = streamUrl,
+                                    contentType = contentType,
+                                    isLive = isLive,
+                                    sortOrder = sortOrder,
+                                    isActive = true
+                                )
+                            )
+                        }
+                    }
+
+                    if (resultList.isNotEmpty()) {
+                        Log.i(TAG, "Loaded ${resultList.size} sliders from Firestore.")
+                        return@withContext resultList.sortedBy { it.sortOrder }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to load sliders from Firestore: ${e.message}")
+            }
+        }
+
+        // 2. Try Firebase Realtime Database path '/sliders.json'
+        try {
+            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/sliders.json"
+            val request = Request.Builder().url(url).build()
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string().orEmpty().trim()
+            
+            if (body.isNotEmpty() && body != "null") {
+                if (body.startsWith("[")) {
+                    val jsonArray = JSONArray(body)
+                    for (i in 0 until jsonArray.length()) {
+                        val itemObj = jsonArray.optJSONObject(i) ?: continue
+                        parseSliderJson(itemObj, "slider_$i")?.let { resultList.add(it) }
+                    }
+                } else if (body.startsWith("{")) {
+                    val jsonObj = JSONObject(body)
+                    val keys = jsonObj.keys()
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        val itemObj = jsonObj.optJSONObject(key) ?: continue
+                        parseSliderJson(itemObj, key)?.let { resultList.add(it) }
+                    }
+                }
+
+                if (resultList.isNotEmpty()) {
+                    Log.i(TAG, "Loaded ${resultList.size} sliders from RTDB.")
+                    return@withContext resultList.sortedBy { it.sortOrder }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "RTDB sliders fetch error: ${e.message}")
+        }
+
+        resultList
+    }
+
+    private fun parseSliderJson(obj: JSONObject, defaultId: String): HeroBannerItem? {
+        val isActive = obj.optBoolean("isActive", obj.optBoolean("is_active", true))
+        if (!isActive) return null
+
+        val id = obj.optString("id", defaultId)
+        val title = obj.optString("title", "")
+        if (title.isEmpty()) return null
+
+        // Check if slider has expired based on duration and createdAt
+        val duration = obj.optDouble("duration", 0.0)
+        val createdAt = obj.optLong("createdAt", 0L)
+        if (duration > 0 && createdAt > 0) {
+            val expiryTime = createdAt + (duration * 60 * 60 * 1000).toLong()
+            if (System.currentTimeMillis() > expiryTime) {
+                return null
+            }
+        }
+
+        val typeRaw = obj.optString("type", obj.optString("contentType", "normal")).lowercase()
+        val isLive = typeRaw == "match" || obj.optBoolean("isLive", obj.optBoolean("is_live", false))
+
+        val contentType = when {
+            typeRaw == "movie" -> ContentType.MOVIE
+            typeRaw == "match" -> ContentType.MATCH
+            typeRaw == "channel" || typeRaw == "live" -> ContentType.CHANNEL
+            else -> ContentType.SERIES
+        }
+
+        // Subtitle logic based on type and fields
+        val subtitle = when {
+            obj.has("subtitle") && obj.optString("subtitle").isNotEmpty() -> obj.optString("subtitle")
+            typeRaw == "match" -> {
+                val matchTime = obj.optLong("matchTime", 0L)
+                if (matchTime > 0) "بث مباشر • انطلاق المباراة" else "بث مباشر للمباراة"
+            }
+            typeRaw == "movie" -> {
+                val rating = obj.optString("movieRating", "")
+                if (rating.isNotEmpty()) "فيلم • تقييم ⭐ $rating/10" else "فيلم سينمائي"
+            }
+            else -> "عرض مميز بدقة عالية"
+        }
+
+        // Image / Backdrop URL
+        val backdropUrl = obj.optString(
+            "image",
+            obj.optString(
+                "backdropUrl",
+                obj.optString("backdrop_url", obj.optString("imageUrl", obj.optString("image_url", "")))
+            )
+        )
+
+        // Badge
+        val badge = when {
+            obj.has("badge") && obj.optString("badge").isNotEmpty() -> obj.optString("badge")
+            typeRaw == "match" -> "مباشر LIVE"
+            typeRaw == "movie" -> "فيلم"
+            else -> "مميز"
+        }
+
+        // Stream URL resolution: server1..server5, url, movieUrl, streamUrl
+        val streamUrl = listOf(
+            obj.optString("server1", ""),
+            obj.optString("server2", ""),
+            obj.optString("server3", ""),
+            obj.optString("server4", ""),
+            obj.optString("server5", ""),
+            obj.optString("movieUrl", ""),
+            obj.optString("streamUrl", ""),
+            obj.optString("stream_url", ""),
+            obj.optString("url", "")
+        ).firstOrNull { it.isNotBlank() } ?: ""
+
+        val sortOrder = obj.optInt("sortOrder", obj.optInt("sort_order", obj.optInt("order", 0)))
+
+        val tagsList = mutableListOf<String>()
+        val tagsStr = obj.optString("genreTags", obj.optString("tags", ""))
+        if (tagsStr.isNotEmpty()) {
+            tagsList.addAll(tagsStr.split(",", "•", "-").map { it.trim() }.filter { it.isNotEmpty() })
+        }
+        if (tagsList.isEmpty()) {
+            when (typeRaw) {
+                "match" -> tagsList.addAll(listOf("مباراة", "بث مباشر", "HD"))
+                "movie" -> tagsList.addAll(listOf("فيلم", "سينما", "Full HD"))
+                else -> tagsList.addAll(listOf("مميز", "HD"))
+            }
+        }
+
+        return HeroBannerItem(
+            id = id,
+            title = title,
+            subtitle = subtitle,
+            backdropUrl = backdropUrl,
+            badge = badge,
+            genreTags = tagsList,
+            streamUrl = streamUrl,
+            contentType = contentType,
+            isLive = isLive,
+            sortOrder = sortOrder,
+            isActive = true
+        )
     }
 }

@@ -50,6 +50,7 @@ fun SaribApp(
     val isConnecting by viewModel.isConnecting.collectAsState()
     val connectionError by viewModel.connectionError.collectAsState()
 
+    val heroSliders by viewModel.heroSliders.collectAsState()
     val categories by viewModel.categories.collectAsState()
     val mostWatchedChannels by viewModel.mostWatchedChannels.collectAsState()
     val allMatches by viewModel.allMatches.collectAsState()
@@ -82,30 +83,17 @@ fun SaribApp(
         if (drawerState.isOpen) {
             scope.launch { drawerState.close() }
         } else {
-            when (currentScreen) {
-                is AppScreen.Splash -> {
-                    // Do nothing or exit
-                }
-                is AppScreen.Player -> {
-                    viewModel.navigateTo(AppScreen.Main)
-                }
-                is AppScreen.CategoryDetail -> {
-                    viewModel.navigateTo(AppScreen.Main)
-                }
-                is AppScreen.Search -> {
-                    viewModel.navigateTo(AppScreen.Main)
-                }
-                is AppScreen.Main -> {
-                    if (currentTab != "home") {
-                        viewModel.selectTab("home")
+            val handled = viewModel.popBack()
+            if (!handled) {
+                if (currentTab != "home") {
+                    viewModel.selectTab("home")
+                } else {
+                    val currentTime = System.currentTimeMillis()
+                    if (currentTime - lastBackPressTime < 2000) {
+                        (context as? android.app.Activity)?.finish()
                     } else {
-                        val currentTime = System.currentTimeMillis()
-                        if (currentTime - lastBackPressTime < 2000) {
-                            (context as? android.app.Activity)?.finish()
-                        } else {
-                            lastBackPressTime = currentTime
-                            Toast.makeText(context, "اضغط مرة أخرى للخروج من SARIB TV", Toast.LENGTH_SHORT).show()
-                        }
+                        lastBackPressTime = currentTime
+                        Toast.makeText(context, "اضغط مرة أخرى للخروج من SARIB TV", Toast.LENGTH_SHORT).show()
                     }
                 }
             }
@@ -164,7 +152,7 @@ fun SaribApp(
                     when (currentTab) {
                         "home" -> {
                             HomeScreen(
-                                heroBanner = viewModel.heroBanner,
+                                heroSliders = heroSliders,
                                 popularChannels = mostWatchedChannels,
                                 todaysMatches = allMatches,
                                 featuredMovies = featuredMovies,
@@ -212,7 +200,7 @@ fun SaribApp(
                                         title = banner.title,
                                         subtitle = banner.subtitle,
                                         streamUrl = banner.streamUrl,
-                                        isLive = false
+                                        isLive = banner.isLive
                                     )
                                 },
                                 onViewAllChannelsClick = { viewModel.selectTab("channels") },
@@ -320,7 +308,7 @@ fun SaribApp(
                         channels = categoryChannels,
                         viewMode = viewMode,
                         onToggleViewMode = { viewModel.toggleViewMode() },
-                        onBackClick = { viewModel.navigateTo(AppScreen.Main) },
+                        onBackClick = { viewModel.popBack() },
                         onChannelClick = { channel ->
                             viewModel.playMedia(
                                 title = channel.name,
@@ -348,7 +336,7 @@ fun SaribApp(
                         subtitle = screen.subtitle,
                         streamUrl = screen.streamUrl,
                         isLive = screen.isLive,
-                        onBackClick = { viewModel.navigateTo(AppScreen.Main) }
+                        onBackClick = { viewModel.popBack() }
                     )
                 }
 
@@ -373,7 +361,7 @@ fun SaribApp(
                                 isLive = false
                             )
                         },
-                        onBackClick = { viewModel.navigateTo(AppScreen.Main) }
+                        onBackClick = { viewModel.popBack() }
                     )
                 }
             }

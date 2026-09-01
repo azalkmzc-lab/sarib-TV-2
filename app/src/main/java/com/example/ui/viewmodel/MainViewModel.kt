@@ -32,7 +32,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = SaribRepository(application)
 
-    // Navigation State
+    // Navigation State & Backstack
+    private val backStack = mutableListOf<AppScreen>()
     private val _currentScreen = MutableStateFlow<AppScreen>(AppScreen.Splash)
     val currentScreen: StateFlow<AppScreen> = _currentScreen.asStateFlow()
 
@@ -47,7 +48,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val connectionError: StateFlow<String?> = _connectionError.asStateFlow()
 
     // Home & Content States
-    val heroBanner: HeroBannerItem = repository.getHeroBanner()
+    val heroBanner: HeroBannerItem
+        get() = repository.getHeroBanner()
+
+    val heroSliders: StateFlow<List<HeroBannerItem>> = repository.heroSliders
 
     val categories: StateFlow<List<ChannelCategory>> = repository.getAllCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -133,11 +137,47 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun navigateTo(screen: AppScreen) {
+        val curr = _currentScreen.value
+        if (curr != screen && curr != AppScreen.Splash) {
+            backStack.add(curr)
+        }
         _currentScreen.value = screen
+    }
+
+    fun popBack(): Boolean {
+        val curr = _currentScreen.value
+        if (curr is AppScreen.Player) {
+            // When exiting player, pop back to exact previous screen (e.g. CategoryDetail)
+            if (backStack.isNotEmpty()) {
+                val previous = backStack.removeAt(backStack.lastIndex)
+                _currentScreen.value = previous
+                return true
+            } else {
+                _currentScreen.value = AppScreen.Main
+                return true
+            }
+        } else if (curr is AppScreen.CategoryDetail) {
+            _currentScreen.value = AppScreen.Main
+            backStack.clear()
+            return true
+        } else if (curr is AppScreen.Search) {
+            _currentScreen.value = AppScreen.Main
+            backStack.clear()
+            return true
+        } else if (backStack.isNotEmpty()) {
+            val previous = backStack.removeAt(backStack.lastIndex)
+            _currentScreen.value = previous
+            return true
+        } else if (curr != AppScreen.Main) {
+            _currentScreen.value = AppScreen.Main
+            return true
+        }
+        return false
     }
 
     fun selectTab(tab: String) {
         _currentTab.value = tab
+        backStack.clear()
         _currentScreen.value = AppScreen.Main
     }
 
@@ -147,6 +187,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             repository.getChannelsByCategory(category.id).collect { list ->
                 _categoryChannels.value = list
             }
+        }
+        val curr = _currentScreen.value
+        if (curr != AppScreen.Splash && curr !is AppScreen.CategoryDetail) {
+            backStack.add(curr)
         }
         _currentScreen.value = AppScreen.CategoryDetail(category)
     }
@@ -171,10 +215,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun playMedia(title: String, subtitle: String, streamUrl: String, isLive: Boolean = false) {
+        val curr = _currentScreen.value
+        if (curr != AppScreen.Splash && curr !is AppScreen.Player) {
+            backStack.add(curr)
+        }
         _currentScreen.value = AppScreen.Player(
             title = title,
             subtitle = subtitle,
-            streamUrl = streamUrl.ifEmpty { SaribRepository.SAMPLE_STREAM_HLS_1 },
+            streamUrl = streamUrl,
             isLive = isLive
         )
     }

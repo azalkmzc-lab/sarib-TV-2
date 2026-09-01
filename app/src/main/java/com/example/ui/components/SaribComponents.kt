@@ -68,6 +68,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import coil.compose.AsyncImage
+import coil.compose.SubcomposeAsyncImage
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -309,17 +311,22 @@ fun CategoryChipsRow(
 
 @Composable
 fun HeroSlider(
-    banner: HeroBannerItem,
+    sliders: List<HeroBannerItem>,
     onWatchClick: (HeroBannerItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+    if (sliders.isEmpty()) return
 
-    LaunchedEffect(pagerState) {
-        while (true) {
-            delay(5000)
-            val nextPage = (pagerState.currentPage + 1) % 3
-            pagerState.animateScrollToPage(nextPage)
+    val pageCount = sliders.size
+    val pagerState = rememberPagerState(pageCount = { pageCount })
+
+    LaunchedEffect(pagerState, pageCount) {
+        if (pageCount > 1) {
+            while (true) {
+                delay(5000)
+                val nextPage = (pagerState.currentPage + 1) % pageCount
+                pagerState.animateScrollToPage(nextPage)
+            }
         }
     }
 
@@ -342,14 +349,24 @@ fun HeroSlider(
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
             ) { page ->
+                val currentItem = sliders.getOrNull(page) ?: sliders.first()
                 Box(modifier = Modifier.fillMaxSize()) {
-                    // Backdrop Image
-                    Image(
-                        painter = painterResource(id = R.drawable.hero_lost_town),
-                        contentDescription = banner.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    // Backdrop Image with AsyncImage
+                    if (currentItem.backdropUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = currentItem.backdropUrl,
+                            contentDescription = currentItem.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        Image(
+                            painter = painterResource(id = R.drawable.hero_lost_town),
+                            contentDescription = currentItem.title,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
 
                     // Dark Gradient Vignette
                     Box(
@@ -358,37 +375,47 @@ fun HeroSlider(
                             .background(
                                 Brush.verticalGradient(
                                     listOf(
-                                        Color.Transparent,
+                                        Color(0x33070C14),
                                         Color(0x80070C14),
-                                        Color(0xF0070C14)
+                                        Color(0xF5070C14)
                                     )
                                 )
                             )
                     )
 
-                    // Top tags pill
+                    // Top tags pill / badge
                     Row(
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .padding(top = 12.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0x99000000))
-                            .border(0.5.dp, Color(0x66FFFFFF), RoundedCornerShape(12.dp))
+                            .background(Color(0xCC000000))
+                            .border(0.5.dp, SaribCyanAccent.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
                             .padding(horizontal = 12.dp, vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Tv,
-                            contentDescription = null,
-                            tint = SaribCyanAccent,
-                            modifier = Modifier.size(14.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
+                        if (currentItem.isLive) {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(SaribLiveRed)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Tv,
+                                contentDescription = null,
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
                         Text(
-                            text = banner.subtitle,
+                            text = if (currentItem.badge.isNotBlank()) "${currentItem.badge} • ${currentItem.subtitle}" else currentItem.subtitle,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = Color.White,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.Bold
                             )
                         )
                     }
@@ -401,12 +428,14 @@ fun HeroSlider(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = if (page == 0) banner.title else if (page == 1) "The Last of Us S2" else "Spider-Man: Brand New Day",
+                            text = currentItem.title,
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Black,
                                 color = Color.White
                             ),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
@@ -421,7 +450,7 @@ fun HeroSlider(
                                         listOf(SaribElectricBlue, SaribCyanAccent)
                                     )
                                 )
-                                .clickable { onWatchClick(banner) }
+                                .clickable { onWatchClick(currentItem) }
                                 .padding(horizontal = 24.dp, vertical = 8.dp)
                         ) {
                             Row(
@@ -436,7 +465,7 @@ fun HeroSlider(
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
-                                    text = stringResource(id = R.string.watch_now),
+                                    text = if (currentItem.isLive) "مشاهدة البث المباشر" else stringResource(id = R.string.watch_now),
                                     style = MaterialTheme.typography.labelLarge.copy(
                                         color = Color.White,
                                         fontWeight = FontWeight.Bold
@@ -449,24 +478,26 @@ fun HeroSlider(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        if (pageCount > 1) {
+            Spacer(modifier = Modifier.height(10.dp))
 
-        // Pagination Indicator dots
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            repeat(3) { index ->
-                val isSelected = pagerState.currentPage == index
-                val width = if (isSelected) 24.dp else 8.dp
-                val color = if (isSelected) SaribCyanAccent else SaribTextMuted
-                Box(
-                    modifier = Modifier
-                        .height(6.dp)
-                        .width(width)
-                        .clip(RoundedCornerShape(3.dp))
-                        .background(color)
-                )
+            // Pagination Indicator dots
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                repeat(pageCount) { index ->
+                    val isSelected = pagerState.currentPage == index
+                    val width = if (isSelected) 24.dp else 8.dp
+                    val color = if (isSelected) SaribCyanAccent else SaribTextMuted
+                    Box(
+                        modifier = Modifier
+                            .height(6.dp)
+                            .width(width)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(color)
+                    )
+                }
             }
         }
     }
@@ -639,27 +670,38 @@ fun ChannelCardItem(
                     .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(14.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                // Stylized Channel Logo
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Tv,
-                        contentDescription = null,
-                        tint = SaribCyanAccent,
-                        modifier = Modifier.size(30.dp)
+                if (channel.logoUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = channel.logoUrl,
+                        contentDescription = channel.name,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(6.dp)
                     )
-                    Text(
-                        text = if (channel.name.contains("beIN", ignoreCase = true)) "beIN"
-                        else if (channel.name.contains("MBC", ignoreCase = true)) "MBC"
-                        else if (channel.name.contains("Thmanyah", ignoreCase = true)) "8"
-                        else "HD",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = Color.White,
-                            fontWeight = FontWeight.Black
+                } else {
+                    // Stylized Fallback Channel Logo
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Tv,
+                            contentDescription = null,
+                            tint = SaribCyanAccent,
+                            modifier = Modifier.size(28.dp)
                         )
-                    )
+                        Text(
+                            text = if (channel.name.contains("beIN", ignoreCase = true)) "beIN"
+                            else if (channel.name.contains("MBC", ignoreCase = true)) "MBC"
+                            else if (channel.name.contains("SSC", ignoreCase = true)) "SSC"
+                            else "TV",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Black
+                            )
+                        )
+                    }
                 }
             }
 
@@ -712,14 +754,23 @@ fun MatchCardItem(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // League Name
+                    // League Name & Icon
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(SaribCyanAccent)
-                        )
+                        if (match.leagueIconUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = match.leagueIconUrl,
+                                contentDescription = match.leagueName,
+                                modifier = Modifier.size(16.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .clip(CircleShape)
+                                    .background(SaribCyanAccent)
+                            )
+                        }
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = match.leagueName,
@@ -770,20 +821,32 @@ fun MatchCardItem(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF1B263B)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = match.homeTeam.take(1),
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    color = SaribCyanAccent,
-                                    fontWeight = FontWeight.Bold
-                                )
+                        if (match.homeLogoUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = match.homeLogoUrl,
+                                contentDescription = match.homeTeam,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF1B263B)),
+                                contentScale = ContentScale.Fit
                             )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF1B263B)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = match.homeTeam.take(1),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = SaribCyanAccent,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
@@ -831,20 +894,32 @@ fun MatchCardItem(
                             overflow = TextOverflow.Ellipsis
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Box(
-                            modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF1B263B)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                text = match.awayTeam.take(1),
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    color = SaribElectricBlue,
-                                    fontWeight = FontWeight.Bold
-                                )
+                        if (match.awayLogoUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = match.awayLogoUrl,
+                                contentDescription = match.awayTeam,
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF1B263B)),
+                                contentScale = ContentScale.Fit
                             )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xFF1B263B)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = match.awayTeam.take(1),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = SaribElectricBlue,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
                         }
                     }
                 }
@@ -859,6 +934,8 @@ fun MediaCardItem(
     onClick: (MediaItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val displayImageUrl = item.posterUrl.ifBlank { item.backdropUrl }
+
     Card(
         modifier = modifier
             .width(135.dp)
@@ -874,13 +951,21 @@ fun MediaCardItem(
                     .height(180.dp)
                     .background(Color(0xFF111E30))
             ) {
-                // Background artistic representation / poster
-                Image(
-                    painter = painterResource(id = R.drawable.hero_lost_town),
-                    contentDescription = item.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
-                )
+                if (displayImageUrl.isNotBlank()) {
+                    AsyncImage(
+                        model = displayImageUrl,
+                        contentDescription = item.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Image(
+                        painter = painterResource(id = R.drawable.hero_lost_town),
+                        contentDescription = item.title,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
 
                 // Top Badge if Top ranked
                 if (item.isTop) {

@@ -35,7 +35,7 @@ import com.example.ui.theme.SaribDarkBackground
 
 @Composable
 fun HomeScreen(
-    heroBanner: HeroBannerItem,
+    heroSliders: List<HeroBannerItem>,
     popularChannels: List<ChannelItem>,
     todaysMatches: List<MatchItem>,
     featuredMovies: List<MediaItem>,
@@ -100,7 +100,7 @@ fun HomeScreen(
             // Hero Banner Slider
             item {
                 HeroSlider(
-                    banner = heroBanner,
+                    sliders = heroSliders,
                     onWatchClick = onHeroWatchClick
                 )
                 Spacer(modifier = Modifier.height(14.dp))

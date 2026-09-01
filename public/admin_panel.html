@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SARIB TV - لوحة التحكم الشاملة</title>
+
+    <!-- Firebase SDK (v8.10.1 Compat for Realtime Database) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b0f19;
+            color: #fff;
+            padding: 15px;
+        }
+
+        header {
+            text-align: center;
+            font-size: 26px;
+            font-weight: 900;
+            color: #00d2ff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 12px rgba(0, 210, 255, 0.4);
+        }
+
+        /* لوحات التحكم */
+        .admin-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto 25px auto;
+        }
+
+        .admin-panel {
+            background-color: #141b2d;
+            padding: 18px;
+            border-radius: 12px;
+            flex: 1;
+            min-width: 320px;
+            border: 1px solid rgba(0, 210, 255, 0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .admin-panel.full-width {
+            flex: 100%;
+            min-width: 100%;
+            border: 1px solid #00d2ff;
+        }
+
+        .admin-panel h3 {
+            margin-bottom: 12px;
+            color: #00d2ff;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #233554;
+            background-color: #080d1a;
+            color: #fff;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #00d2ff;
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.25);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #0077fe, #00d2ff);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+        }
+
+        .btn-submit:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        /* معاينة الصور */
+        .poster-preview-box {
+            margin-top: 10px;
+            display: none;
+            text-align: center;
+            background: #080d1a;
+            border: 1px solid #233554;
+            border-radius: 8px;
+            padding: 8px;
+        }
+
+        .poster-preview-box span {
+            display: block;
+            color: #aaa;
+            font-size: 11px;
+            margin-bottom: 6px;
+        }
+
+        .poster-preview {
+            width: 100%;
+            max-width: 200px;
+            height: 110px;
+            object-fit: cover;
+            border-radius: 6px;
+            background: #000;
+        }
+
+        /* تصميم Slider Bar */
+        .sliders-container {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 5px 15px 5px;
+            max-width: 1200px;
+            margin: 0 auto 20px auto;
+        }
+
+        .sliders-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .sliders-container::-webkit-scrollbar-thumb {
+            background: #233554;
+            border-radius: 10px;
+        }
+
+        .slider-card-view {
+            min-width: 270px;
+            max-width: 290px;
+            background-color: #141b2d;
+            border: 1px solid #233554;
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        }
+
+        .slider-card-view img {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            display: block;
+            background: #000;
+        }
+
+        .slider-badge-view {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.8);
+            color: #00d2ff;
+            border: 1px solid #00d2ff;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .slider-card-info {
+            padding: 12px;
+            text-align: center;
+        }
+
+        .slider-card-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        /* شبكات العرض */
+        .news-grid, .channels-grid, .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 15px;
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+        }
+
+        .news-card, .channel-card, .match-card {
+            background-color: #141b2d;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #233554;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+        }
+
+        .news-card img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            background-color: #000;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        .news-card-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        .news-card-desc {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        .categories-bar {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 10px 5px 15px 5px;
+            max-width: 1200px;
+            margin: 0 auto 20px auto;
+        }
+
+        .category-tab {
+            min-width: 110px;
+            padding: 8px 12px;
+            background-color: #141b2d;
+            border: 1px solid #233554;
+            border-radius: 10px;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 13px;
+            text-align: center;
+            transition: 0.2s;
+        }
+
+        .category-tab.active {
+            background: linear-gradient(135deg, #0077fe, #00d2ff);
+            color: #fff;
+            font-weight: bold;
+            border-color: #00d2ff;
+        }
+
+        .category-tab img {
+            display: block;
+            width: 90px;
+            height: 55px;
+            object-fit: cover;
+            margin: 0 auto 6px auto;
+            border-radius: 6px;
+            background: #000;
+        }
+
+        .section-title {
+            max-width: 1200px;
+            margin: 24px auto 12px auto;
+            font-size: 18px;
+            font-weight: bold;
+            color: #00d2ff;
+            border-bottom: 1px solid #233554;
+            padding-bottom: 6px;
+        }
+
+        .channel-card img {
+            width: 100%;
+            height: 85px;
+            object-fit: contain;
+            border-radius: 6px;
+            background-color: #080d1a;
+            margin-bottom: 8px;
+        }
+
+        .match-teams {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .match-team {
+            flex: 1;
+            text-align: center;
+        }
+
+        .match-team img {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto 4px auto;
+        }
+
+        .match-team-name {
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .match-vs {
+            font-size: 13px;
+            font-weight: 900;
+            color: #00d2ff;
+            padding: 0 6px;
+        }
+
+        .match-info {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            background: #080d1a;
+            padding: 6px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .btn-edit {
+            background-color: #0288d1;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .btn-delete {
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .btn-edit:hover { background-color: #0277bd; }
+        .btn-delete:hover { background-color: #b71c1c; }
+    </style>
+</head>
+
+<body>
+
+    <header>⚡ SARIB TV - لوحة التحكم السحابية الشاملة</header>
+
+    <div class="admin-section">
+
+        <!-- ============================================== -->
+        <!-- قسم إعدادات وخوادم البث المباشر (المسار: stream_config) -->
+        <!-- ============================================== -->
+        <div class="admin-panel full-width">
+            <h3>📡 إعدادات وخوادم البث وسيرفر Xtream (Firebase Path: stream_config)</h3>
+            <p style="font-size:12px; color:#94a3b8; margin-bottom:12px;">يتم قراءة هذه الإعدادات تلقائياً من تطبيق SARIB TV عند الفتح عبر مسار <code>stream_config</code> في قاعدة البيانات لتحديث السيرفرات دون الحاجة لتحديث التطبيق.</p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+                <div class="form-group">
+                    <label>🌐 خادم Xtream (Server Host):</label>
+                    <input type="text" id="stream-server-host" placeholder="مثال: http://cliccck52258.club:2082">
+                </div>
+
+                <div class="form-group">
+                    <label>👤 اسم المستخدم (Username):</label>
+                    <input type="text" id="stream-username" placeholder="مثال: khaledsliman">
+                </div>
+
+                <div class="form-group">
+                    <label>🔑 كلمة المرور (Password):</label>
+                    <input type="text" id="stream-password" placeholder="مثال: 755246419856">
+                </div>
+
+                <div class="form-group">
+                    <label>⚽ رابط API جدول المباريات (Matches API):</label>
+                    <input type="text" id="stream-matches-url" placeholder="https://bab-elmoshahd.online/api/index.php?path=matches&day=">
+                </div>
+
+                <div class="form-group">
+                    <label>✈️ رابط قناة التليجرام الرسمية:</label>
+                    <input type="text" id="stream-telegram-link" placeholder="https://t.me/sarib_tv">
+                </div>
+
+                <div class="form-group">
+                    <label>📢 إشعار أو تنبيه شريطي عاجل للمستخدمين (اختياري):</label>
+                    <input type="text" id="stream-announcement" placeholder="مثال: تم تحديث باقة قنوات بين سبورت بجودة عالية 4K">
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid #233554; margin-top: 12px; padding-top: 12px;">
+                <h4 style="font-size: 13px; color: #ffd700; margin-bottom: 8px;">🎬 العمل المميز بالواجهة الرئيسية (Hero Banner الافتراضي):</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+                    <div class="form-group">
+                        <label>عنوان العمل المميز:</label>
+                        <input type="text" id="stream-hero-title" placeholder="مثال: بلدة الضياع S1-S4">
+                    </div>
+                    <div class="form-group">
+                        <label>الوصف والتصنيف:</label>
+                        <input type="text" id="stream-hero-subtitle" placeholder="مسلسل • دراما • رعب • أحجية">
+                    </div>
+                    <div class="form-group">
+                        <label>رابط البث أو المشاهدة للعمل:</label>
+                        <input type="text" id="stream-hero-url" placeholder="http://cliccck52258.club:2082/series/khaledsliman/755246419856/1.mp4">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-submit" onclick="saveStreamConfig()">حفظ وتحديث بيانات البث للمستخدمين</button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- إدارة الـ Sliders (Firebase Path: sliders) -->
+        <!-- ============================================== -->
+        <div class="admin-panel">
+            <h3 id="slider-panel-title">🎞️ إدارة السلايدر العلوي (Firebase Path: sliders)</h3>
+            <p style="font-size:11px; color:#94a3b8; margin-bottom:8px;">يتم قراءة السلايدرات مباشرة من مسار <code>sliders</code> في Firebase وعرضها كشريط متحرك في أعلى التطبيق.</p>
+            <input type="hidden" id="slider-id">
+
+            <div class="form-group">
+                <label>عنوان السلايدر (Title) *:</label>
+                <input type="text" id="slider-title" placeholder="مثال: شاهد مباراة الكلاسيكو اليوم أو فيلم The Last of Us">
+            </div>
+
+            <div class="form-group">
+                <label>الوصف الإضافي (Subtitle):</label>
+                <input type="text" id="slider-subtitle" placeholder="مثال: دوري أبطال أوروبا • بث مباشر HD">
+            </div>
+
+            <div class="form-group">
+                <label>الشارة العلوية (Badge):</label>
+                <input type="text" id="slider-badge" placeholder="مثال: مباشر LIVE أو حصري أو جديد">
+            </div>
+
+            <div class="form-group">
+                <label>نوع السلايدر:</label>
+                <select id="slider-type" onchange="toggleSliderMatchFields()">
+                    <option value="normal">عادي / مسلسل (Series/Live)</option>
+                    <option value="match">مباراة بث مباشر (Live Match)</option>
+                    <option value="movie">فيلم سينمائي (Movie VOD)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>رابط الصورة / البوستر (Image / Backdrop URL) *:</label>
+                <input type="text" id="slider-image" placeholder="https://example.com/banner.jpg">
+            </div>
+
+            <div class="form-group">
+                <label>وقت انطلاق المباراة (اختياري - للعد التنازلي):</label>
+                <input type="datetime-local" id="slider-match-time">
+            </div>
+
+            <div id="slider-match-fields" style="display:none; border-right:3px solid #00d2ff; padding-right:10px; margin-bottom:10px;">
+                <div class="form-group">
+                    <label>⏱️ مدة الشوط الأول (دقيقة):</label>
+                    <input type="number" id="slider-first-half" value="45" min="1">
+                </div>
+                <div class="form-group">
+                    <label>⏸️ مدة الاستراحة (دقيقة):</label>
+                    <input type="number" id="slider-halftime" value="15" min="0">
+                </div>
+                <div class="form-group">
+                    <label>⏱️ مدة الشوط الثاني (دقيقة):</label>
+                    <input type="number" id="slider-second-half" value="45" min="1">
+                </div>
+            </div>
+
+            <div id="slider-movie-fields" style="display:none; border-right:3px solid #e50914; padding-right:10px; margin-bottom:10px;">
+                <div class="form-group">
+                    <label>تقييم الفيلم (من 10):</label>
+                    <input type="text" id="slider-movie-rating" placeholder="مثال: 8.7">
+                </div>
+                <div class="form-group">
+                    <label>قصة الفيلم:</label>
+                    <textarea id="slider-movie-story" rows="3" placeholder="اكتب نبذة وقصة الفيلم..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>مسار الفيلم المباشر (Movie URL):</label>
+                    <input type="text" id="slider-movie-url" placeholder="https://example.com/movie.mp4">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>🔴 السيرفر 1 (أساسي):</label>
+                <input type="text" id="slider-server1" placeholder="http://server.com:8080/live/user/pass/123.m3u8">
+            </div>
+            <div class="form-group">
+                <label>🟠 السيرفر 2:</label>
+                <input type="text" id="slider-server2" placeholder="https://example.com/server2.m3u8">
+            </div>
+            <div class="form-group">
+                <label>🟡 السيرفر 3:</label>
+                <input type="text" id="slider-server3" placeholder="https://example.com/server3.m3u8">
+            </div>
+            <div class="form-group">
+                <label>🟢 السيرفر 4:</label>
+                <input type="text" id="slider-server4" placeholder="https://example.com/server4.m3u8">
+            </div>
+            <div class="form-group">
+                <label>🔵 السيرفر 5:</label>
+                <input type="text" id="slider-server5" placeholder="https://example.com/server5.m3u8">
+            </div>
+            <div class="form-group">
+                <label>رابط احتياطي أخير (اختياري):</label>
+                <input type="text" id="slider-url" placeholder="يُستخدم إذا كانت السيرفرات الأخرى فارغة">
+            </div>
+
+            <div class="form-group">
+                <label>ترتيب الظهور (Order Index):</label>
+                <input type="number" id="slider-order" value="1" min="1">
+            </div>
+
+            <div class="form-group">
+                <label>مدة بقاء السلايدر في التطبيق:</label>
+                <select id="slider-duration">
+                    <option value="0">دائم (لا يحذف)</option>
+                    <option value="0.08333333">5 دقائق</option>
+                    <option value="0.5">نصف ساعة</option>
+                    <option value="2">ساعتين</option>
+                    <option value="6">6 ساعات</option>
+                    <option value="12">12 ساعة</option>
+                    <option value="24">24 ساعة</option>
+                </select>
+            </div>
+
+            <button class="btn-submit" id="btn-save-slider" onclick="saveSlider()">إضافة السلايدر ونشره فورياً</button>
+            <button class="btn-delete" id="btn-cancel-slider" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetSliderForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- ========================= -->
+        <!-- إدارة الأخبار -->
+        <!-- ========================= -->
+        <div class="admin-panel">
+            <h3 id="news-panel-title">📰 إدارة الأخبار (Path: news)</h3>
+            <input type="hidden" id="news-id">
+
+            <div class="form-group">
+                <label>عنوان الخبر:</label>
+                <input type="text" id="news-title" placeholder="مثال: إعلان جدول مباريات اليوم">
+            </div>
+
+            <div class="form-group">
+                <label>رابط صورة الخبر:</label>
+                <input type="text" id="news-image" placeholder="https://example.com/news.jpg">
+            </div>
+
+            <div class="form-group">
+                <label>تفاصيل الخبر:</label>
+                <textarea id="news-desc" rows="3" placeholder="اكتب تفاصيل الخبر هنا..."></textarea>
+            </div>
+
+            <button class="btn-submit" id="btn-save-news" onclick="saveNews()">إضافة الخبر</button>
+            <button class="btn-delete" id="btn-cancel-news" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetNewsForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- ========================= -->
+        <!-- إدارة الإشعارات -->
+        <!-- ========================= -->
+        <div class="admin-panel">
+            <h3 id="notif-panel-title">🔔 إدارة الإشعارات (Path: notifications)</h3>
+            <input type="hidden" id="notif-id">
+
+            <div class="form-group">
+                <label>عنوان الإشعار:</label>
+                <input type="text" id="notif-title" placeholder="مثال: تمت إضافة قنوات جديدة!">
+            </div>
+
+            <div class="form-group">
+                <label>نص الإشعار:</label>
+                <textarea id="notif-message" rows="3" placeholder="اكتب تفاصيل الإشعار هنا..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>رابط صورة (اختياري):</label>
+                <input type="text" id="notif-image" placeholder="https://example.com/notif.jpg">
+            </div>
+
+            <div class="form-group">
+                <label>رابط عند الضغط (اختياري):</label>
+                <input type="text" id="notif-url" placeholder="https://example.com">
+            </div>
+
+            <button class="btn-submit" id="btn-save-notif" onclick="saveNotification()">إرسال الإشعار</button>
+            <button class="btn-delete" id="btn-cancel-notif" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetNotifForm()">إلغاء التعديل</button>
+
+            <div id="notifications-list" style="margin-top:16px;"></div>
+        </div>
+
+        <!-- ========================= -->
+        <!-- الواجهة المنبثقة عند دخول التطبيق -->
+        <!-- ========================= -->
+        <div class="admin-panel">
+            <h3>🪟 الواجهة المنبثقة (Path: popup)</h3>
+
+            <div class="form-group">
+                <label>تفعيل الواجهة المنبثقة:</label>
+                <select id="popup-enabled">
+                    <option value="false">❌ معطلة</option>
+                    <option value="true">✅ مفعلة (تظهر عند فتح التطبيق)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>العنوان:</label>
+                <input type="text" id="popup-title" placeholder="مثال: تحديث هام لتطبيق SARIB TV">
+            </div>
+
+            <div class="form-group">
+                <label>رابط الصورة (اختياري):</label>
+                <input type="text" id="popup-image" placeholder="https://example.com/popup.jpg">
+            </div>
+
+            <div class="form-group">
+                <label>الرسالة:</label>
+                <textarea id="popup-message" rows="3" placeholder="اكتب نص الرسالة هنا..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>نص الزر:</label>
+                <input type="text" id="popup-button-text" placeholder="حسناً">
+            </div>
+
+            <div class="form-group">
+                <label>رابط الزر (اختياري - يفتح بالمتصفح أو تليجرام):</label>
+                <input type="text" id="popup-button-url" placeholder="https://t.me/sarib_tv">
+            </div>
+
+            <button class="btn-submit" onclick="savePopup()">حفظ الواجهة المنبثقة</button>
+        </div>
+
+        <!-- ========================= -->
+        <!-- الصيانة وإجبار التحديث -->
+        <!-- ========================= -->
+        <div class="admin-panel">
+            <h3>🛠️ الصيانة وإجبار التحديث (Path: app_control)</h3>
+
+            <div class="form-group">
+                <label>وضع الصيانة:</label>
+                <select id="control-maintenance">
+                    <option value="false">❌ التطبيق يعمل بشكل طبيعي</option>
+                    <option value="true">🛠️ وضع الصيانة (إيقاف مؤقت)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>رسالة الصيانة:</label>
+                <textarea id="control-maintenance-message" rows="2" placeholder="التطبيق قيد الصيانة والتحديث حالياً"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>أقل إصدار مسموح (versionCode):</label>
+                <input type="number" id="control-min-version" placeholder="مثال: 5">
+            </div>
+
+            <div class="form-group">
+                <label>رابط التحديث:</label>
+                <input type="text" id="control-update-url" placeholder="https://t.me/sarib_tv">
+            </div>
+
+            <button class="btn-submit" onclick="saveAppControl()">حفظ إعدادات الصيانة</button>
+        </div>
+
+        <!-- ========================= -->
+        <!-- إدارة الأقسام -->
+        <!-- ========================= -->
+        <div class="admin-panel">
+            <h3 id="cat-panel-title">📁 إدارة الأقسام (Path: categories)</h3>
+            <input type="hidden" id="category-id">
+
+            <div class="form-group">
+                <label>اختر قسم لتعديله أو أضف قسماً جديداً:</label>
+                <select id="cat-manage-select" onchange="onSelectCategoryToManage()">
+                    <option value="">-- إضافة قسم جديد --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>اسم القسم:</label>
+                <input type="text" id="category-name" placeholder="مثال: قنوات رياضية">
+            </div>
+
+            <div class="form-group">
+                <label>رابط بوستر القسم:</label>
+                <input type="text" id="category-poster" placeholder="https://example.com/poster.jpg" oninput="previewCategoryPoster()">
+            </div>
+
+            <div id="poster-preview-box" class="poster-preview-box">
+                <span>معاينة بوستر القسم</span>
+                <img id="poster-preview" class="poster-preview" src="" alt="معاينة">
+            </div>
+
+            <button class="btn-submit" id="btn-save-cat" onclick="saveCategory()">إضافة القسم</button>
+            <button class="btn-delete" id="btn-del-cat" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="deleteCategory()">حذف القسم المحدد</button>
+        </div>
+
+        <!-- ========================= -->
+        <!-- إدارة القنوات -->
+        <!-- ========================= -->
+        <div class="admin-panel">
+            <h3 id="panel-title">📺 إضافة قناة جديدة (Path: channels)</h3>
+            <input type="hidden" id="channel-id">
+
+            <div class="form-group">
+                <label>اختر القسم:</label>
+                <select id="channel-category-select">
+                    <option value="">بدون قسم</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>اسم القناة:</label>
+                <input type="text" id="channel-name" placeholder="مثال: beIN SPORTS 1 HD">
+            </div>
+
+            <div class="form-group">
+                <label>رابط الشعار (لوجو القناة):</label>
+                <input type="text" id="channel-logo" placeholder="https://example.com/logo.png">
+            </div>
+
+            <div class="form-group">
+                <label>🔴 السيرفر الأول (Server 1) - الأساسي:</label>
+                <input type="text" id="channel-server1" placeholder="https://example.com/server1.m3u8">
+            </div>
+
+            <div class="form-group">
+                <label>🟠 السيرفر الثاني (Server 2) - احتياطي:</label>
+                <input type="text" id="channel-server2" placeholder="https://example.com/server2.m3u8">
+            </div>
+
+            <div class="form-group">
+                <label>رابط قديم/احتياطي أخير:</label>
+                <input type="text" id="channel-url" placeholder="يُستخدم فقط إذا كان السيرفر الأول والثاني فارغين">
+            </div>
+
+            <div class="form-group">
+                <label>🟦 رابط Manifest MPD (DASH) - اختياري:</label>
+                <input type="url" id="channel-mpd" placeholder="https://example.com/channel/manifest.mpd">
+            </div>
+
+            <div class="form-group">
+                <label>🔐 رابط API للمفتاح (ClearKey) - اختياري:</label>
+                <input type="url" id="channel-key-api" placeholder="https://your-domain.com/api/results.php?keyid=...&key=...">
+            </div>
+
+            <button class="btn-submit" id="btn-save" onclick="saveChannel()">حفظ القناة</button>
+        </div>
+
+        <!-- ========================= -->
+        <!-- إدارة المباريات -->
+        <!-- ========================= -->
+        <div class="admin-panel">
+            <h3 id="match-panel-title">⚽ إدارة جدول المباريات (Path: matches)</h3>
+            <input type="hidden" id="match-id">
+
+            <div class="form-group">
+                <label>الفريق الأول (المستضيف):</label>
+                <input type="text" id="team1-name" placeholder="مثال: ريال مدريد">
+            </div>
+
+            <div class="form-group">
+                <label>رابط شعار الفريق الأول:</label>
+                <input type="text" id="team1-logo" placeholder="https://example.com/team1.png">
+            </div>
+
+            <div class="form-group">
+                <label>الفريق الثاني (الضيف):</label>
+                <input type="text" id="team2-name" placeholder="مثال: برشلونة">
+            </div>
+
+            <div class="form-group">
+                <label>رابط شعار الفريق الثاني:</label>
+                <input type="text" id="team2-logo" placeholder="https://example.com/team2.png">
+            </div>
+
+            <div class="form-group">
+                <label>وقت وتاريخ المباراة:</label>
+                <input type="text" id="match-time" placeholder="مثال: اليوم 22:00 م">
+            </div>
+
+            <div class="form-group">
+                <label>القناة الناقلة / اسم المعلق:</label>
+                <input type="text" id="match-channel-info" placeholder="مثال: beIN 1 - عصام الشوالي">
+            </div>
+
+            <div class="form-group">
+                <label>رابط بث المباراة المباشر:</label>
+                <input type="text" id="match-url" placeholder="https://example.com/live.m3u8">
+            </div>
+
+            <button class="btn-submit" id="btn-save-match" onclick="saveMatch()">إضافة المباراة</button>
+            <button class="btn-delete" id="btn-cancel-match" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetMatchForm()">إلغاء التعديل</button>
+        </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- قسم Sliders -->
+    <!-- ========================= -->
+    <div class="section-title">🎞️ السلايدرات المعروضة في التطبيق حالياً (Sliders)</div>
+    <div id="sliders" class="sliders-container"></div>
+
+    <!-- ========================= -->
+    <!-- قسم الأخبار -->
+    <!-- ========================= -->
+    <div class="section-title">📰 آخر الأخبار</div>
+    <div id="news-container" class="news-grid"></div>
+
+    <!-- ========================= -->
+    <!-- شريط الأقسام -->
+    <!-- ========================= -->
+    <div class="section-title">📁 أقسام القنوات</div>
+    <div class="categories-bar" id="categories-bar">
+        <div class="category-tab active" onclick="filterCategory('all', event)">
+            <span class="category-tab-name">الكل</span>
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- قسم المباريات -->
+    <!-- ========================= -->
+    <div class="section-title">⚽ جدول المباريات</div>
+    <div id="matches" class="matches-grid"></div>
+
+    <!-- ========================= -->
+    <!-- قسم القنوات -->
+    <!-- ========================= -->
+    <div class="section-title">📺 القنوات المضافة</div>
+    <div id="channels" class="channels-grid"></div>
+
+    <script>
+        /* =========================================
+           Firebase Setup
+        ========================================= */
+        const firebaseConfig = {
+            apiKey: "AIzaSyD3_gxu-Z7m8ek3Z7PJUoNAmnENeR4s3u0",
+            authDomain: "iptvpro-f5172.firebaseapp.com",
+            databaseURL: "https://iptvpro-f5172-default-rtdb.firebaseio.com",
+            projectId: "iptvpro-f5172",
+            storageBucket: "iptvpro-f5172.firebasestorage.app",
+            messagingSenderId: "385544585356",
+            appId: "1:385544585356:web:a77b1e016c987c9f813ba9",
+            measurementId: "G-0L17FL0DWC"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const database = firebase.database();
+        const streamConfigRef = database.ref('stream_config');
+        const categoriesRef = database.ref('categories');
+        const channelsRef = database.ref('channels');
+        const matchesRef = database.ref('matches');
+        const slidersRef = database.ref('sliders');
+        const newsRef = database.ref('news');
+        const popupRef = database.ref('popup');
+        const appControlRef = database.ref('app_control');
+        const notificationsRef = database.ref('notifications');
+
+        let selectedCategory = 'all';
+        let categoriesData = {};
+
+        function escapeHtml(value) {
+            if (value === null || value === undefined) return '';
+            return String(value)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function timestampToDatetimeLocal(ts) {
+            const d = new Date(ts);
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
+        /* =========================================
+           إدارة بيانات وخوادم البث المباشر (stream_config)
+        ========================================= */
+        function saveStreamConfig() {
+            const host = document.getElementById('stream-server-host').value.trim();
+            const user = document.getElementById('stream-username').value.trim();
+            const pass = document.getElementById('stream-password').value.trim();
+            const matchesUrl = document.getElementById('stream-matches-url').value.trim();
+            const tg = document.getElementById('stream-telegram-link').value.trim();
+            const alertMsg = document.getElementById('stream-announcement').value.trim();
+            const heroTitle = document.getElementById('stream-hero-title').value.trim();
+            const heroSubtitle = document.getElementById('stream-hero-subtitle').value.trim();
+            const heroUrl = document.getElementById('stream-hero-url').value.trim();
+
+            if (!host || !user || !pass) {
+                alert('يرجى ملء خادم Xtream واسم المستخدم وكلمة المرور');
+                return;
+            }
+
+            const streamData = {
+                server_host: host,
+                username: user,
+                password: pass,
+                matches_api_url: matchesUrl || "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
+                telegram_link: tg || "https://t.me/sarib_tv",
+                announcement: alertMsg,
+                hero_title: heroTitle || "بلدة الضياع S1-S4",
+                hero_subtitle: heroSubtitle || "مسلسل • دراما • رعب • أحجية",
+                hero_stream_url: heroUrl,
+                updatedAt: Date.now()
+            };
+
+            streamConfigRef.set(streamData).then(() => {
+                alert('✅ تم حفظ وتحديث بيانات البث بنجاح! سيتم تطبيقها لجميع مستخدمي التطبيق تلقائياً.');
+            }).catch(err => alert('خطأ أثناء الحفظ: ' + err.message));
+        }
+
+        streamConfigRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                document.getElementById('stream-server-host').value = data.server_host || 'http://cliccck52258.club:2082';
+                document.getElementById('stream-username').value = data.username || 'khaledsliman';
+                document.getElementById('stream-password').value = data.password || '755246419856';
+                document.getElementById('stream-matches-url').value = data.matches_api_url || 'https://bab-elmoshahd.online/api/index.php?path=matches&day=';
+                document.getElementById('stream-telegram-link').value = data.telegram_link || 'https://t.me/sarib_tv';
+                document.getElementById('stream-announcement').value = data.announcement || '';
+                document.getElementById('stream-hero-title').value = data.hero_title || 'بلدة الضياع S1-S4';
+                document.getElementById('stream-hero-subtitle').value = data.hero_subtitle || 'مسلسل • دراما • رعب • أحجية';
+                document.getElementById('stream-hero-url').value = data.hero_stream_url || 'http://cliccck52258.club:2082/series/khaledsliman/755246419856/1.mp4';
+            } else {
+                document.getElementById('stream-server-host').value = 'http://cliccck52258.club:2082';
+                document.getElementById('stream-username').value = 'khaledsliman';
+                document.getElementById('stream-password').value = '755246419856';
+                document.getElementById('stream-matches-url').value = 'https://bab-elmoshahd.online/api/index.php?path=matches&day=';
+                document.getElementById('stream-telegram-link').value = 'https://t.me/sarib_tv';
+                document.getElementById('stream-hero-title').value = 'بلدة الضياع S1-S4';
+                document.getElementById('stream-hero-subtitle').value = 'مسلسل • دراما • رعب • أحجية';
+                document.getElementById('stream-hero-url').value = 'http://cliccck52258.club:2082/series/khaledsliman/755246419856/1.mp4';
+            }
+        });
+
+        /* =========================================
+           إدارة الـ Sliders (Path: sliders)
+        ========================================= */
+        function toggleSliderMatchFields() {
+            const type = document.getElementById('slider-type').value;
+            document.getElementById('slider-match-fields').style.display = (type === 'match') ? 'block' : 'none';
+            document.getElementById('slider-movie-fields').style.display = (type === 'movie') ? 'block' : 'none';
+        }
+        toggleSliderMatchFields();
+
+        function saveSlider() {
+            const id = document.getElementById('slider-id').value;
+            const title = document.getElementById('slider-title').value.trim();
+            const subtitle = document.getElementById('slider-subtitle').value.trim();
+            const badge = document.getElementById('slider-badge').value.trim();
+            const type = document.getElementById('slider-type').value;
+            const image = document.getElementById('slider-image').value.trim();
+            const server1 = document.getElementById('slider-server1').value.trim();
+            const server2 = document.getElementById('slider-server2').value.trim();
+            const server3 = document.getElementById('slider-server3').value.trim();
+            const server4 = document.getElementById('slider-server4').value.trim();
+            const server5 = document.getElementById('slider-server5').value.trim();
+            const url = document.getElementById('slider-url').value.trim();
+            const order = parseInt(document.getElementById('slider-order').value) || 1;
+            const duration = parseFloat(document.getElementById('slider-duration').value); 
+            const matchTimeRaw = document.getElementById('slider-match-time').value;
+            const matchTime = matchTimeRaw ? new Date(matchTimeRaw).getTime() : 0;
+            const firstHalfMin = parseInt(document.getElementById('slider-first-half').value, 10) || 45;
+            const halftimeBreakMin = parseInt(document.getElementById('slider-halftime').value, 10) || 15;
+            const secondHalfMin = parseInt(document.getElementById('slider-second-half').value, 10) || 45;
+            const movieRating = document.getElementById('slider-movie-rating').value.trim();
+            const movieStory = document.getElementById('slider-movie-story').value.trim();
+            const movieUrl = document.getElementById('slider-movie-url').value.trim();
+
+            const hasAnyServer = server1 || server2 || server3 || server4 || server5 || url || (type === 'movie' && movieUrl);
+            if (!title || !image || !hasAnyServer) {
+                alert('يرجى إدخال عنوان السلايدر، رابط الصورة/البوستر، ورابط سيرفر تشغيل واحد على الأقل');
+                return;
+            }
+
+            const sliderData = { 
+                title: title,
+                subtitle: subtitle,
+                badge: badge || (type === 'match' ? 'مباشر LIVE' : (type === 'movie' ? 'فيلم' : 'مميز')),
+                type: type,
+                image: image, 
+                backdropUrl: image,
+                posterUrl: image,
+                server1: server1,
+                server2: server2,
+                server3: server3,
+                server4: server4,
+                server5: server5,
+                url: url,
+                streamUrl: server1 || server2 || server3 || server4 || server5 || movieUrl || url,
+                order: order,
+                sortOrder: order,
+                duration: duration,
+                createdAt: Date.now(),
+                matchTime: matchTime,
+                firstHalfMin: firstHalfMin,
+                halftimeBreakMin: halftimeBreakMin,
+                secondHalfMin: secondHalfMin,
+                movieRating: movieRating,
+                movieStory: movieStory,
+                movieUrl: movieUrl,
+                isLive: (type === 'match'),
+                isActive: true
+            };
+
+            if (id) {
+                slidersRef.child(id).update(sliderData).then(() => {
+                    alert('✅ تم تحديث السلايدر بنجاح!');
+                    resetSliderForm();
+                }).catch(err => alert('خطأ: ' + err.message));
+            } else {
+                slidersRef.push(sliderData).then(() => {
+                    alert('✅ تمت إضافة السلايدر ونشره فورياً في التطبيق!');
+                    resetSliderForm();
+                }).catch(err => alert('خطأ: ' + err.message));
+            }
+        }
+
+        function editSlider(key, slider) {
+            document.getElementById('slider-id').value = key;
+            document.getElementById('slider-title').value = slider.title || '';
+            document.getElementById('slider-subtitle').value = slider.subtitle || '';
+            document.getElementById('slider-badge').value = slider.badge || '';
+            document.getElementById('slider-type').value = slider.type || 'normal';
+            document.getElementById('slider-image').value = slider.image || slider.backdropUrl || '';
+            document.getElementById('slider-server1').value = slider.server1 || '';
+            document.getElementById('slider-server2').value = slider.server2 || '';
+            document.getElementById('slider-server3').value = slider.server3 || '';
+            document.getElementById('slider-server4').value = slider.server4 || '';
+            document.getElementById('slider-server5').value = slider.server5 || '';
+            document.getElementById('slider-url').value = slider.url || '';
+            document.getElementById('slider-order').value = slider.order || slider.sortOrder || 1;
+            document.getElementById('slider-duration').value = slider.duration || 0; 
+            document.getElementById('slider-match-time').value = (slider.matchTime && slider.matchTime > 0)
+                ? timestampToDatetimeLocal(slider.matchTime) : '';
+            document.getElementById('slider-first-half').value = slider.firstHalfMin || 45;
+            document.getElementById('slider-halftime').value = (slider.halftimeBreakMin !== undefined && slider.halftimeBreakMin !== null) ? slider.halftimeBreakMin : 15;
+            document.getElementById('slider-second-half').value = slider.secondHalfMin || 45;
+            document.getElementById('slider-movie-rating').value = slider.movieRating || '';
+            document.getElementById('slider-movie-story').value = slider.movieStory || '';
+            document.getElementById('slider-movie-url').value = slider.movieUrl || '';
+            toggleSliderMatchFields();
+
+            document.getElementById('slider-panel-title').innerText = 'تعديل السلايدر';
+            document.getElementById('btn-save-slider').innerText = 'تحديث السلايدر';
+            document.getElementById('btn-cancel-slider').style.display = 'block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteSlider(key) {
+            if (confirm('هل أنت متأكد من رغبتك في حذف هذا السلايدر من التطبيق؟')) {
+                slidersRef.child(key).remove().then(() => alert('تم حذف السلايدر بنجاح'));
+            }
+        }
+
+        function resetSliderForm() {
+            document.getElementById('slider-id').value = '';
+            document.getElementById('slider-title').value = '';
+            document.getElementById('slider-subtitle').value = '';
+            document.getElementById('slider-badge').value = '';
+            document.getElementById('slider-type').value = 'normal';
+            document.getElementById('slider-image').value = '';
+            document.getElementById('slider-server1').value = '';
+            document.getElementById('slider-server2').value = '';
+            document.getElementById('slider-server3').value = '';
+            document.getElementById('slider-server4').value = '';
+            document.getElementById('slider-server5').value = '';
+            document.getElementById('slider-url').value = '';
+            document.getElementById('slider-order').value = 1;
+            document.getElementById('slider-duration').value = '0'; 
+            document.getElementById('slider-match-time').value = '';
+            document.getElementById('slider-first-half').value = 45;
+            document.getElementById('slider-halftime').value = 15;
+            document.getElementById('slider-second-half').value = 45;
+            document.getElementById('slider-movie-rating').value = '';
+            document.getElementById('slider-movie-story').value = '';
+            document.getElementById('slider-movie-url').value = '';
+            toggleSliderMatchFields();
+
+            document.getElementById('slider-panel-title').innerText = '🎞️ إدارة السلايدر العلوي (Firebase Path: sliders)';
+            document.getElementById('btn-save-slider').innerText = 'إضافة السلايدر ونشره فورياً';
+            document.getElementById('btn-cancel-slider').style.display = 'none';
+        }
+
+        slidersRef.on('value', (snapshot) => {
+            const slidersEl = document.getElementById('sliders');
+            slidersEl.innerHTML = '';
+            const data = snapshot.val();
+            const now = Date.now(); 
+
+            if (!data) {
+                slidersEl.innerHTML = '<div style="color:#94a3b8; text-align:center; width:100%; padding:20px;">لا توجد سلايدرات مضافة حالياً</div>';
+                return;
+            }
+
+            Object.keys(data).forEach((key) => {
+                const slider = data[key];
+                
+                if (slider.duration && slider.duration > 0 && slider.createdAt) {
+                    const expiryTime = slider.createdAt + (slider.duration * 60 * 60 * 1000);
+                    if (now > expiryTime) {
+                        slidersRef.child(key).remove();
+                        return; 
+                    }
+                }
+
+                const card = document.createElement('div');
+                card.className = 'slider-card-view';
+                const imgUrl = slider.image || slider.backdropUrl || 'https://via.placeholder.com/300x150?text=No+Image';
+                const sliderServerCount = ['server1', 'server2', 'server3', 'server4', 'server5']
+                    .filter(k => slider[k] && slider[k].trim()).length
+                    || (slider.url && slider.url.trim() ? 1 : 0)
+                    || (slider.movieUrl && slider.movieUrl.trim() ? 1 : 0);
+                const sliderServerLabel = sliderServerCount > 0
+                    ? ('📡 ' + sliderServerCount + ' سيرفر')
+                    : '⚠️ بدون رابط';
+                const sliderTypeLabel = slider.type === 'match' ? 'مباراة' : (slider.type === 'movie' ? 'فيلم' : 'عادي');
+
+                card.innerHTML = `
+                    <span class="slider-badge-view">${escapeHtml(slider.badge || sliderTypeLabel)}</span>
+                    <img src="${imgUrl}" onerror="this.src='https://via.placeholder.com/300x150?text=No+Image'">
+                    <div class="slider-card-info">
+                        <div class="slider-card-title">${escapeHtml(slider.title || 'سلايدر بدون عنوان')}</div>
+                        <div style="font-size:12px; color:#94a3b8; margin-bottom:4px;">${escapeHtml(slider.subtitle || '')}</div>
+                        ${slider.type === 'movie' ? `<div style="font-size:11px;color:#f5c542;margin:3px 0;">التقييم: ${escapeHtml(slider.movieRating || 'غير محدد')} / 10</div>` : ''}
+                        <div style="font-size:11px; color:#00d2ff; margin-top:2px;">الترتيب: ${slider.order || slider.sortOrder || 1} &nbsp;•&nbsp; ${sliderServerLabel}</div>
+                        <div class="card-actions">
+                            <button class="btn-edit" onclick='editSlider("${key}", ${JSON.stringify(slider).replace(/'/g, "&apos;")})'>تعديل</button>
+                            <button class="btn-delete" onclick='deleteSlider("${key}")'>حذف</button>
+                        </div>
+                    </div>
+                `;
+                slidersEl.appendChild(card);
+            });
+        });
+
+        /* =========================================
+           إدارة الأخبار (Path: news)
+        ========================================= */
+        function saveNews() {
+            const id = document.getElementById('news-id').value;
+            const title = document.getElementById('news-title').value.trim();
+            const image = document.getElementById('news-image').value.trim();
+            const desc = document.getElementById('news-desc').value.trim();
+
+            if (!title || !desc) {
+                alert('يرجى إدخال عنوان وتفاصيل الخبر على الأقل');
+                return;
+            }
+
+            if (id) {
+                const newsData = { title: title, image: image, desc: desc };
+                newsRef.child(id).update(newsData).then(() => {
+                    alert('تم تعديل الخبر بنجاح!');
+                    resetNewsForm();
+                }).catch(err => alert('خطأ: ' + err.message));
+            } else {
+                const newsData = { title: title, image: image, desc: desc, createdAt: Date.now() };
+                newsRef.push(newsData).then(() => {
+                    alert('تمت إضافة الخبر بنجاح!');
+                    resetNewsForm();
+                }).catch(err => alert('خطأ: ' + err.message));
+            }
+        }
+
+        function editNews(key, item) {
+            document.getElementById('news-id').value = key;
+            document.getElementById('news-title').value = item.title || '';
+            document.getElementById('news-image').value = item.image || '';
+            document.getElementById('news-desc').value = item.desc || '';
+
+            document.getElementById('news-panel-title').innerText = 'تعديل الخبر';
+            document.getElementById('btn-save-news').innerText = 'تحديث الخبر';
+            document.getElementById('btn-cancel-news').style.display = 'block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteNews(key) {
+            if (confirm('هل أنت متأكد من حذف هذا الخبر؟')) {
+                newsRef.child(key).remove().then(() => alert('تم حذف الخبر بنجاح'));
+            }
+        }
+
+        function resetNewsForm() {
+            document.getElementById('news-id').value = '';
+            document.getElementById('news-title').value = '';
+            document.getElementById('news-image').value = '';
+            document.getElementById('news-desc').value = '';
+
+            document.getElementById('news-panel-title').innerText = '📰 إدارة الأخبار (Path: news)';
+            document.getElementById('btn-save-news').innerText = 'إضافة الخبر';
+            document.getElementById('btn-cancel-news').style.display = 'none';
+        }
+
+        newsRef.on('value', (snapshot) => {
+            const newsContainer = document.getElementById('news-container');
+            newsContainer.innerHTML = '';
+            const data = snapshot.val();
+
+            if (!data) {
+                newsContainer.innerHTML = '<div style="color:#94a3b8; text-align:center; grid-column:1/-1; padding:20px;">لا توجد أخبار مضافة حالياً</div>';
+                return;
+            }
+
+            Object.keys(data).forEach((key) => {
+                const item = data[key];
+                const card = document.createElement('div');
+                card.className = 'news-card';
+
+                const imgHtml = item.image ? `<img src="${escapeHtml(item.image)}" onerror="this.style.display='none'">` : '';
+                const dateHtml = item.createdAt ? `<div style="color:#888; font-size:11px; margin-bottom:6px;">🕒 ${new Date(item.createdAt).toLocaleString('ar-EG')}</div>` : '';
+
+                card.innerHTML = `
+                    ${imgHtml}
+                    <div class="news-card-content">
+                        <div class="news-card-title">${escapeHtml(item.title)}</div>
+                        ${dateHtml}
+                        <div class="news-card-desc">${escapeHtml(item.desc)}</div>
+                        <div class="card-actions">
+                            <button class="btn-edit" onclick='editNews("${key}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>تعديل</button>
+                            <button class="btn-delete" onclick='deleteNews("${key}")'>حذف</button>
+                        </div>
+                    </div>
+                `;
+                newsContainer.appendChild(card);
+            });
+        });
+
+        /* =========================================
+           إدارة الإشعارات (Path: notifications)
+        ========================================= */
+        function saveNotification() {
+            const id = document.getElementById('notif-id').value;
+            const title = document.getElementById('notif-title').value.trim();
+            const message = document.getElementById('notif-message').value.trim();
+            const image = document.getElementById('notif-image').value.trim();
+            const url = document.getElementById('notif-url').value.trim();
+
+            if (!title || !message) {
+                alert('يرجى إدخال عنوان ونص الإشعار على الأقل');
+                return;
+            }
+
+            if (id) {
+                const notifData = { title: title, message: message, image: image, url: url };
+                notificationsRef.child(id).update(notifData).then(() => {
+                    alert('تم تعديل الإشعار بنجاح!');
+                    resetNotifForm();
+                }).catch(err => alert('خطأ: ' + err.message));
+            } else {
+                const notifData = { title: title, message: message, image: image, url: url, createdAt: Date.now() };
+                notificationsRef.push(notifData).then(() => {
+                    alert('تم إرسال الإشعار بنجاح!');
+                    resetNotifForm();
+                }).catch(err => alert('خطأ: ' + err.message));
+            }
+        }
+
+        function editNotification(key, item) {
+            document.getElementById('notif-id').value = key;
+            document.getElementById('notif-title').value = item.title || '';
+            document.getElementById('notif-message').value = item.message || '';
+            document.getElementById('notif-image').value = item.image || '';
+            document.getElementById('notif-url').value = item.url || '';
+
+            document.getElementById('notif-panel-title').innerText = 'تعديل الإشعار';
+            document.getElementById('btn-save-notif').innerText = 'تحديث الإشعار';
+            document.getElementById('btn-cancel-notif').style.display = 'block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteNotification(key) {
+            if (confirm('هل أنت متأكد من حذف هذا الإشعار؟')) {
+                notificationsRef.child(key).remove().then(() => alert('تم حذف الإشعار بنجاح'));
+            }
+        }
+
+        function resetNotifForm() {
+            document.getElementById('notif-id').value = '';
+            document.getElementById('notif-title').value = '';
+            document.getElementById('notif-message').value = '';
+            document.getElementById('notif-image').value = '';
+            document.getElementById('notif-url').value = '';
+
+            document.getElementById('notif-panel-title').innerText = '🔔 إدارة الإشعارات (Path: notifications)';
+            document.getElementById('btn-save-notif').innerText = 'إرسال الإشعار';
+            document.getElementById('btn-cancel-notif').style.display = 'none';
+        }
+
+        notificationsRef.on('value', (snapshot) => {
+            const listEl = document.getElementById('notifications-list');
+            listEl.innerHTML = '';
+            const data = snapshot.val();
+
+            if (!data) {
+                listEl.innerHTML = '<div style="color:#94a3b8; text-align:center; padding:10px;">لا توجد إشعارات مرسلة حالياً</div>';
+                return;
+            }
+
+            const keys = Object.keys(data).sort((a, b) => (data[b].createdAt || 0) - (data[a].createdAt || 0));
+
+            keys.forEach((key) => {
+                const item = data[key];
+                const card = document.createElement('div');
+                card.style.cssText = 'background:#080d1a; border:1px solid #233554; border-radius:8px; padding:10px; margin-bottom:8px;';
+
+                const dateHtml = item.createdAt ? `<div style="color:#888; font-size:11px; margin-bottom:4px;">🕒 ${new Date(item.createdAt).toLocaleString('ar-EG')}</div>` : '';
+
+                card.innerHTML = `
+                    <div style="font-weight:bold; color:#00d2ff; font-size:13px;">${escapeHtml(item.title || '')}</div>
+                    ${dateHtml}
+                    <div style="color:#ccc; font-size:12px; margin:4px 0;">${escapeHtml(item.message || '')}</div>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick='editNotification("${key}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>تعديل</button>
+                        <button class="btn-delete" onclick='deleteNotification("${key}")'>حذف</button>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        });
+
+        /* =========================================
+           معاينة وحفظ الأقسام (Path: categories)
+        ========================================= */
+        function previewCategoryPoster() {
+            const url = document.getElementById('category-poster').value.trim();
+            const box = document.getElementById('poster-preview-box');
+            const image = document.getElementById('poster-preview');
+
+            if (!url) {
+                box.style.display = 'none';
+                image.src = '';
+                return;
+            }
+
+            image.src = url;
+            box.style.display = 'block';
+
+            image.onerror = function () {
+                box.style.display = 'none';
+            };
+        }
+
+        function saveCategory() {
+            const catId = document.getElementById('category-id').value;
+            const name = document.getElementById('category-name').value.trim();
+            const poster = document.getElementById('category-poster').value.trim();
+
+            if (!name) {
+                alert('اكتب اسم القسم أولاً');
+                return;
+            }
+
+            const categoryData = { name: name, poster: poster };
+
+            if (catId) {
+                categoriesRef.child(catId).update(categoryData).then(() => {
+                    alert('تم تعديل القسم والبوستر بنجاح!');
+                    resetCategoryForm();
+                }).catch((error) => alert('حدث خطأ: ' + error.message));
+            } else {
+                categoriesRef.push(categoryData).then(() => {
+                    alert('تمت إضافة القسم والبوستر بنجاح!');
+                    resetCategoryForm();
+                }).catch((error) => alert('حدث خطأ: ' + error.message));
+            }
+        }
+
+        function onSelectCategoryToManage() {
+            const select = document.getElementById('cat-manage-select');
+            const catId = select.value;
+
+            if (catId && categoriesData[catId]) {
+                const category = categoriesData[catId];
+                document.getElementById('category-id').value = catId;
+                document.getElementById('category-name').value = category.name || '';
+                document.getElementById('category-poster').value = category.poster || '';
+                document.getElementById('cat-panel-title').innerText = 'تعديل القسم';
+                document.getElementById('btn-save-cat').innerText = 'تحديث القسم';
+                document.getElementById('btn-del-cat').style.display = 'block';
+                previewCategoryPoster();
+            } else {
+                resetCategoryForm();
+            }
+        }
+
+        function deleteCategory() {
+            const catId = document.getElementById('category-id').value;
+            if (!catId) return;
+
+            if (confirm('هل أنت متأكد من حذف هذا القسم؟')) {
+                categoriesRef.child(catId).remove().then(() => {
+                    alert('تم حذف القسم بنجاح!');
+                    resetCategoryForm();
+                }).catch((error) => alert('حدث خطأ: ' + error.message));
+            }
+        }
+
+        function resetCategoryForm() {
+            document.getElementById('category-id').value = '';
+            document.getElementById('category-name').value = '';
+            document.getElementById('category-poster').value = '';
+            document.getElementById('cat-manage-select').value = '';
+            document.getElementById('cat-panel-title').innerText = '📁 إدارة الأقسام (Path: categories)';
+            document.getElementById('btn-save-cat').innerText = 'إضافة القسم';
+            document.getElementById('btn-del-cat').style.display = 'none';
+            document.getElementById('poster-preview-box').style.display = 'none';
+            document.getElementById('poster-preview').src = '';
+        }
+
+        categoriesRef.on('value', (snapshot) => {
+            categoriesData = snapshot.val() || {};
+            const selectEl = document.getElementById('channel-category-select');
+            const manageSelectEl = document.getElementById('cat-manage-select');
+            const barEl = document.getElementById('categories-bar');
+
+            selectEl.innerHTML = '<option value="">بدون قسم</option>';
+            manageSelectEl.innerHTML = '<option value="">-- إضافة قسم جديد --</option>';
+            barEl.innerHTML = '';
+
+            const allTab = document.createElement('div');
+            allTab.className = 'category-tab ' + (selectedCategory === 'all' ? 'active' : '');
+            allTab.innerHTML = '<span class="category-tab-name">الكل</span>';
+            allTab.onclick = function (e) { filterCategory('all', e); };
+            barEl.appendChild(allTab);
+
+            Object.keys(categoriesData).forEach((key) => {
+                const cat = categoriesData[key];
+                const catName = cat.name || 'قسم بدون اسم';
+                const catPoster = cat.poster || '';
+
+                const opt1 = document.createElement('option');
+                opt1.value = key;
+                opt1.textContent = catName;
+                selectEl.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = key;
+                opt2.textContent = catName;
+                manageSelectEl.appendChild(opt2);
+
+                const tab = document.createElement('div');
+                tab.className = 'category-tab ' + (selectedCategory === key ? 'active' : '');
+
+                if (catPoster) {
+                    const img = document.createElement('img');
+                    img.src = catPoster;
+                    img.alt = catName;
+                    img.onerror = function () { this.style.display = 'none'; };
+                    tab.appendChild(img);
+                }
+
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'category-tab-name';
+                nameSpan.textContent = catName;
+                tab.appendChild(nameSpan);
+
+                tab.onclick = function (e) { filterCategory(key, e); };
+                barEl.appendChild(tab);
+            });
+
+            if (selectedCategory !== 'all' && !categoriesData[selectedCategory]) {
+                selectedCategory = 'all';
+            }
+        });
+
+        /* =========================================
+           حفظ وتعديل قناة (Path: channels)
+        ========================================= */
+        function saveChannel() {
+            const id = document.getElementById('channel-id').value;
+            const categoryId = document.getElementById('channel-category-select').value;
+            const name = document.getElementById('channel-name').value.trim();
+            const logo = document.getElementById('channel-logo').value.trim();
+            const server1 = document.getElementById('channel-server1').value.trim();
+            const server2 = document.getElementById('channel-server2').value.trim();
+            const url = document.getElementById('channel-url').value.trim();
+            const mpd = document.getElementById('channel-mpd').value.trim();
+            const keyApi = document.getElementById('channel-key-api').value.trim();
+
+            if (!name || (!server1 && !server2 && !url && !mpd)) {
+                alert('يرجى إدخال اسم القناة، ورابط تشغيل واحد على الأقل');
+                return;
+            }
+
+            const channelData = {
+                categoryId: categoryId,
+                name: name,
+                logo: logo,
+                server1: server1,
+                server2: server2,
+                url: url,
+                mpd: mpd,
+                keyApi: keyApi
+            };
+
+            if (id) {
+                channelsRef.child(id).update(channelData).then(() => {
+                    alert('تم تعديل القناة!');
+                    resetForm();
+                }).catch(err => alert('خطأ: ' + err.message));
+            } else {
+                channelsRef.push(channelData).then(() => {
+                    alert('تمت إضافة القناة!');
+                    resetForm();
+                }).catch(err => alert('خطأ: ' + err.message));
+            }
+        }
+
+        function deleteChannel(key, name) {
+            if (confirm('هل أنت متأكد من حذف قناة "' + name + '"؟')) {
+                channelsRef.child(key).remove().then(() => alert('تم حذف القناة بنجاح'));
+            }
+        }
+
+        function editChannel(key, categoryId, name, logo, server1, server2, url, mpd, keyApi) {
+            document.getElementById('channel-id').value = key;
+            document.getElementById('channel-category-select').value = categoryId || '';
+            document.getElementById('channel-name').value = name || '';
+            document.getElementById('channel-logo').value = logo || '';
+            document.getElementById('channel-server1').value = server1 || '';
+            document.getElementById('channel-server2').value = server2 || '';
+            document.getElementById('channel-url').value = url || '';
+            document.getElementById('channel-mpd').value = mpd || '';
+            document.getElementById('channel-key-api').value = keyApi || '';
+            document.getElementById('panel-title').innerText = 'تعديل بيانات القناة';
+            document.getElementById('btn-save').innerText = 'تحديث البيانات';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('channel-id').value = '';
+            document.getElementById('channel-category-select').value = '';
+            document.getElementById('channel-name').value = '';
+            document.getElementById('channel-logo').value = '';
+            document.getElementById('channel-server1').value = '';
+            document.getElementById('channel-server2').value = '';
+            document.getElementById('channel-url').value = '';
+            document.getElementById('channel-mpd').value = '';
+            document.getElementById('channel-key-api').value = '';
+            document.getElementById('panel-title').innerText = '📺 إضافة قناة جديدة (Path: channels)';
+            document.getElementById('btn-save').innerText = 'حفظ القناة';
+        }
+
+        function filterCategory(catId, evt) {
+            selectedCategory = catId;
+            document.querySelectorAll('.category-tab').forEach(el => { el.classList.remove('active'); });
+
+            if (evt && evt.currentTarget) {
+                evt.currentTarget.classList.add('active');
+            }
+
+            loadChannels();
+        }
+
+        function loadChannels() {
+            channelsRef.once('value', (snapshot) => {
+                const channelsEl = document.getElementById('channels');
+                channelsEl.innerHTML = '';
+                const data = snapshot.val();
+                if (!data) return;
+
+                Object.keys(data).forEach((key) => {
+                    const item = data[key];
+                    if (selectedCategory !== 'all' && item.categoryId !== selectedCategory) {
+                        return;
+                    }
+
+                    const card = document.createElement('div');
+                    card.className = 'channel-card';
+
+                    const logo = item.logo || 'https://via.placeholder.com/150?text=No+Logo';
+                    const safeName = escapeHtml(item.name || 'قناة بدون اسم');
+
+                    const image = document.createElement('img');
+                    image.src = logo;
+                    image.alt = item.name || 'قناة';
+                    image.onerror = function () { this.src = 'https://via.placeholder.com/150?text=No+Logo'; };
+                    card.appendChild(image);
+
+                    const title = document.createElement('div');
+                    title.className = 'channel-title';
+                    title.style.cssText = 'font-size:13px; font-weight:bold; margin-bottom:4px; text-align:center;';
+                    title.innerHTML = safeName;
+                    card.appendChild(title);
+
+                    const serverCount = (item.server1 ? 1 : 0) + (item.server2 ? 1 : 0) + (!item.server1 && !item.server2 && item.url ? 1 : 0);
+                    const serverBadge = document.createElement('div');
+                    serverBadge.style.cssText = 'font-size:11px; opacity:0.75; text-align:center;';
+                    serverBadge.textContent = serverCount >= 2 ? '📡 سيرفرين متاحين' : (serverCount === 1 ? '📡 سيرفر واحد' : '⚠️ بدون رابط');
+                    card.appendChild(serverBadge);
+
+                    const actions = document.createElement('div');
+                    actions.className = 'card-actions';
+
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'btn-edit';
+                    editBtn.textContent = 'تعديل';
+                    editBtn.onclick = function () {
+                        editChannel(key, item.categoryId || '', item.name || '', item.logo || '', item.server1 || '', item.server2 || '', item.url || '', item.mpd || '', item.keyApi || '');
+                    };
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = 'btn-delete';
+                    deleteBtn.textContent = 'حذف';
+                    deleteBtn.onclick = function () { deleteChannel(key, item.name || 'القناة'); };
+
+                    actions.appendChild(editBtn);
+                    actions.appendChild(deleteBtn);
+                    card.appendChild(actions);
+
+                    channelsEl.appendChild(card);
+                });
+            });
+        }
+
+        channelsRef.on('value', function () { loadChannels(); });
+
+        /* =========================================
+           إدارة المباريات (Path: matches)
+        ========================================= */
+        function saveMatch() {
+            const matchId = document.getElementById('match-id').value;
+            const team1Name = document.getElementById('team1-name').value.trim();
+            const team1Logo = document.getElementById('team1-logo').value.trim();
+            const team2Name = document.getElementById('team2-name').value.trim();
+            const team2Logo = document.getElementById('team2-logo').value.trim();
+            const matchTime = document.getElementById('match-time').value.trim();
+            const channelInfo = document.getElementById('match-channel-info').value.trim();
+            const matchUrl = document.getElementById('match-url').value.trim();
+
+            if (!team1Name || !team2Name || !matchUrl) {
+                alert('يرجى إدخال أسماء الفريقين ورابط بث المباراة على الأقل');
+                return;
+            }
+
+            const matchData = {
+                team1Name: team1Name,
+                team1Logo: team1Logo,
+                team2Name: team2Name,
+                team2Logo: team2Logo,
+                matchTime: matchTime,
+                channelInfo: channelInfo,
+                matchUrl: matchUrl
+            };
+
+            if (matchId) {
+                matchesRef.child(matchId).update(matchData).then(() => {
+                    alert('تم تعديل المباراة بنجاح!');
+                    resetMatchForm();
+                }).catch((error) => alert('حدث خطأ: ' + error.message));
+            } else {
+                matchesRef.push(matchData).then(() => {
+                    alert('تمت إضافة المباراة بنجاح!');
+                    resetMatchForm();
+                }).catch((error) => alert('حدث خطأ: ' + error.message));
+            }
+        }
+
+        function editMatch(key, match) {
+            document.getElementById('match-id').value = key;
+            document.getElementById('team1-name').value = match.team1Name || '';
+            document.getElementById('team1-logo').value = match.team1Logo || '';
+            document.getElementById('team2-name').value = match.team2Name || '';
+            document.getElementById('team2-logo').value = match.team2Logo || '';
+            document.getElementById('match-time').value = match.matchTime || '';
+            document.getElementById('match-channel-info').value = match.channelInfo || '';
+            document.getElementById('match-url').value = match.matchUrl || '';
+
+            document.getElementById('match-panel-title').innerText = 'تعديل بيانات المباراة';
+            document.getElementById('btn-save-match').innerText = 'تحديث المباراة';
+            document.getElementById('btn-cancel-match').style.display = 'block';
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteMatch(key) {
+            if (confirm('هل أنت متأكد من حذف هذه المباراة؟')) {
+                matchesRef.child(key).remove().then(() => alert('تم حذف المباراة بنجاح'));
+            }
+        }
+
+        function resetMatchForm() {
+            document.getElementById('match-id').value = '';
+            document.getElementById('team1-name').value = '';
+            document.getElementById('team1-logo').value = '';
+            document.getElementById('team2-name').value = '';
+            document.getElementById('team2-logo').value = '';
+            document.getElementById('match-time').value = '';
+            document.getElementById('match-channel-info').value = '';
+            document.getElementById('match-url').value = '';
+
+            document.getElementById('match-panel-title').innerText = '⚽ إدارة جدول المباريات (Path: matches)';
+            document.getElementById('btn-save-match').innerText = 'إضافة المباراة';
+            document.getElementById('btn-cancel-match').style.display = 'none';
+        }
+
+        matchesRef.on('value', (snapshot) => {
+            const matchesEl = document.getElementById('matches');
+            matchesEl.innerHTML = '';
+            const data = snapshot.val();
+
+            if (!data) {
+                matchesEl.innerHTML = '<div style="color:#94a3b8; text-align:center; grid-column:1/-1; padding:20px;">لا توجد مباريات مضافة حالياً</div>';
+                return;
+            }
+
+            Object.keys(data).forEach((key) => {
+                const match = data[key];
+                const card = document.createElement('div');
+                card.className = 'match-card';
+
+                const team1Logo = match.team1Logo || 'https://via.placeholder.com/50?text=Team1';
+                const team2Logo = match.team2Logo || 'https://via.placeholder.com/50?text=Team2';
+
+                card.innerHTML = `
+                    <div class="match-teams">
+                        <div class="match-team">
+                            <img src="${team1Logo}" onerror="this.src='https://via.placeholder.com/50?text=Team1'">
+                            <div class="match-team-name">${escapeHtml(match.team1Name)}</div>
+                        </div>
+                        <div class="match-vs">VS</div>
+                        <div class="match-team">
+                            <img src="${team2Logo}" onerror="this.src='https://via.placeholder.com/50?text=Team2'">
+                            <div class="match-team-name">${escapeHtml(match.team2Name)}</div>
+                        </div>
+                    </div>
+                    <div class="match-info">
+                        <div>⏱ ${escapeHtml(match.matchTime || 'غير محدد')}</div>
+                        ${match.channelInfo ? `<div>📺 ${escapeHtml(match.channelInfo)}</div>` : ''}
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick='editMatch("${key}", ${JSON.stringify(match).replace(/'/g, "&apos;")})'>تعديل</button>
+                        <button class="btn-delete" onclick='deleteMatch("${key}")'>حذف</button>
+                    </div>
+                `;
+                matchesEl.appendChild(card);
+            });
+        });
+
+        loadChannels();
+
+        /* =========================================
+           الواجهة المنبثقة (Path: popup)
+        ========================================= */
+        function savePopup() {
+            const popupData = {
+                enabled: document.getElementById('popup-enabled').value === 'true',
+                title: document.getElementById('popup-title').value.trim(),
+                image: document.getElementById('popup-image').value.trim(),
+                message: document.getElementById('popup-message').value.trim(),
+                buttonText: document.getElementById('popup-button-text').value.trim(),
+                buttonUrl: document.getElementById('popup-button-url').value.trim(),
+                updatedAt: Date.now()
+            };
+            popupRef.set(popupData).then(() => {
+                alert('تم حفظ الواجهة المنبثقة بنجاح!');
+            }).catch(err => alert('خطأ: ' + err.message));
+        }
+
+        popupRef.once('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+            document.getElementById('popup-enabled').value = data.enabled ? 'true' : 'false';
+            document.getElementById('popup-title').value = data.title || '';
+            document.getElementById('popup-image').value = data.image || '';
+            document.getElementById('popup-message').value = data.message || '';
+            document.getElementById('popup-button-text').value = data.buttonText || '';
+            document.getElementById('popup-button-url').value = data.buttonUrl || '';
+        });
+
+        /* =========================================
+           الصيانة وإجبار التحديث (Path: app_control)
+        ========================================= */
+        function saveAppControl() {
+            const controlData = {
+                maintenance_mode: document.getElementById('control-maintenance').value === 'true',
+                maintenance_message: document.getElementById('control-maintenance-message').value.trim(),
+                min_version: parseInt(document.getElementById('control-min-version').value) || 0,
+                update_url: document.getElementById('control-update-url').value.trim()
+            };
+            appControlRef.set(controlData).then(() => {
+                alert('تم حفظ إعدادات الصيانة/التحديث بنجاح!');
+            }).catch(err => alert('خطأ: ' + err.message));
+        }
+
+        appControlRef.once('value', (snapshot) => {
+            const data = snapshot.val();
+            if (!data) return;
+            document.getElementById('control-maintenance').value = data.maintenance_mode ? 'true' : 'false';
+            document.getElementById('control-maintenance-message').value = data.maintenance_message || '';
+            document.getElementById('control-min-version').value = data.min_version || '';
+            document.getElementById('control-update-url').value = data.update_url || '';
+        });
+    </script>
+</body>
+</html>
