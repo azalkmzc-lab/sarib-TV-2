@@ -86,13 +86,16 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.example.ui.theme.SaribCyanAccent
@@ -169,8 +172,8 @@ fun PlayerScreen(
     var availableAudioTracks by remember { mutableStateOf<List<AudioTrackOption>>(emptyList()) }
     var selectedAudioTrackIndex by remember { mutableIntStateOf(0) }
 
-    // High performance ExoPlayer configuration
-    val exoPlayer = remember {
+    // High performance ExoPlayer configuration with full MPD (DASH), HLS & TS support
+    val exoPlayer = remember(streamUrl) {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
                 2000,   // Min buffer: 2 seconds for fast start
@@ -180,12 +183,28 @@ fun PlayerScreen(
             )
             .build()
 
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 SARIB-TV-Player/1.0")
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(15000)
+            .setReadTimeoutMs(15000)
+
+        val mediaSourceFactory = DefaultMediaSourceFactory(context)
+            .setDataSourceFactory(httpDataSourceFactory)
+
+        val mediaItemBuilder = MediaItem.Builder().setUri(Uri.parse(streamUrl))
+        if (streamUrl.contains(".mpd", ignoreCase = true) || streamUrl.contains("dash", ignoreCase = true)) {
+            mediaItemBuilder.setMimeType(MimeTypes.APPLICATION_MPD)
+        } else if (streamUrl.contains(".m3u8", ignoreCase = true) || streamUrl.contains("hls", ignoreCase = true)) {
+            mediaItemBuilder.setMimeType(MimeTypes.APPLICATION_M3U8)
+        }
+
         ExoPlayer.Builder(context)
+            .setMediaSourceFactory(mediaSourceFactory)
             .setLoadControl(loadControl)
             .build().apply {
                 playWhenReady = true
-                val mediaItem = MediaItem.fromUri(Uri.parse(streamUrl))
-                setMediaItem(mediaItem)
+                setMediaItem(mediaItemBuilder.build())
                 prepare()
             }
     }

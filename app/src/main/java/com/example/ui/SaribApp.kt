@@ -62,6 +62,7 @@ fun SaribApp(
     val favorites by viewModel.favorites.collectAsState()
 
     val categoryChannels by viewModel.categoryChannels.collectAsState()
+    val isCategoryLoading by viewModel.isCategoryLoading.collectAsState()
     val currentSeriesDetail by viewModel.currentSeriesDetail.collectAsState()
     val isSeriesLoading by viewModel.isSeriesLoading.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
@@ -309,9 +310,11 @@ fun SaribApp(
                     CategoryDetailScreen(
                         category = screen.category,
                         channels = categoryChannels,
+                        isLoading = isCategoryLoading,
                         viewMode = viewMode,
                         onToggleViewMode = { viewModel.toggleViewMode() },
                         onBackClick = { viewModel.popBack() },
+                        onRefresh = { viewModel.refreshCategory(screen.category) },
                         onChannelClick = { channel ->
                             viewModel.playMedia(
                                 title = channel.name,

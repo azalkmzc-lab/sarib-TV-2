@@ -15,7 +15,7 @@ android {
 
   defaultConfig {
     applicationId = "com.aistudio.saribtv.kxmpzq"
-    minSdk = 24
+    minSdk = 21
     targetSdk = 36
     versionCode = 1
     versionName = "1.0"
@@ -100,6 +100,7 @@ dependencies {
   implementation(libs.androidx.room.runtime)
   implementation(libs.coil.compose)
   implementation(libs.androidx.media3.exoplayer)
+  implementation(libs.androidx.media3.exoplayer.dash)
   implementation(libs.androidx.media3.ui)
   implementation(libs.androidx.media3.common)
   implementation(libs.androidx.media3.exoplayer.hls)

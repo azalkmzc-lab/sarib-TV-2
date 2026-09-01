@@ -30,6 +30,18 @@ class XtreamApiClient(
         this.password = pass
     }
 
+    suspend fun pingServer(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val url = "${getBaseUrl()}&action=get_live_categories"
+            val request = Request.Builder().url(url).build()
+            val response = client.newCall(request).execute()
+            response.isSuccessful && !response.body?.string().isNullOrBlank()
+        } catch (e: Exception) {
+            Log.w("XtreamApiClient", "Server ping failed: ${e.message}")
+            false
+        }
+    }
+
     suspend fun fetchLiveCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
         try {
             val url = "${getBaseUrl()}&action=get_live_categories"
@@ -66,7 +78,79 @@ class XtreamApiClient(
         }
     }
 
-    suspend fun fetchLiveStreams(categoryId: String? = null): List<ChannelItem> = withContext(Dispatchers.IO) {
+    suspend fun fetchVodCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
+        try {
+            val url = "${getBaseUrl()}&action=get_vod_categories"
+            val request = Request.Builder().url(url).build()
+            val response = client.newCall(request).execute()
+            val jsonStr = response.body?.string().orEmpty()
+            if (jsonStr.isBlank()) return@withContext emptyList()
+
+            val jsonArray = JSONArray(jsonStr)
+            val list = mutableListOf<ChannelCategory>()
+            val colors = listOf("#E11D48", "#2563EB", "#7C3AED", "#D97706", "#059669", "#9333EA")
+
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val catId = obj.optString("category_id", "")
+                val catName = obj.optString("category_name", "قسم أفلام")
+                if (catId.isNotEmpty()) {
+                    list.add(
+                        ChannelCategory(
+                            id = "vod_$catId",
+                            name = catName,
+                            subtitle = "أفلام سينمائية",
+                            channelCount = 0,
+                            categoryType = "vod",
+                            gradientColorHex = colors[i % colors.size]
+                        )
+                    )
+                }
+            }
+            list
+        } catch (e: Exception) {
+            Log.e("XtreamApiClient", "Error fetching VOD categories: ${e.message}", e)
+            emptyList()
+        }
+    }
+
+    suspend fun fetchSeriesCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
+        try {
+            val url = "${getBaseUrl()}&action=get_series_categories"
+            val request = Request.Builder().url(url).build()
+            val response = client.newCall(request).execute()
+            val jsonStr = response.body?.string().orEmpty()
+            if (jsonStr.isBlank()) return@withContext emptyList()
+
+            val jsonArray = JSONArray(jsonStr)
+            val list = mutableListOf<ChannelCategory>()
+            val colors = listOf("#7C3AED", "#059669", "#2563EB", "#E11D48", "#D97706")
+
+            for (i in 0 until jsonArray.length()) {
+                val obj = jsonArray.getJSONObject(i)
+                val catId = obj.optString("category_id", "")
+                val catName = obj.optString("category_name", "قسم مسلسلات")
+                if (catId.isNotEmpty()) {
+                    list.add(
+                        ChannelCategory(
+                            id = "series_$catId",
+                            name = catName,
+                            subtitle = "مسلسلات حصرية",
+                            channelCount = 0,
+                            categoryType = "series",
+                            gradientColorHex = colors[i % colors.size]
+                        )
+                    )
+                }
+            }
+            list
+        } catch (e: Exception) {
+            Log.e("XtreamApiClient", "Error fetching Series categories: ${e.message}", e)
+            emptyList()
+        }
+    }
+
+    suspend fun fetchLiveStreams(categoryId: String? = null, limit: Int = -1): List<ChannelItem> = withContext(Dispatchers.IO) {
         try {
             val url = if (categoryId.isNullOrBlank()) {
                 "${getBaseUrl()}&action=get_live_streams"
@@ -80,8 +164,9 @@ class XtreamApiClient(
 
             val jsonArray = JSONArray(jsonStr)
             val list = mutableListOf<ChannelItem>()
+            val maxItems = if (limit > 0) minOf(limit, jsonArray.length()) else jsonArray.length()
 
-            for (i in 0 until jsonArray.length()) {
+            for (i in 0 until maxItems) {
                 val obj = jsonArray.getJSONObject(i)
                 val streamId = obj.optString("stream_id", "")
                 val name = obj.optString("name", "قناة")
@@ -118,9 +203,14 @@ class XtreamApiClient(
         }
     }
 
-    suspend fun fetchVodStreams(): List<MediaItem> = withContext(Dispatchers.IO) {
+    suspend fun fetchVodStreams(categoryId: String? = null, limit: Int = -1): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
-            val url = "${getBaseUrl()}&action=get_vod_streams"
+            val cleanCatId = categoryId?.removePrefix("vod_")
+            val url = if (cleanCatId.isNullOrBlank()) {
+                "${getBaseUrl()}&action=get_vod_streams"
+            } else {
+                "${getBaseUrl()}&action=get_vod_streams&category_id=$cleanCatId"
+            }
             val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
             val jsonStr = response.body?.string().orEmpty()
@@ -128,8 +218,9 @@ class XtreamApiClient(
 
             val jsonArray = JSONArray(jsonStr)
             val list = mutableListOf<MediaItem>()
+            val maxItems = if (limit > 0) minOf(limit, jsonArray.length()) else jsonArray.length()
 
-            for (i in 0 until jsonArray.length()) {
+            for (i in 0 until maxItems) {
                 val obj = jsonArray.getJSONObject(i)
                 val streamId = obj.optString("stream_id", "")
                 val name = obj.optString("name", "فيلم")
@@ -166,9 +257,14 @@ class XtreamApiClient(
         }
     }
 
-    suspend fun fetchSeries(): List<MediaItem> = withContext(Dispatchers.IO) {
+    suspend fun fetchSeries(categoryId: String? = null, limit: Int = -1): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
-            val url = "${getBaseUrl()}&action=get_series"
+            val cleanCatId = categoryId?.removePrefix("series_")
+            val url = if (cleanCatId.isNullOrBlank()) {
+                "${getBaseUrl()}&action=get_series"
+            } else {
+                "${getBaseUrl()}&action=get_series&category_id=$cleanCatId"
+            }
             val request = Request.Builder().url(url).build()
             val response = client.newCall(request).execute()
             val jsonStr = response.body?.string().orEmpty()
@@ -176,8 +272,9 @@ class XtreamApiClient(
 
             val jsonArray = JSONArray(jsonStr)
             val list = mutableListOf<MediaItem>()
+            val maxItems = if (limit > 0) minOf(limit, jsonArray.length()) else jsonArray.length()
 
-            for (i in 0 until jsonArray.length()) {
+            for (i in 0 until maxItems) {
                 val obj = jsonArray.getJSONObject(i)
                 val seriesId = obj.optString("series_id", "")
                 val name = obj.optString("name", "مسلسل")

@@ -18,6 +18,9 @@ interface SaribDao {
     @Query("SELECT * FROM channels WHERE categoryId = :categoryId AND isEnabled = 1 ORDER BY sortOrder ASC")
     fun getChannelsByCategory(categoryId: String): Flow<List<ChannelEntity>>
 
+    @Query("SELECT * FROM channels WHERE categoryId = :categoryId AND isEnabled = 1 ORDER BY sortOrder ASC")
+    suspend fun getChannelsListByCategory(categoryId: String): List<ChannelEntity>
+
     @Query("SELECT * FROM channels WHERE isEnabled = 1 ORDER BY viewsCount DESC LIMIT 10")
     fun getMostWatchedChannels(): Flow<List<ChannelEntity>>
 

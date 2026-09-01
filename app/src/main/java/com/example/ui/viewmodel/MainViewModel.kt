@@ -85,6 +85,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _categoryChannels = MutableStateFlow<List<ChannelItem>>(emptyList())
     val categoryChannels: StateFlow<List<ChannelItem>> = _categoryChannels.asStateFlow()
 
+    private val _isCategoryLoading = MutableStateFlow(false)
+    val isCategoryLoading: StateFlow<Boolean> = _isCategoryLoading.asStateFlow()
+
     // Series Detail Screen State (Episodes & Seasons)
     private val _currentSeriesDetail = MutableStateFlow<com.example.data.model.SeriesDetail?>(null)
     val currentSeriesDetail: StateFlow<com.example.data.model.SeriesDetail?> = _currentSeriesDetail.asStateFlow()
@@ -139,7 +142,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _currentScreen.value = AppScreen.Main
             } else {
                 _isConnecting.value = false
-                _connectionError.value = "تعذر الاتصال بخادم البث. يرجى التحقق من اتصال الإنترنت."
+                val errorMsg = result.exceptionOrNull()?.message?.takeIf { it.isNotBlank() }
+                    ?: "لم يتصل بالسيرفر. يرجى التحقق من اتصالك بالإنترنت أو حالة السيرفر."
+                _connectionError.value = errorMsg
             }
         }
     }
@@ -218,18 +223,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _currentScreen.value = AppScreen.Main
     }
 
-    fun openCategory(category: ChannelCategory) {
+    fun openCategory(category: ChannelCategory, forceRefresh: Boolean = false) {
         _selectedCategory.value = category
-        viewModelScope.launch {
-            repository.getChannelsByCategory(category.id).collect { list ->
-                _categoryChannels.value = list
-            }
-        }
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.CategoryDetail) {
             backStack.add(curr)
         }
         _currentScreen.value = AppScreen.CategoryDetail(category)
+        
+        viewModelScope.launch {
+            _isCategoryLoading.value = true
+            try {
+                val channels = repository.getChannelsForCategoryOnDemand(category.id, forceRefresh = forceRefresh)
+                _categoryChannels.value = channels
+            } catch (e: Exception) {
+                // Keep current or empty
+            } finally {
+                _isCategoryLoading.value = false
+            }
+        }
+    }
+
+    fun refreshCategory(category: ChannelCategory) {
+        openCategory(category, forceRefresh = true)
     }
 
     fun toggleViewMode() {

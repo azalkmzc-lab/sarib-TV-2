@@ -18,6 +18,7 @@ import com.example.data.remote.FirebaseStreamManager
 import com.example.data.remote.MatchesApiClient
 import com.example.data.remote.RemoteStreamConfig
 import com.example.data.remote.XtreamApiClient
+import com.example.util.SecurityChecker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -29,7 +30,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
-class SaribRepository(context: Context) {
+class SaribRepository(private val context: Context) {
 
     private val db = SaribDatabase.getDatabase(context)
     private val dao = db.saribDao()
@@ -51,7 +52,14 @@ class SaribRepository(context: Context) {
 
     suspend fun initializeBackendConnection(): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            // 1. Fetch remote config & multi-sliders from Firebase
+            // 1. Security Check (Anti-VPN & Proxy / CA certificate tampering protection)
+            val securityStatus = SecurityChecker.performSecurityAudit(context)
+            if (!securityStatus.isSecure) {
+                Log.w("SaribRepository", "Security issue detected: ${securityStatus.message}")
+                return@withContext Result.failure(Exception(securityStatus.message))
+            }
+
+            // 2. Fetch remote config & multi-sliders from Firebase
             try {
                 val firebaseConfig = firebaseStreamManager.fetchRemoteConfig()
                 currentRemoteConfig = firebaseConfig
@@ -66,7 +74,7 @@ class SaribRepository(context: Context) {
                 Log.w("SaribRepository", "Could not load Firebase config: ${e.message}")
             }
 
-            // 2. Fetch Firebase Sliders from independent path (/sliders)
+            // 3. Fetch Firebase Sliders from independent path (/sliders)
             try {
                 val remoteSliders = firebaseStreamManager.fetchSliders()
                 if (remoteSliders.isNotEmpty()) {
@@ -77,29 +85,30 @@ class SaribRepository(context: Context) {
                 Log.w("SaribRepository", "Could not load Firebase sliders: ${e.message}")
             }
 
-            // 3. Fetch real live streams, VOD, series and matches from Xtream server and Matches API & Firebase
-            coroutineScope {
+            // 4. Fast Startup: Fetch Categories & Home essentials only (On-demand loading for channel streams!)
+            val syncResult = coroutineScope {
                 val liveCategoriesDeferred = async { xtreamClient.fetchLiveCategories() }
-                val liveStreamsDeferred = async { xtreamClient.fetchLiveStreams() }
-                val vodStreamsDeferred = async { xtreamClient.fetchVodStreams() }
-                val seriesStreamsDeferred = async { xtreamClient.fetchSeries() }
-                val matchesDeferred = async { matchesClient.fetchMatches(0) }
                 val customCatsDeferred = async { firebaseStreamManager.fetchCustomCategories() }
                 val customChannelsDeferred = async { firebaseStreamManager.fetchCustomChannels() }
                 val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies() }
+                val matchesDeferred = async { matchesClient.fetchMatches(0) }
+                // Fetch only top 15 preview streams for Home screen carousel/most watched
+                val topLiveStreamsDeferred = async { xtreamClient.fetchLiveStreams(limit = 15) }
+                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 10) }
+                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 10) }
 
                 val remoteCategories = liveCategoriesDeferred.await()
-                val remoteStreams = liveStreamsDeferred.await()
-                val remoteMovies = vodStreamsDeferred.await()
-                val remoteSeries = seriesStreamsDeferred.await()
-                val remoteMatches = matchesDeferred.await()
                 val customCats = customCatsDeferred.await()
                 val customChannels = customChannelsDeferred.await()
                 val customMovies = customMoviesDeferred.await()
+                val remoteMatches = matchesDeferred.await()
+                val topStreams = topLiveStreamsDeferred.await()
+                val topMovies = topMoviesDeferred.await()
+                val topSeries = topSeriesDeferred.await()
 
                 val allCats = (customCats + remoteCategories).distinctBy { it.id }
-                val allChans = (customChannels + remoteStreams).distinctBy { it.id }
-                val allMovs = (customMovies + remoteMovies).distinctBy { it.id }
+                val allChans = (customChannels + topStreams).distinctBy { it.id }
+                val allMovs = (customMovies + topMovies).distinctBy { it.id }
 
                 if (allCats.isNotEmpty()) {
                     dao.insertCategories(allCats.map { it.toEntity() })
@@ -110,8 +119,8 @@ class SaribRepository(context: Context) {
                 if (allMovs.isNotEmpty()) {
                     dao.insertMediaItems(allMovs.map { it.toEntity() })
                 }
-                if (remoteSeries.isNotEmpty()) {
-                    dao.insertMediaItems(remoteSeries.map { it.toEntity() })
+                if (topSeries.isNotEmpty()) {
+                    dao.insertMediaItems(topSeries.map { it.toEntity() })
                 }
                 if (remoteMatches.isNotEmpty()) {
                     dao.insertMatches(remoteMatches.map { it.toEntity() })
@@ -139,7 +148,7 @@ class SaribRepository(context: Context) {
                     }
 
                     // Add top movie from real server data if available
-                    remoteMovies.firstOrNull()?.let { movie ->
+                    allMovs.firstOrNull()?.let { movie ->
                         fallbackSliders.add(
                             HeroBannerItem(
                                 id = movie.id,
@@ -158,7 +167,7 @@ class SaribRepository(context: Context) {
                     }
 
                     // Add top live channel from real server data if available
-                    remoteStreams.firstOrNull()?.let { ch ->
+                    allChans.firstOrNull()?.let { ch ->
                         fallbackSliders.add(
                             HeroBannerItem(
                                 id = ch.id,
@@ -180,12 +189,84 @@ class SaribRepository(context: Context) {
                         _heroSliders.value = fallbackSliders
                     }
                 }
+
+                // Server connection verification: check if any data was retrieved
+                val hasRemoteData = remoteCategories.isNotEmpty() || customCats.isNotEmpty() || topStreams.isNotEmpty()
+                hasRemoteData
             }
 
-            Result.success(true)
+            if (syncResult) {
+                Result.success(true)
+            } else {
+                // If offline cache exists in DB, let user proceed, else show error
+                val localCats = dao.getChannelsCount()
+                if (localCats > 0) {
+                    Result.success(true)
+                } else {
+                    Result.failure(Exception("لم يتصل بالسيرفر. يرجى التحقق من اتصالك بالإنترنت أو حالة السيرفر."))
+                }
+            }
         } catch (e: Exception) {
             Log.e("SaribRepository", "Init backend sync error: ${e.message}", e)
-            Result.success(true)
+            val msg = e.message ?: "لم يتصل بالسيرفر. يرجى التحقق من اتصال الإنترنت."
+            Result.failure(Exception(msg))
+        }
+    }
+
+    /**
+     * Lazy on-demand loading of channels when user opens a category.
+     */
+    suspend fun getChannelsForCategoryOnDemand(categoryId: String, forceRefresh: Boolean = false): List<ChannelItem> = withContext(Dispatchers.IO) {
+        try {
+            // Check local database first if not forced
+            val cached = dao.getChannelsListByCategory(categoryId)
+            if (cached.isNotEmpty() && !forceRefresh) {
+                return@withContext cached.map { it.toModel() }
+            }
+
+            // Fetch from Xtream server for this specific category
+            val remoteChannels = xtreamClient.fetchLiveStreams(categoryId = categoryId)
+            if (remoteChannels.isNotEmpty()) {
+                dao.insertChannels(remoteChannels.map { it.toEntity() })
+                remoteChannels
+            } else {
+                cached.map { it.toModel() }
+            }
+        } catch (e: Exception) {
+            Log.e("SaribRepository", "Error fetching channels for category $categoryId: ${e.message}", e)
+            dao.getChannelsListByCategory(categoryId).map { it.toModel() }
+        }
+    }
+
+    /**
+     * Lazy on-demand loading of VOD Movies when user selects a category.
+     */
+    suspend fun getMoviesForCategoryOnDemand(categoryId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
+        try {
+            val remoteMovies = xtreamClient.fetchVodStreams(categoryId = categoryId)
+            if (remoteMovies.isNotEmpty()) {
+                dao.insertMediaItems(remoteMovies.map { it.toEntity() })
+            }
+            remoteMovies
+        } catch (e: Exception) {
+            Log.e("SaribRepository", "Error fetching movies for category $categoryId: ${e.message}", e)
+            emptyList()
+        }
+    }
+
+    /**
+     * Lazy on-demand loading of Series when user selects a category.
+     */
+    suspend fun getSeriesForCategoryOnDemand(categoryId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
+        try {
+            val remoteSeries = xtreamClient.fetchSeries(categoryId = categoryId)
+            if (remoteSeries.isNotEmpty()) {
+                dao.insertMediaItems(remoteSeries.map { it.toEntity() })
+            }
+            remoteSeries
+        } catch (e: Exception) {
+            Log.e("SaribRepository", "Error fetching series for category $categoryId: ${e.message}", e)
+            emptyList()
         }
     }
 
@@ -328,3 +409,4 @@ fun MatchEntity.toModel() = MatchItem(id, leagueName, leagueIconUrl, homeTeam, h
 fun MatchItem.toEntity() = MatchEntity(id, leagueName, leagueIconUrl, homeTeam, homeLogoUrl, awayTeam, awayLogoUrl, matchTime, matchDate, status, homeScore, awayScore, streamUrl, isLive, isFavorite)
 fun MediaEntity.toModel() = MediaItem(id, title, posterUrl, backdropUrl, ContentType.valueOf(type), year, rating, genre, description, duration, seasonsCount, episodesCount, streamUrl, isTop, topRank, isFavorite)
 fun MediaItem.toEntity() = MediaEntity(id, title, posterUrl, backdropUrl, type.name, year, rating, genre, description, duration, seasonsCount, episodesCount, streamUrl, isTop, topRank, isFavorite)
+

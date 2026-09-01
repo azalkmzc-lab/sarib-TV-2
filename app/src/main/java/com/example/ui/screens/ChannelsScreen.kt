@@ -30,11 +30,15 @@ import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -218,11 +222,13 @@ fun ActionButtonCard(
 fun CategoryDetailScreen(
     category: ChannelCategory,
     channels: List<ChannelItem>,
+    isLoading: Boolean = false,
     viewMode: ViewMode,
     onToggleViewMode: () -> Unit,
     onBackClick: () -> Unit,
     onChannelClick: (ChannelItem) -> Unit,
     onFavoriteToggle: (ChannelItem) -> Unit,
+    onRefresh: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -270,28 +276,45 @@ fun CategoryDetailScreen(
                             )
                         )
                         Text(
-                            text = "${filteredChannels.size} قناة متاحة",
+                            text = if (isLoading) "جاري سحب القنوات..." else "${filteredChannels.size} قناة متاحة",
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = SaribTextSecondary
+                                color = if (isLoading) SaribCyanAccent else SaribTextSecondary
                             )
                         )
                     }
                 }
 
-                // Toggle View Mode
-                IconButton(
-                    onClick = onToggleViewMode,
-                    modifier = Modifier
-                        .size(40.dp)
-                        .clip(CircleShape)
-                        .background(SaribDarkBackground)
-                        .border(1.dp, SaribCardBorder, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = if (viewMode == ViewMode.GRID) Icons.Default.ViewList else Icons.Default.GridView,
-                        contentDescription = "تبديل العرض",
-                        tint = SaribCyanAccent
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onRefresh,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(SaribDarkBackground)
+                            .border(1.dp, SaribCardBorder, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "تحديث",
+                            tint = SaribCyanAccent
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    // Toggle View Mode
+                    IconButton(
+                        onClick = onToggleViewMode,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(SaribDarkBackground)
+                            .border(1.dp, SaribCardBorder, CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = if (viewMode == ViewMode.GRID) Icons.Default.ViewList else Icons.Default.GridView,
+                            contentDescription = "تبديل العرض",
+                            tint = SaribCyanAccent
+                        )
+                    }
                 }
             }
         }
@@ -345,17 +368,74 @@ fun CategoryDetailScreen(
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             )
 
-            if (filteredChannels.isEmpty()) {
+            if (isLoading) {
+                // Stylish On-Demand Loading indicator matching user request
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(24.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.no_content_available),
-                        style = MaterialTheme.typography.bodyLarge.copy(color = SaribTextSecondary)
-                    )
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth(0.85f)
+                            .clip(RoundedCornerShape(22.dp))
+                            .border(1.dp, SaribCyanAccent.copy(alpha = 0.5f), RoundedCornerShape(22.dp)),
+                        colors = CardDefaults.cardColors(containerColor = SaribCardBg)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(28.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(36.dp),
+                                color = SaribCyanAccent,
+                                strokeWidth = 3.dp
+                            )
+                            Spacer(modifier = Modifier.height(18.dp))
+                            Text(
+                                text = "جاري تحميل قنوات القسم...",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = SaribTextPrimary
+                                )
+                            )
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(
+                                text = "يتم الآن سحب القنوات بدقة عالية من السيرفر",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = SaribTextSecondary
+                                )
+                            )
+                        }
+                    }
+                }
+            } else if (filteredChannels.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = stringResource(id = R.string.no_content_available),
+                            style = MaterialTheme.typography.bodyLarge.copy(color = SaribTextSecondary)
+                        )
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Button(
+                            onClick = onRefresh,
+                            colors = ButtonDefaults.buttonColors(containerColor = SaribElectricBlue),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("إعادة المحاولة", color = Color.White, fontWeight = FontWeight.Bold)
+                        }
+                    }
                 }
             } else if (viewMode == ViewMode.GRID) {
                 // Grid View
