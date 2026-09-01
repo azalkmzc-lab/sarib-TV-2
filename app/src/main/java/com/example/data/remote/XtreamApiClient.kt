@@ -206,7 +206,8 @@ class XtreamApiClient(
                             streamUrl = streamUrl,
                             isTop = i < 10,
                             topRank = String.format("%02d", i + 1),
-                            isFavorite = false
+                            isFavorite = false,
+                            rawSeriesId = seriesId
                         )
                     )
                 }
@@ -215,6 +216,98 @@ class XtreamApiClient(
         } catch (e: Exception) {
             Log.e("XtreamApiClient", "Error fetching series: ${e.message}", e)
             emptyList()
+        }
+    }
+
+    suspend fun fetchSeriesDetails(seriesId: String): com.example.data.model.SeriesDetail? = withContext(Dispatchers.IO) {
+        try {
+            val cleanId = seriesId.removePrefix("xt_ser_")
+            val url = "${getBaseUrl()}&action=get_series_info&series_id=$cleanId"
+            val request = Request.Builder().url(url).build()
+            val response = client.newCall(request).execute()
+            val jsonStr = response.body?.string().orEmpty()
+            if (jsonStr.isBlank() || !jsonStr.startsWith("{")) return@withContext null
+
+            val rootObj = org.json.JSONObject(jsonStr)
+            val infoObj = rootObj.optJSONObject("info")
+            val title = infoObj?.optString("name", "تفاصيل العمل") ?: "مسلسل"
+            val cover = infoObj?.optString("cover", "") ?: ""
+            val backdrop = if (infoObj?.has("backdrop_path") == true) {
+                val bdArr = infoObj.optJSONArray("backdrop_path")
+                if (bdArr != null && bdArr.length() > 0) bdArr.optString(0, "") else infoObj.optString("backdrop_path", cover)
+            } else cover
+            val plot = infoObj?.optString("plot", "") ?: ""
+            val genre = infoObj?.optString("genre", "دراما") ?: ""
+            val releaseDate = infoObj?.optString("releaseDate", "2024") ?: "2024"
+            val rating = infoObj?.optString("rating", "8.9") ?: "8.9"
+
+            val seasonsList = mutableListOf<com.example.data.model.SeasonItem>()
+            val episodesObj = rootObj.optJSONObject("episodes")
+
+            if (episodesObj != null) {
+                val keys = episodesObj.keys()
+                while (keys.hasNext()) {
+                    val seasonKey = keys.next()
+                    val seasonNum = seasonKey.toIntOrNull() ?: 1
+                    val epArray = episodesObj.optJSONArray(seasonKey)
+                    val episodesList = mutableListOf<com.example.data.model.EpisodeItem>()
+
+                    if (epArray != null) {
+                        for (j in 0 until epArray.length()) {
+                            val epObj = epArray.getJSONObject(j)
+                            val epId = epObj.optString("id", "")
+                            val epNum = epObj.optInt("episode_num", j + 1)
+                            val epTitle = epObj.optString("title", "الحلقة $epNum")
+                            val ext = epObj.optString("container_extension", "mp4").ifEmpty { "mp4" }
+                            val epInfo = epObj.optJSONObject("info")
+                            val epDuration = epInfo?.optString("duration", "45:00") ?: "45 دقيقة"
+                            val epPlot = epInfo?.optString("plot", "") ?: ""
+                            val epCover = epInfo?.optString("movie_image", cover) ?: cover
+
+                            val streamUrl = "${serverHost.trimEnd('/')}/series/$username/$password/$epId.$ext"
+                            episodesList.add(
+                                com.example.data.model.EpisodeItem(
+                                    id = epId,
+                                    episodeNum = epNum,
+                                    title = if (epTitle.isNotBlank() && epTitle != "null") epTitle else "الحلقة $epNum",
+                                    seasonNum = seasonNum,
+                                    containerExtension = ext,
+                                    duration = epDuration,
+                                    overview = epPlot,
+                                    coverUrl = epCover,
+                                    streamUrl = streamUrl
+                                )
+                            )
+                        }
+                    }
+
+                    seasonsList.add(
+                        com.example.data.model.SeasonItem(
+                            seasonNumber = seasonNum,
+                            name = "الموسم $seasonNum",
+                            episodeCount = episodesList.size,
+                            episodes = episodesList.sortedBy { it.episodeNum },
+                            airDate = releaseDate,
+                            coverUrl = cover
+                        )
+                    )
+                }
+            }
+
+            com.example.data.model.SeriesDetail(
+                id = seriesId,
+                title = title,
+                coverUrl = cover,
+                backdropUrl = backdrop,
+                plot = plot,
+                genre = genre,
+                releaseDate = releaseDate,
+                rating = rating,
+                seasons = seasonsList.sortedBy { it.seasonNumber }
+            )
+        } catch (e: Exception) {
+            Log.e("XtreamApiClient", "Error parsing series details: ${e.message}", e)
+            null
         }
     }
 }

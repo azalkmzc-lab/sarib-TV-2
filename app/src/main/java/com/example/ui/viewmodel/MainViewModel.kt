@@ -24,6 +24,7 @@ sealed interface AppScreen {
     object Splash : AppScreen
     object Main : AppScreen
     data class CategoryDetail(val category: ChannelCategory) : AppScreen
+    data class SeriesDetail(val mediaItem: MediaItem) : AppScreen
     data class Player(val title: String, val subtitle: String, val streamUrl: String, val isLive: Boolean = false) : AppScreen
     object Search : AppScreen
 }
@@ -83,6 +84,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _categoryChannels = MutableStateFlow<List<ChannelItem>>(emptyList())
     val categoryChannels: StateFlow<List<ChannelItem>> = _categoryChannels.asStateFlow()
+
+    // Series Detail Screen State (Episodes & Seasons)
+    private val _currentSeriesDetail = MutableStateFlow<com.example.data.model.SeriesDetail?>(null)
+    val currentSeriesDetail: StateFlow<com.example.data.model.SeriesDetail?> = _currentSeriesDetail.asStateFlow()
+
+    private val _isSeriesLoading = MutableStateFlow(false)
+    val isSeriesLoading: StateFlow<Boolean> = _isSeriesLoading.asStateFlow()
 
     // View Mode (Grid / List) for channels
     private val _viewMode = MutableStateFlow(ViewMode.GRID)
@@ -144,10 +152,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _currentScreen.value = screen
     }
 
+    fun openSeriesDetails(media: MediaItem) {
+        val curr = _currentScreen.value
+        if (curr != AppScreen.Splash && curr !is AppScreen.SeriesDetail) {
+            backStack.add(curr)
+        }
+        _currentScreen.value = AppScreen.SeriesDetail(media)
+        _currentSeriesDetail.value = null
+        _isSeriesLoading.value = true
+
+        viewModelScope.launch {
+            try {
+                val details = repository.getSeriesDetails(media.id)
+                _currentSeriesDetail.value = details
+            } catch (e: Exception) {
+                _currentSeriesDetail.value = null
+            } finally {
+                _isSeriesLoading.value = false
+            }
+        }
+    }
+
     fun popBack(): Boolean {
         val curr = _currentScreen.value
         if (curr is AppScreen.Player) {
-            // When exiting player, pop back to exact previous screen (e.g. CategoryDetail)
+            if (backStack.isNotEmpty()) {
+                val previous = backStack.removeAt(backStack.lastIndex)
+                _currentScreen.value = previous
+                return true
+            } else {
+                _currentScreen.value = AppScreen.Main
+                return true
+            }
+        } else if (curr is AppScreen.SeriesDetail) {
             if (backStack.isNotEmpty()) {
                 val previous = backStack.removeAt(backStack.lastIndex)
                 _currentScreen.value = previous

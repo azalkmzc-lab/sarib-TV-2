@@ -87,7 +87,41 @@ data class MediaItem(
     val streamUrl: String = "",
     val isTop: Boolean = false,
     val topRank: String = "01",
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val rawSeriesId: String = "" // Series ID in Xtream
+)
+
+data class EpisodeItem(
+    val id: String,
+    val episodeNum: Int,
+    val title: String,
+    val seasonNum: Int,
+    val containerExtension: String = "mp4",
+    val duration: String = "",
+    val overview: String = "",
+    val coverUrl: String = "",
+    val streamUrl: String = ""
+)
+
+data class SeasonItem(
+    val seasonNumber: Int,
+    val name: String,
+    val episodeCount: Int,
+    val episodes: List<EpisodeItem> = emptyList(),
+    val airDate: String = "",
+    val coverUrl: String = ""
+)
+
+data class SeriesDetail(
+    val id: String,
+    val title: String,
+    val coverUrl: String,
+    val backdropUrl: String,
+    val plot: String,
+    val genre: String,
+    val releaseDate: String,
+    val rating: String,
+    val seasons: List<SeasonItem> = emptyList()
 )
 
 data class ApiSourceConfig(

@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.data.model.ContentType
 import com.example.ui.components.SaribDrawerContent
 import com.example.ui.screens.CategoryDetailScreen
 import com.example.ui.screens.EntertainmentScreen
@@ -31,6 +32,7 @@ import com.example.ui.screens.MatchesScreen
 import com.example.ui.screens.ChannelsScreen
 import com.example.ui.screens.PlayerScreen
 import com.example.ui.screens.SearchScreen
+import com.example.ui.screens.SeriesDetailScreen
 import com.example.ui.screens.SplashScreen
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.MainViewModel
@@ -60,6 +62,8 @@ fun SaribApp(
     val favorites by viewModel.favorites.collectAsState()
 
     val categoryChannels by viewModel.categoryChannels.collectAsState()
+    val currentSeriesDetail by viewModel.currentSeriesDetail.collectAsState()
+    val isSeriesLoading by viewModel.isSeriesLoading.collectAsState()
     val viewMode by viewModel.viewMode.collectAsState()
     val selectedMatchDate by viewModel.selectedMatchDate.collectAsState()
     val selectedHomeChip by viewModel.selectedHomeChip.collectAsState()
@@ -75,6 +79,19 @@ fun SaribApp(
             context.startActivity(intent)
         } catch (e: Exception) {
             Toast.makeText(context, "SARIB TV Official Channel: @sarib_tv", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    val handleMediaClick: (com.example.data.model.MediaItem) -> Unit = { media ->
+        if (media.type == ContentType.SERIES || media.type == ContentType.ANIME) {
+            viewModel.openSeriesDetails(media)
+        } else {
+            viewModel.playMedia(
+                title = media.title,
+                subtitle = "${media.year} • ${media.genre}",
+                streamUrl = media.streamUrl,
+                isLive = false
+            )
         }
     }
 
@@ -187,14 +204,7 @@ fun SaribApp(
                                         isLive = match.isLive
                                     )
                                 },
-                                onMediaClick = { media ->
-                                    viewModel.playMedia(
-                                        title = media.title,
-                                        subtitle = "${media.year} • ${media.genre}",
-                                        streamUrl = media.streamUrl,
-                                        isLive = false
-                                    )
-                                },
+                                onMediaClick = handleMediaClick,
                                 onHeroWatchClick = { banner ->
                                     viewModel.playMedia(
                                         title = banner.title,
@@ -253,14 +263,7 @@ fun SaribApp(
                                 movies = featuredMovies,
                                 series = featuredSeries,
                                 anime = animePicks,
-                                onMediaClick = { media ->
-                                    viewModel.playMedia(
-                                        title = media.title,
-                                        subtitle = "${media.year} • ${media.genre}",
-                                        streamUrl = media.streamUrl,
-                                        isLive = false
-                                    )
-                                },
+                                onMediaClick = handleMediaClick,
                                 onMenuClick = { scope.launch { drawerState.open() } },
                                 onTelegramClick = openTelegram,
                                 onFavoritesClick = { viewModel.selectTab("favorites") },
@@ -330,6 +333,31 @@ fun SaribApp(
                     )
                 }
 
+                is AppScreen.SeriesDetail -> {
+                    SeriesDetailScreen(
+                        mediaItem = screen.mediaItem,
+                        seriesDetail = currentSeriesDetail,
+                        isLoading = isSeriesLoading,
+                        onBackClick = { viewModel.popBack() },
+                        onPlayEpisode = { ep, epTitle ->
+                            viewModel.playMedia(
+                                title = epTitle,
+                                subtitle = "${screen.mediaItem.title} • الحلقة ${ep.episodeNum}",
+                                streamUrl = ep.streamUrl,
+                                isLive = false
+                            )
+                        },
+                        onPlayDirect = {
+                            viewModel.playMedia(
+                                title = screen.mediaItem.title,
+                                subtitle = "${screen.mediaItem.year} • ${screen.mediaItem.genre}",
+                                streamUrl = screen.mediaItem.streamUrl,
+                                isLive = false
+                            )
+                        }
+                    )
+                }
+
                 is AppScreen.Player -> {
                     PlayerScreen(
                         title = screen.title,
@@ -353,14 +381,7 @@ fun SaribApp(
                                 isLive = true
                             )
                         },
-                        onMediaClick = { media ->
-                            viewModel.playMedia(
-                                title = media.title,
-                                subtitle = "${media.year} • ${media.genre}",
-                                streamUrl = media.streamUrl,
-                                isLive = false
-                            )
-                        },
+                        onMediaClick = handleMediaClick,
                         onBackClick = { viewModel.popBack() }
                     )
                 }

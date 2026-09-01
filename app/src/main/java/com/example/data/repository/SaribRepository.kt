@@ -77,28 +77,38 @@ class SaribRepository(context: Context) {
                 Log.w("SaribRepository", "Could not load Firebase sliders: ${e.message}")
             }
 
-            // 3. Fetch real live streams, VOD, series and matches from Xtream server and Matches API
+            // 3. Fetch real live streams, VOD, series and matches from Xtream server and Matches API & Firebase
             coroutineScope {
                 val liveCategoriesDeferred = async { xtreamClient.fetchLiveCategories() }
                 val liveStreamsDeferred = async { xtreamClient.fetchLiveStreams() }
                 val vodStreamsDeferred = async { xtreamClient.fetchVodStreams() }
                 val seriesStreamsDeferred = async { xtreamClient.fetchSeries() }
                 val matchesDeferred = async { matchesClient.fetchMatches(0) }
+                val customCatsDeferred = async { firebaseStreamManager.fetchCustomCategories() }
+                val customChannelsDeferred = async { firebaseStreamManager.fetchCustomChannels() }
+                val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies() }
 
                 val remoteCategories = liveCategoriesDeferred.await()
                 val remoteStreams = liveStreamsDeferred.await()
                 val remoteMovies = vodStreamsDeferred.await()
                 val remoteSeries = seriesStreamsDeferred.await()
                 val remoteMatches = matchesDeferred.await()
+                val customCats = customCatsDeferred.await()
+                val customChannels = customChannelsDeferred.await()
+                val customMovies = customMoviesDeferred.await()
 
-                if (remoteCategories.isNotEmpty()) {
-                    dao.insertCategories(remoteCategories.map { it.toEntity() })
+                val allCats = (customCats + remoteCategories).distinctBy { it.id }
+                val allChans = (customChannels + remoteStreams).distinctBy { it.id }
+                val allMovs = (customMovies + remoteMovies).distinctBy { it.id }
+
+                if (allCats.isNotEmpty()) {
+                    dao.insertCategories(allCats.map { it.toEntity() })
                 }
-                if (remoteStreams.isNotEmpty()) {
-                    dao.insertChannels(remoteStreams.map { it.toEntity() })
+                if (allChans.isNotEmpty()) {
+                    dao.insertChannels(allChans.map { it.toEntity() })
                 }
-                if (remoteMovies.isNotEmpty()) {
-                    dao.insertMediaItems(remoteMovies.map { it.toEntity() })
+                if (allMovs.isNotEmpty()) {
+                    dao.insertMediaItems(allMovs.map { it.toEntity() })
                 }
                 if (remoteSeries.isNotEmpty()) {
                     dao.insertMediaItems(remoteSeries.map { it.toEntity() })
@@ -302,6 +312,10 @@ class SaribRepository(context: Context) {
 
     fun isFavorite(id: String): Flow<Boolean> {
         return dao.isFavorite(id).flowOn(Dispatchers.IO)
+    }
+
+    suspend fun getSeriesDetails(seriesId: String): com.example.data.model.SeriesDetail? = withContext(Dispatchers.IO) {
+        xtreamClient.fetchSeriesDetails(seriesId)
     }
 }
 

@@ -1,17 +1,24 @@
 package com.example.ui.screens
 
 import android.app.Activity
+import android.app.PictureInPictureParams
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.pm.ActivityInfo
 import android.net.Uri
+import android.os.Build
+import android.util.Rational
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.Toast
 import androidx.annotation.OptIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -25,19 +32,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.Audiotrack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Forward10
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,6 +65,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,18 +79,25 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.TrackSelectionOverride
+import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.example.ui.theme.SaribCyanAccent
+import com.example.ui.theme.SaribDarkBackground
+import com.example.ui.theme.SaribDarkCard
 import com.example.ui.theme.SaribElectricBlue
 import com.example.ui.theme.SaribLiveRed
 import com.example.ui.theme.SaribTextMuted
@@ -90,6 +112,21 @@ private fun Context.findActivity(): Activity? = when (this) {
     is ContextWrapper -> baseContext.findActivity()
     else -> null
 }
+
+data class QualityOption(
+    val label: String,
+    val resolutionLabel: String,
+    val maxHeight: Int,
+    val maxBitrate: Int
+)
+
+data class AudioTrackOption(
+    val id: String,
+    val label: String,
+    val language: String,
+    val trackGroupIndex: Int,
+    val trackIndex: Int
+)
 
 @OptIn(UnstableApi::class)
 @Composable
@@ -111,21 +148,57 @@ fun PlayerScreen(
     var duration by remember { mutableLongStateOf(0L) }
     var areControlsVisible by remember { mutableStateOf(true) }
     var isControlsLocked by remember { mutableStateOf(false) }
+    var isLandscape by remember { mutableStateOf(true) }
     var resizeMode by remember { mutableStateOf(AspectRatioFrameLayout.RESIZE_MODE_FIT) }
 
-    // ExoPlayer initialization
+    // Dialog sheets
+    var showQualityDialog by remember { mutableStateOf(false) }
+    var showAudioDialog by remember { mutableStateOf(false) }
+
+    val qualityOptions = remember {
+        listOf(
+            QualityOption("تلقائي (الأفضل)", "Auto Adaptive", Int.MAX_VALUE, Int.MAX_VALUE),
+            QualityOption("1080p FHD", "Full HD 60fps", 1080, 8_000_000),
+            QualityOption("720p HD", "High Definition", 720, 4_000_000),
+            QualityOption("480p SD", "Standard Def", 480, 1_500_000),
+            QualityOption("360p توفير البيانات", "Data Saver", 360, 800_000)
+        )
+    }
+    var selectedQualityIndex by remember { mutableIntStateOf(0) }
+
+    var availableAudioTracks by remember { mutableStateOf<List<AudioTrackOption>>(emptyList()) }
+    var selectedAudioTrackIndex by remember { mutableIntStateOf(0) }
+
+    // High performance ExoPlayer configuration
     val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            playWhenReady = true
-            val mediaItem = MediaItem.fromUri(Uri.parse(streamUrl))
-            setMediaItem(mediaItem)
-            prepare()
-        }
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                2000,   // Min buffer: 2 seconds for fast start
+                15000,  // Max buffer: 15 seconds
+                1000,   // Playback start buffer: 1 second
+                1500    // Rebuffer start buffer: 1.5 seconds
+            )
+            .build()
+
+        ExoPlayer.Builder(context)
+            .setLoadControl(loadControl)
+            .build().apply {
+                playWhenReady = true
+                val mediaItem = MediaItem.fromUri(Uri.parse(streamUrl))
+                setMediaItem(mediaItem)
+                prepare()
+            }
     }
 
-    // Enter Immersive Fullscreen and restore on exit
+    // Force Landscape Mode on Enter, restore on exit + Immersive Fullscreen
     DisposableEffect(activity) {
         val window = activity?.window
+        val originalOrientation = activity?.requestedOrientation ?: ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+
+        // Set Landscape orientation like a game
+        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        isLandscape = true
+
         if (window != null) {
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
             insetsController.systemBarsBehavior =
@@ -150,12 +223,47 @@ fun PlayerScreen(
                 hasError = true
                 isBuffering = false
             }
+
+            override fun onTracksChanged(tracks: Tracks) {
+                val audioList = mutableListOf<AudioTrackOption>()
+                audioList.add(AudioTrackOption("default", "الصوت الافتراضي (تلقائي)", "ar", -1, -1))
+                
+                var trackCounter = 1
+                for (groupIndex in 0 until tracks.groups.size) {
+                    val group = tracks.groups[groupIndex]
+                    if (group.type == C.TRACK_TYPE_AUDIO) {
+                        for (trackIndex in 0 until group.length) {
+                            val format = group.getTrackFormat(trackIndex)
+                            val lang = format.language ?: "und"
+                            val langName = when (lang.lowercase()) {
+                                "ar", "ara", "arabic" -> "العربية"
+                                "en", "eng", "english" -> "الإنجليزية (English)"
+                                "fr", "fra", "french" -> "الفرنسية (Français)"
+                                "es", "spa", "spanish" -> "الإسبانية (Español)"
+                                else -> "المسار $trackCounter ($lang)"
+                            }
+                            audioList.add(
+                                AudioTrackOption(
+                                    id = "track_${groupIndex}_$trackIndex",
+                                    label = langName,
+                                    language = lang,
+                                    trackGroupIndex = groupIndex,
+                                    trackIndex = trackIndex
+                                )
+                            )
+                            trackCounter++
+                        }
+                    }
+                }
+                availableAudioTracks = audioList
+            }
         }
         exoPlayer.addListener(listener)
 
         onDispose {
             exoPlayer.removeListener(listener)
             exoPlayer.release()
+            activity?.requestedOrientation = originalOrientation
             if (window != null) {
                 val insetsController = WindowCompat.getInsetsController(window, window.decorView)
                 insetsController.show(WindowInsetsCompat.Type.systemBars())
@@ -172,10 +280,37 @@ fun PlayerScreen(
     }
 
     // Auto-hide controls timer
-    LaunchedEffect(areControlsVisible, isPlaying) {
-        if (areControlsVisible && isPlaying && !isControlsLocked) {
-            delay(4000)
+    LaunchedEffect(areControlsVisible, isPlaying, isControlsLocked) {
+        if (areControlsVisible && isPlaying && !isControlsLocked && !showQualityDialog && !showAudioDialog) {
+            delay(4500)
             areControlsVisible = false
+        }
+    }
+
+    // Screen rotation toggle function
+    val toggleScreenOrientation = {
+        if (isLandscape) {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            isLandscape = false
+        } else {
+            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            isLandscape = true
+        }
+    }
+
+    // Picture-in-Picture trigger function
+    val enterPiPMode: () -> Unit = {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                val params = PictureInPictureParams.Builder()
+                    .setAspectRatio(Rational(16, 9))
+                    .build()
+                activity?.enterPictureInPictureMode(params)
+            } catch (e: Exception) {
+                Toast.makeText(context, "تعذر تفعيل ميزة صورة في صورة على هذا الجهاز", Toast.LENGTH_SHORT).show()
+            }
+        } else {
+            Toast.makeText(context, "خاصية صورة في صورة غير مدعومة على إصدار أندرويد هذا", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -187,10 +322,11 @@ fun PlayerScreen(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
             ) {
-                if (!isControlsLocked) {
+                if (showQualityDialog || showAudioDialog) {
+                    showQualityDialog = false
+                    showAudioDialog = false
+                } else if (!isControlsLocked) {
                     areControlsVisible = !areControlsVisible
-                } else {
-                    areControlsVisible = true
                 }
             }
     ) {
@@ -219,11 +355,18 @@ fun PlayerScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(
-                    color = SaribCyanAccent,
-                    strokeWidth = 3.dp,
-                    modifier = Modifier.size(54.dp)
-                )
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    CircularProgressIndicator(
+                        color = SaribCyanAccent,
+                        strokeWidth = 3.dp,
+                        modifier = Modifier.size(54.dp)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        text = "جاري التحميل الفائق...",
+                        style = MaterialTheme.typography.bodySmall.copy(color = Color.White)
+                    )
+                }
             }
         }
 
@@ -237,33 +380,65 @@ fun PlayerScreen(
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "حدث خطأ أثناء تشغيل البث",
+                        text = "تعذر تشغيل هذا البث، جاري إعادة المحاولة...",
                         style = MaterialTheme.typography.titleMedium.copy(color = SaribLiveRed)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    IconButton(
-                        onClick = {
-                            hasError = false
-                            exoPlayer.prepare()
-                            exoPlayer.play()
-                        },
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(SaribElectricBlue)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.PlayArrow,
-                            contentDescription = "إعادة المحاولة",
-                            tint = Color.White
-                        )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        IconButton(
+                            onClick = {
+                                hasError = false
+                                exoPlayer.prepare()
+                                exoPlayer.play()
+                            },
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .background(SaribElectricBlue)
+                                .size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "إعادة المحاولة",
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }
         }
 
-        // Controls Overlay
+        // FLOATING UNLOCK BUTTON (When screen is locked)
+        if (isControlsLocked) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(20.dp),
+                contentAlignment = Alignment.TopEnd
+            ) {
+                IconButton(
+                    onClick = {
+                        isControlsLocked = false
+                        areControlsVisible = true
+                    },
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clip(CircleShape)
+                        .background(SaribCyanAccent)
+                        .testTag("unlock_screen_button")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LockOpen,
+                        contentDescription = "إلغاء قفل الشاشة",
+                        tint = Color.Black,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
+            }
+        }
+
+        // Controls Overlay (When not locked and visible)
         AnimatedVisibility(
-            visible = areControlsVisible,
+            visible = areControlsVisible && !isControlsLocked,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier.fillMaxSize()
@@ -274,9 +449,9 @@ fun PlayerScreen(
                     .background(
                         Brush.verticalGradient(
                             listOf(
-                                Color(0xCC000000),
-                                Color(0x40000000),
-                                Color(0xCC000000)
+                                Color(0xDD000000),
+                                Color(0x30000000),
+                                Color(0xEE000000)
                             )
                         )
                     )
@@ -290,7 +465,11 @@ fun PlayerScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Left group: Back & Title
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f, fill = false)
+                    ) {
                         IconButton(
                             onClick = onBackClick,
                             modifier = Modifier
@@ -312,27 +491,34 @@ fun PlayerScreen(
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold
-                                )
+                                ),
+                                maxLines = 1
                             )
                             if (subtitle.isNotEmpty()) {
                                 Text(
                                     text = subtitle,
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = SaribTextSecondary
-                                    )
+                                    ),
+                                    maxLines = 1
                                 )
                             }
                         }
                     }
 
-                    // Live Pill & Lock Button
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    // Right group: LIVE tag, Quality, Audio, PiP, Screen Rotate, Lock
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         if (isLive) {
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
                                     .background(SaribLiveRed)
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = "مباشر LIVE",
@@ -342,173 +528,466 @@ fun PlayerScreen(
                                     )
                                 )
                             }
-                            Spacer(modifier = Modifier.width(10.dp))
                         }
 
+                        // Quality Selector Button (زر الجودة)
                         IconButton(
-                            onClick = { isControlsLocked = !isControlsLocked },
+                            onClick = {
+                                showQualityDialog = true
+                                showAudioDialog = false
+                            },
                             modifier = Modifier
-                                .size(40.dp)
+                                .size(38.dp)
                                 .clip(CircleShape)
-                                .background(Color(0x66000000))
+                                .background(if (selectedQualityIndex != 0) SaribElectricBlue else Color(0x66000000))
+                                .testTag("quality_selector_button")
                         ) {
                             Icon(
-                                imageVector = if (isControlsLocked) Icons.Default.Lock else Icons.Default.LockOpen,
-                                contentDescription = "قفل عناصر التحكم",
-                                tint = if (isControlsLocked) SaribCyanAccent else Color.White
+                                imageVector = Icons.Default.HighQuality,
+                                contentDescription = "تغيير الجودة",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        // Audio Track Selector Button (زر مسارات الصوت)
+                        IconButton(
+                            onClick = {
+                                showAudioDialog = true
+                                showQualityDialog = false
+                            },
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(if (selectedAudioTrackIndex != 0) SaribElectricBlue else Color(0x66000000))
+                                .testTag("audio_track_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Audiotrack,
+                                contentDescription = "مسارات الصوت",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        // Picture-in-Picture Button (زر صورة في صورة)
+                        IconButton(
+                            onClick = enterPiPMode,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x66000000))
+                                .testTag("pip_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PictureInPictureAlt,
+                                contentDescription = "صورة في صورة PiP",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        // Screen Orientation Switcher (زر الوضع الأفقي / العمودي)
+                        IconButton(
+                            onClick = toggleScreenOrientation,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x66000000))
+                                .testTag("rotate_screen_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ScreenRotation,
+                                contentDescription = if (isLandscape) "الوضع العمودي" else "الوضع الأفقي",
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        // Screen Lock Button (زر قفل الشاشة)
+                        IconButton(
+                            onClick = {
+                                isControlsLocked = true
+                                areControlsVisible = false
+                                Toast.makeText(context, "تم قفل الشاشة لمنع اللمس غير المقصود", Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x66000000))
+                                .testTag("lock_screen_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "قفل الشاشة",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                 }
 
                 // Center Controls (Play/Pause, Rewind, Forward)
-                if (!isControlsLocked) {
-                    Row(
-                        modifier = Modifier.align(Alignment.Center),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(28.dp)
+                Row(
+                    modifier = Modifier.align(Alignment.Center),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(36.dp)
+                ) {
+                    // Rewind 10s
+                    IconButton(
+                        onClick = {
+                            val target = (exoPlayer.currentPosition - 10000).coerceAtLeast(0L)
+                            exoPlayer.seekTo(target)
+                        },
+                        modifier = Modifier
+                            .size(54.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x66000000))
                     ) {
-                        // Rewind 10s
-                        IconButton(
-                            onClick = {
-                                val target = (exoPlayer.currentPosition - 10000).coerceAtLeast(0L)
-                                exoPlayer.seekTo(target)
-                            },
-                            modifier = Modifier
-                                .size(50.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x66000000))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Replay10,
-                                contentDescription = "تأخير 10 ثوان",
-                                tint = Color.White,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Replay10,
+                            contentDescription = "تأخير 10 ثوان",
+                            tint = Color.White,
+                            modifier = Modifier.size(34.dp)
+                        )
+                    }
 
-                        // Play/Pause Button
-                        Box(
-                            modifier = Modifier
-                                .size(72.dp)
-                                .clip(CircleShape)
-                                .background(SaribElectricBlue)
-                                .clickable {
-                                    if (isPlaying) {
-                                        exoPlayer.pause()
-                                    } else {
-                                        exoPlayer.play()
-                                    }
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isPlaying) "إيقاف مؤقت" else "تشغيل",
-                                tint = Color.White,
-                                modifier = Modifier.size(42.dp)
+                    // Play/Pause Button
+                    Box(
+                        modifier = Modifier
+                            .size(76.dp)
+                            .clip(CircleShape)
+                            .background(
+                                Brush.radialGradient(
+                                    listOf(SaribElectricBlue, Color(0xFF0055D4))
+                                )
                             )
-                        }
-
-                        // Forward 10s
-                        IconButton(
-                            onClick = {
-                                val target = (exoPlayer.currentPosition + 10000).coerceAtMost(duration)
-                                exoPlayer.seekTo(target)
+                            .clickable {
+                                if (isPlaying) {
+                                    exoPlayer.pause()
+                                } else {
+                                    exoPlayer.play()
+                                }
                             },
-                            modifier = Modifier
-                                .size(50.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x66000000))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Forward10,
-                                contentDescription = "تقديم 10 ثوان",
-                                tint = Color.White,
-                                modifier = Modifier.size(32.dp)
-                            )
-                        }
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isPlaying) "إيقاف مؤقت" else "تشغيل",
+                            tint = Color.White,
+                            modifier = Modifier.size(44.dp)
+                        )
+                    }
+
+                    // Forward 10s
+                    IconButton(
+                        onClick = {
+                            val target = (exoPlayer.currentPosition + 10000).coerceAtMost(duration)
+                            exoPlayer.seekTo(target)
+                        },
+                        modifier = Modifier
+                            .size(54.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x66000000))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Forward10,
+                            contentDescription = "تقديم 10 ثوان",
+                            tint = Color.White,
+                            modifier = Modifier.size(34.dp)
+                        )
                     }
                 }
 
                 // Bottom Controls Bar
-                if (!isControlsLocked) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.BottomCenter)
-                    ) {
-                        // Progress Bar (if not live or has duration)
-                        if (duration > 0) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = formatDuration(currentPosition),
-                                    style = MaterialTheme.typography.labelSmall.copy(color = Color.White)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Slider(
-                                    value = if (duration > 0) currentPosition.toFloat() / duration else 0f,
-                                    onValueChange = { frac ->
-                                        val newPos = (frac * duration).toLong()
-                                        exoPlayer.seekTo(newPos)
-                                        currentPosition = newPos
-                                    },
-                                    colors = SliderDefaults.colors(
-                                        thumbColor = SaribCyanAccent,
-                                        activeTrackColor = SaribCyanAccent,
-                                        inactiveTrackColor = Color(0x66FFFFFF)
-                                    ),
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = formatDuration(duration),
-                                    style = MaterialTheme.typography.labelSmall.copy(color = Color.White)
-                                )
-                            }
-                        }
-
-                        // Bottom Actions (Aspect Ratio, Quality)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                ) {
+                    // Progress Bar (if not live or has duration)
+                    if (duration > 0) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
-                                text = if (isLive) "بث عالي الدقة HD • SARIB TV CDN" else "1080p FHD",
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    color = SaribCyanAccent,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                text = formatDuration(currentPosition),
+                                style = MaterialTheme.typography.labelSmall.copy(color = Color.White)
                             )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Slider(
+                                value = if (duration > 0) (currentPosition.toFloat() / duration).coerceIn(0f, 1f) else 0f,
+                                onValueChange = { frac ->
+                                    val newPos = (frac * duration).toLong()
+                                    exoPlayer.seekTo(newPos)
+                                    currentPosition = newPos
+                                },
+                                colors = SliderDefaults.colors(
+                                    thumbColor = SaribCyanAccent,
+                                    activeTrackColor = SaribCyanAccent,
+                                    inactiveTrackColor = Color(0x66FFFFFF)
+                                ),
+                                modifier = Modifier.weight(1f)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = formatDuration(duration),
+                                style = MaterialTheme.typography.labelSmall.copy(color = Color.White)
+                            )
+                        }
+                    }
 
+                    // Bottom Actions (Aspect Ratio, Active Quality Tag)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isLive) "بث فائق السرعة • سيرفر سحابي SARIB CDN" else qualityOptions[selectedQualityIndex].label,
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = SaribCyanAccent,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Aspect ratio toggle
+                            IconButton(
+                                onClick = {
+                                    resizeMode = when (resizeMode) {
+                                        AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                                        else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                    }
+                                    val modeName = when (resizeMode) {
+                                        AspectRatioFrameLayout.RESIZE_MODE_FIT -> "تناسب أصلي (Fit)"
+                                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "تكبير سينمائي (Zoom)"
+                                        else -> "ملء الشاشة بالكامل (Fill)"
+                                    }
+                                    Toast.makeText(context, modeName, Toast.LENGTH_SHORT).show()
+                                },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0x66000000))
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AspectRatio,
+                                    contentDescription = "نسبة العرض",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // QUALITY SELECTION MODAL
+        AnimatedVisibility(
+            visible = showQualityDialog,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(340.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(SaribDarkCard)
+                    .border(1.dp, SaribCyanAccent.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "اختيار جودة البث",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                        IconButton(
+                            onClick = { showQualityDialog = false },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "إغلاق", tint = SaribTextMuted)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    qualityOptions.forEachIndexed { index, option ->
+                        val isSelected = selectedQualityIndex == index
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (isSelected) SaribElectricBlue.copy(alpha = 0.3f) else Color(0x33000000))
+                                .border(
+                                    1.dp,
+                                    if (isSelected) SaribCyanAccent else Color.Transparent,
+                                    RoundedCornerShape(8.dp)
+                                )
+                                .clickable {
+                                    selectedQualityIndex = index
+                                    // Apply track selection parameters to ExoPlayer
+                                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                                        .buildUpon()
+                                        .setMaxVideoSize(option.maxHeight * 2, option.maxHeight)
+                                        .setMaxVideoBitrate(option.maxBitrate)
+                                        .build()
+                                    Toast.makeText(context, "تم ضبط الجودة: ${option.label}", Toast.LENGTH_SHORT).show()
+                                    showQualityDialog = false
+                                }
+                                .padding(horizontal = 12.dp, vertical = 10.dp)
+                        ) {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                // Aspect ratio toggle
-                                IconButton(
-                                    onClick = {
-                                        resizeMode = when (resizeMode) {
-                                            AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                                            AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-                                            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                                        }
-                                    },
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0x66000000))
-                                ) {
+                                Column {
+                                    Text(
+                                        text = option.label,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            color = if (isSelected) SaribCyanAccent else Color.White,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    )
+                                    Text(
+                                        text = option.resolutionLabel,
+                                        style = MaterialTheme.typography.labelSmall.copy(color = SaribTextMuted)
+                                    )
+                                }
+                                if (isSelected) {
                                     Icon(
-                                        imageVector = Icons.Default.AspectRatio,
-                                        contentDescription = "نسبة العرض",
-                                        tint = Color.White,
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = "محدد",
+                                        tint = SaribCyanAccent,
                                         modifier = Modifier.size(18.dp)
                                     )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // AUDIO TRACK SELECTION MODAL
+        AnimatedVisibility(
+            visible = showAudioDialog,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(340.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(SaribDarkCard)
+                    .border(1.dp, SaribCyanAccent.copy(alpha = 0.4f), RoundedCornerShape(16.dp))
+                    .padding(16.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "مسار الصوت واللغة",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                        IconButton(
+                            onClick = { showAudioDialog = false },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "إغلاق", tint = SaribTextMuted)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    if (availableAudioTracks.isEmpty()) {
+                        Text(
+                            text = "المسار الافتراضي هو المتاح للبث المباشر الحالي",
+                            style = MaterialTheme.typography.bodySmall.copy(color = SaribTextMuted),
+                            modifier = Modifier.padding(vertical = 12.dp)
+                        )
+                    } else {
+                        availableAudioTracks.forEachIndexed { index, track ->
+                            val isSelected = selectedAudioTrackIndex == index
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isSelected) SaribElectricBlue.copy(alpha = 0.3f) else Color(0x33000000))
+                                    .border(
+                                        1.dp,
+                                        if (isSelected) SaribCyanAccent else Color.Transparent,
+                                        RoundedCornerShape(8.dp)
+                                    )
+                                    .clickable {
+                                        selectedAudioTrackIndex = index
+                                        if (track.trackGroupIndex >= 0) {
+                                            val tracks = exoPlayer.currentTracks
+                                            if (track.trackGroupIndex < tracks.groups.size) {
+                                                val group = tracks.groups[track.trackGroupIndex]
+                                                exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                                                    .buildUpon()
+                                                    .setOverrideForType(
+                                                        TrackSelectionOverride(group.mediaTrackGroup, track.trackIndex)
+                                                    )
+                                                    .build()
+                                            }
+                                        } else {
+                                            exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                                                .buildUpon()
+                                                .clearOverridesOfType(C.TRACK_TYPE_AUDIO)
+                                                .build()
+                                        }
+                                        Toast.makeText(context, "تم تحديد الصوت: ${track.label}", Toast.LENGTH_SHORT).show()
+                                        showAudioDialog = false
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 10.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = track.label,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            color = if (isSelected) SaribCyanAccent else Color.White,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    )
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Default.Check,
+                                            contentDescription = "محدد",
+                                            tint = SaribCyanAccent,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -520,7 +999,12 @@ fun PlayerScreen(
 }
 
 private fun formatDuration(millis: Long): String {
-    val minutes = TimeUnit.MILLISECONDS.toMinutes(millis)
+    val hours = TimeUnit.MILLISECONDS.toHours(millis)
+    val minutes = TimeUnit.MILLISECONDS.toMinutes(millis) - TimeUnit.HOURS.toMinutes(hours)
     val seconds = TimeUnit.MILLISECONDS.toSeconds(millis) - TimeUnit.MINUTES.toSeconds(minutes)
-    return String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+    return if (hours > 0) {
+        String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds)
+    } else {
+        String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+    }
 }

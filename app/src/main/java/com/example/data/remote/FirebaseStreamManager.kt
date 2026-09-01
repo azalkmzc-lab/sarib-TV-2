@@ -333,4 +333,152 @@ class FirebaseStreamManager(private val context: Context) {
             isActive = true
         )
     }
+
+    suspend fun fetchCustomCategories(): List<com.example.data.model.ChannelCategory> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<com.example.data.model.ChannelCategory>()
+        try {
+            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/categories.json"
+            val request = Request.Builder().url(url).build()
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                val jsonObj = JSONObject(body)
+                val keys = jsonObj.keys()
+                var index = 0
+                val colors = listOf("#0088FF", "#9333EA", "#2563EB", "#059669", "#DC2626", "#D97706")
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    val obj = jsonObj.optJSONObject(key) ?: continue
+                    val name = obj.optString("name", "قسم خاص")
+                    val poster = obj.optString("poster", obj.optString("iconUrl", ""))
+                    list.add(
+                        com.example.data.model.ChannelCategory(
+                            id = key,
+                            name = name,
+                            subtitle = "قسم سحابي مخصص",
+                            channelCount = 0,
+                            iconUrl = poster,
+                            categoryType = "custom",
+                            gradientColorHex = colors[index % colors.size]
+                        )
+                    )
+                    index++
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Custom categories fetch error: ${e.message}")
+        }
+        list
+    }
+
+    suspend fun fetchCustomChannels(): List<com.example.data.model.ChannelItem> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<com.example.data.model.ChannelItem>()
+        try {
+            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/channels.json"
+            val request = Request.Builder().url(url).build()
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                val jsonObj = JSONObject(body)
+                val keys = jsonObj.keys()
+                var sort = 1
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    val obj = jsonObj.optJSONObject(key) ?: continue
+                    val name = obj.optString("name", "قناة خاصة")
+                    val catId = obj.optString("categoryId", obj.optString("category_id", "custom"))
+                    val logo = obj.optString("logo", obj.optString("logoUrl", ""))
+                    val s1 = obj.optString("server1", "")
+                    val s2 = obj.optString("server2", "")
+                    val urlDirect = obj.optString("url", "")
+                    val mpd = obj.optString("mpd", "")
+                    val streamUrl = listOf(s1, s2, mpd, urlDirect).firstOrNull { it.isNotBlank() } ?: ""
+                    val backupUrl = if (s2.isNotBlank() && s2 != streamUrl) s2 else urlDirect
+
+                    if (streamUrl.isNotBlank()) {
+                        list.add(
+                            com.example.data.model.ChannelItem(
+                                id = "fb_ch_$key",
+                                name = name,
+                                categoryId = catId,
+                                categoryName = "قنوات Firebase",
+                                logoUrl = logo,
+                                streamUrl = streamUrl,
+                                backupUrl = backupUrl,
+                                country = "سحابي Cloud",
+                                language = "العربية",
+                                isFavorite = false,
+                                isEnabled = true,
+                                sortOrder = sort++,
+                                viewsCount = (500..3000).random()
+                            )
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Custom channels fetch error: ${e.message}")
+        }
+        list
+    }
+
+    suspend fun fetchCustomMovies(): List<com.example.data.model.MediaItem> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<com.example.data.model.MediaItem>()
+        try {
+            val urls = listOf(
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/movies.json",
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/custom_movies.json"
+            )
+            for (url in urls) {
+                val request = Request.Builder().url(url).build()
+                val response = httpClient.newCall(request).execute()
+                val body = response.body?.string().orEmpty().trim()
+                if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                    val jsonObj = JSONObject(body)
+                    val keys = jsonObj.keys()
+                    var i = 0
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        val obj = jsonObj.optJSONObject(key) ?: continue
+                        val title = obj.optString("title", obj.optString("name", "فيلم"))
+                        val poster = obj.optString("poster", obj.optString("posterUrl", obj.optString("image", "")))
+                        val rating = obj.optString("rating", "8.9")
+                        val year = obj.optString("year", "2024")
+                        val story = obj.optString("story", obj.optString("description", "فيلم مخصص عبر لوحة التحكم"))
+                        val streamUrl = listOf(
+                            obj.optString("server1", ""),
+                            obj.optString("server2", ""),
+                            obj.optString("streamUrl", ""),
+                            obj.optString("url", "")
+                        ).firstOrNull { it.isNotBlank() } ?: ""
+
+                        if (title.isNotBlank() && streamUrl.isNotBlank()) {
+                            list.add(
+                                com.example.data.model.MediaItem(
+                                    id = "fb_mov_$key",
+                                    title = title,
+                                    posterUrl = poster,
+                                    backdropUrl = poster,
+                                    type = ContentType.MOVIE,
+                                    year = year,
+                                    rating = rating,
+                                    genre = "أفلام سينما",
+                                    description = story,
+                                    duration = "120 دقيقة",
+                                    streamUrl = streamUrl,
+                                    isTop = i < 5,
+                                    topRank = String.format("%02d", i + 1),
+                                    isFavorite = false
+                                )
+                            )
+                            i++
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Custom movies fetch error: ${e.message}")
+        }
+        list
+    }
 }

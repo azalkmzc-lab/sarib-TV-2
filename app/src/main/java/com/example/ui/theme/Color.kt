@@ -6,6 +6,7 @@ import androidx.compose.ui.graphics.Color
 val SaribDarkBackground = Color(0xFF070C14)
 val SaribDarkSurface = Color(0xFF0E1624)
 val SaribDarkSurfaceVariant = Color(0xFF142033)
+val SaribDarkCard = Color(0xFF111C2D)
 val SaribCardBg = Color(0xFF111C2D)
 val SaribCardBgSecondary = Color(0xFF16253C)
 val SaribCardBorder = Color(0xFF223652)
@@ -16,6 +17,7 @@ val SaribElectricBlue = Color(0xFF0088FF)
 val SaribCyanAccent = Color(0xFF00C8FF)
 val SaribBlueGlow = Color(0x660088FF)
 val SaribBlueGlowSubtle = Color(0x330088FF)
+val SaribGoldRating = Color(0xFFF59E0B)
 
 // Functional Colors
 val SaribTextPrimary = Color(0xFFFFFFFF)
