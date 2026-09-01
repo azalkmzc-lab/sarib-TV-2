@@ -49,6 +49,12 @@ interface SaribDao {
     @Query("SELECT * FROM categories")
     fun getAllCategories(): Flow<List<CategoryEntity>>
 
+    @Query("SELECT * FROM categories WHERE categoryType = :type")
+    fun getCategoriesByType(type: String): Flow<List<CategoryEntity>>
+
+    @Query("SELECT * FROM categories WHERE categoryType IN (:types)")
+    fun getCategoriesByTypes(types: List<String>): Flow<List<CategoryEntity>>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertCategories(categories: List<CategoryEntity>)
 

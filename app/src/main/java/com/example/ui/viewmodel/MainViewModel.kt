@@ -24,6 +24,7 @@ sealed interface AppScreen {
     object Splash : AppScreen
     object Main : AppScreen
     data class CategoryDetail(val category: ChannelCategory) : AppScreen
+    data class MediaCategoryDetail(val category: ChannelCategory) : AppScreen
     data class SeriesDetail(val mediaItem: MediaItem) : AppScreen
     data class Player(val title: String, val subtitle: String, val streamUrl: String, val isLive: Boolean = false) : AppScreen
     object Search : AppScreen
@@ -57,6 +58,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val categories: StateFlow<List<ChannelCategory>> = repository.getAllCategories()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val entertainmentCategories: StateFlow<List<ChannelCategory>> = repository.getEntertainmentCategories()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val vodCategories: StateFlow<List<ChannelCategory>> = repository.getVodCategories()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val seriesCategories: StateFlow<List<ChannelCategory>> = repository.getSeriesCategories()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val mostWatchedChannels: StateFlow<List<ChannelItem>> = repository.getMostWatchedChannels()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -84,6 +94,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _categoryChannels = MutableStateFlow<List<ChannelItem>>(emptyList())
     val categoryChannels: StateFlow<List<ChannelItem>> = _categoryChannels.asStateFlow()
+
+    private val _categoryMediaList = MutableStateFlow<List<MediaItem>>(emptyList())
+    val categoryMediaList: StateFlow<List<MediaItem>> = _categoryMediaList.asStateFlow()
 
     private val _isCategoryLoading = MutableStateFlow(false)
     val isCategoryLoading: StateFlow<Boolean> = _isCategoryLoading.asStateFlow()
@@ -198,10 +211,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _currentScreen.value = AppScreen.Main
                 return true
             }
-        } else if (curr is AppScreen.CategoryDetail) {
-            _currentScreen.value = AppScreen.Main
-            backStack.clear()
-            return true
+        } else if (curr is AppScreen.CategoryDetail || curr is AppScreen.MediaCategoryDetail) {
+            if (backStack.isNotEmpty()) {
+                val previous = backStack.removeAt(backStack.lastIndex)
+                _currentScreen.value = previous
+                return true
+            } else {
+                _currentScreen.value = AppScreen.Main
+                return true
+            }
         } else if (curr is AppScreen.Search) {
             _currentScreen.value = AppScreen.Main
             backStack.clear()
@@ -246,6 +264,35 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun refreshCategory(category: ChannelCategory) {
         openCategory(category, forceRefresh = true)
+    }
+
+    fun openMediaCategory(category: ChannelCategory, forceRefresh: Boolean = false) {
+        _selectedCategory.value = category
+        val curr = _currentScreen.value
+        if (curr != AppScreen.Splash && curr !is AppScreen.MediaCategoryDetail) {
+            backStack.add(curr)
+        }
+        _currentScreen.value = AppScreen.MediaCategoryDetail(category)
+
+        viewModelScope.launch {
+            _isCategoryLoading.value = true
+            try {
+                val media = if (category.categoryType == "series") {
+                    repository.getSeriesForCategoryOnDemand(category.id)
+                } else {
+                    repository.getMoviesForCategoryOnDemand(category.id)
+                }
+                _categoryMediaList.value = media
+            } catch (e: Exception) {
+                // Keep current or empty
+            } finally {
+                _isCategoryLoading.value = false
+            }
+        }
+    }
+
+    fun refreshMediaCategory(category: ChannelCategory) {
+        openMediaCategory(category, forceRefresh = true)
     }
 
     fun toggleViewMode() {

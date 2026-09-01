@@ -30,6 +30,7 @@ import com.example.ui.screens.FavoritesScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MatchesScreen
 import com.example.ui.screens.ChannelsScreen
+import com.example.ui.screens.MediaCategoryDetailScreen
 import com.example.ui.screens.PlayerScreen
 import com.example.ui.screens.SearchScreen
 import com.example.ui.screens.SeriesDetailScreen
@@ -54,6 +55,9 @@ fun SaribApp(
 
     val heroSliders by viewModel.heroSliders.collectAsState()
     val categories by viewModel.categories.collectAsState()
+    val entertainmentCategories by viewModel.entertainmentCategories.collectAsState()
+    val vodCategories by viewModel.vodCategories.collectAsState()
+    val seriesCategories by viewModel.seriesCategories.collectAsState()
     val mostWatchedChannels by viewModel.mostWatchedChannels.collectAsState()
     val allMatches by viewModel.allMatches.collectAsState()
     val featuredMovies by viewModel.featuredMovies.collectAsState()
@@ -62,6 +66,7 @@ fun SaribApp(
     val favorites by viewModel.favorites.collectAsState()
 
     val categoryChannels by viewModel.categoryChannels.collectAsState()
+    val categoryMediaList by viewModel.categoryMediaList.collectAsState()
     val isCategoryLoading by viewModel.isCategoryLoading.collectAsState()
     val currentSeriesDetail by viewModel.currentSeriesDetail.collectAsState()
     val isSeriesLoading by viewModel.isSeriesLoading.collectAsState()
@@ -264,6 +269,10 @@ fun SaribApp(
                                 movies = featuredMovies,
                                 series = featuredSeries,
                                 anime = animePicks,
+                                entertainmentCategories = entertainmentCategories,
+                                vodCategories = vodCategories,
+                                seriesCategories = seriesCategories,
+                                onCategoryClick = { cat -> viewModel.openMediaCategory(cat) },
                                 onMediaClick = handleMediaClick,
                                 onMenuClick = { scope.launch { drawerState.open() } },
                                 onTelegramClick = openTelegram,
@@ -333,6 +342,17 @@ fun SaribApp(
                                 isFav = channel.isFavorite
                             )
                         }
+                    )
+                }
+
+                is AppScreen.MediaCategoryDetail -> {
+                    MediaCategoryDetailScreen(
+                        category = screen.category,
+                        mediaList = categoryMediaList,
+                        isLoading = isCategoryLoading,
+                        onBackClick = { viewModel.popBack() },
+                        onRefresh = { viewModel.refreshMediaCategory(screen.category) },
+                        onMediaClick = handleMediaClick
                     )
                 }
 

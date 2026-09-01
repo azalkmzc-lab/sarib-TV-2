@@ -1211,3 +1211,51 @@ fun SaribBottomNav(
         }
     }
 }
+
+@Composable
+fun ActionButtonCard(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit,
+    isActive: Boolean = false,
+    modifier: Modifier = Modifier
+) {
+    androidx.compose.material3.Card(
+        modifier = modifier
+            .height(58.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .border(
+                1.dp,
+                if (isActive) SaribCyanAccent else SaribCardBorder,
+                RoundedCornerShape(16.dp)
+            )
+            .clickable { onClick() },
+        colors = androidx.compose.material3.CardDefaults.cardColors(
+            containerColor = if (isActive) SaribElectricBlue.copy(alpha = 0.15f) else SaribCardBg
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = title,
+                tint = if (isActive) SaribCyanAccent else SaribTextSecondary,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = if (isActive) SaribCyanAccent else SaribTextPrimary
+                )
+            )
+        }
+    }
+}
+

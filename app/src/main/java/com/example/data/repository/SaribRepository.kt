@@ -88,16 +88,20 @@ class SaribRepository(private val context: Context) {
             // 4. Fast Startup: Fetch Categories & Home essentials only (On-demand loading for channel streams!)
             val syncResult = coroutineScope {
                 val liveCategoriesDeferred = async { xtreamClient.fetchLiveCategories() }
+                val vodCategoriesDeferred = async { xtreamClient.fetchVodCategories() }
+                val seriesCategoriesDeferred = async { xtreamClient.fetchSeriesCategories() }
                 val customCatsDeferred = async { firebaseStreamManager.fetchCustomCategories() }
                 val customChannelsDeferred = async { firebaseStreamManager.fetchCustomChannels() }
                 val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies() }
                 val matchesDeferred = async { matchesClient.fetchMatches(0) }
-                // Fetch only top 15 preview streams for Home screen carousel/most watched
+                // Fetch only top preview streams for Home screen carousel/most watched
                 val topLiveStreamsDeferred = async { xtreamClient.fetchLiveStreams(limit = 15) }
-                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 10) }
-                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 10) }
+                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 12) }
+                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 12) }
 
                 val remoteCategories = liveCategoriesDeferred.await()
+                val vodCategories = vodCategoriesDeferred.await()
+                val seriesCategories = seriesCategoriesDeferred.await()
                 val customCats = customCatsDeferred.await()
                 val customChannels = customChannelsDeferred.await()
                 val customMovies = customMoviesDeferred.await()
@@ -106,7 +110,7 @@ class SaribRepository(private val context: Context) {
                 val topMovies = topMoviesDeferred.await()
                 val topSeries = topSeriesDeferred.await()
 
-                val allCats = (customCats + remoteCategories).distinctBy { it.id }
+                val allCats = (customCats + remoteCategories + vodCategories + seriesCategories).distinctBy { it.id }
                 val allChans = (customChannels + topStreams).distinctBy { it.id }
                 val allMovs = (customMovies + topMovies).distinctBy { it.id }
 
@@ -310,6 +314,24 @@ class SaribRepository(private val context: Context) {
 
     fun getAllCategories(): Flow<List<ChannelCategory>> {
         return dao.getAllCategories().map { list ->
+            list.map { it.toModel() }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    fun getEntertainmentCategories(): Flow<List<ChannelCategory>> {
+        return dao.getCategoriesByTypes(listOf("movies", "series", "entertainment", "anime")).map { list ->
+            list.map { it.toModel() }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    fun getVodCategories(): Flow<List<ChannelCategory>> {
+        return dao.getCategoriesByType("movies").map { list ->
+            list.map { it.toModel() }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    fun getSeriesCategories(): Flow<List<ChannelCategory>> {
+        return dao.getCategoriesByType("series").map { list ->
             list.map { it.toModel() }
         }.flowOn(Dispatchers.IO)
     }
