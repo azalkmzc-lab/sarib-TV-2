@@ -58,7 +58,6 @@ class MatchesApiClient(
                 }
             } else if (trimmed.startsWith("{")) {
                 val rootObj = JSONObject(trimmed)
-                // Might have "matches", "data", "result", or "items"
                 val array = rootObj.optJSONArray("matches")
                     ?: rootObj.optJSONArray("data")
                     ?: rootObj.optJSONArray("result")
@@ -70,7 +69,6 @@ class MatchesApiClient(
                         parseMatchObject(obj, i)?.let { matchesList.add(it) }
                     }
                 } else {
-                    // Try iterating keys if categories are keyed
                     val keys = rootObj.keys()
                     var index = 0
                     while (keys.hasNext()) {
@@ -113,6 +111,10 @@ class MatchesApiClient(
         val homeScore = obj.optInt("home_score", obj.optInt("team1_score", obj.optInt("score1", 0)))
         val awayScore = obj.optInt("away_score", obj.optInt("team2_score", obj.optInt("score2", 0)))
 
+        val stadium = obj.optString("stadium", obj.optString("venue", obj.optString("ground", "الملعب الرئيسي")))
+        val commentator = obj.optString("commentator", obj.optString("voice", obj.optString("speaker", "المعلق المعتمد")))
+        val channelName = obj.optString("channel", obj.optString("tv", obj.optString("channel_name", "beIN SPORTS HD")))
+
         val isLive = rawStatus.contains("مباشر", ignoreCase = true) ||
                 rawStatus.contains("live", ignoreCase = true) ||
                 rawStatus.contains("شوط", ignoreCase = true) ||
@@ -125,8 +127,14 @@ class MatchesApiClient(
             else -> "لم تبدأ"
         }
 
-        // Try extracting stream link if any
-        val streamUrl = obj.optString("stream_url", obj.optString("live_url", obj.optString("server", obj.optString("link", ""))))
+        val s1 = obj.optString("server1", obj.optString("server_1", ""))
+        val s2 = obj.optString("server2", obj.optString("server_2", ""))
+        val s3 = obj.optString("server3", obj.optString("server_3", ""))
+        val s4 = obj.optString("server4", obj.optString("server_4", ""))
+        val s5 = obj.optString("server5", obj.optString("server_5", ""))
+
+        val rawStream = obj.optString("stream_url", obj.optString("live_url", obj.optString("server", obj.optString("link", obj.optString("url", "")))))
+        val streamUrl = listOf(rawStream, s1, s2, s3).firstOrNull { it.isNotBlank() } ?: ""
 
         return MatchItem(
             id = id,
@@ -143,7 +151,15 @@ class MatchesApiClient(
             awayScore = awayScore,
             streamUrl = streamUrl,
             isLive = isLive,
-            isFavorite = false
+            isFavorite = false,
+            stadium = stadium,
+            commentator = commentator,
+            channelName = channelName,
+            server1 = s1,
+            server2 = s2,
+            server3 = s3,
+            server4 = s4,
+            server5 = s5
         )
     }
 }

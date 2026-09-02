@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -26,7 +27,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.model.ContentType
+import com.example.data.model.MatchItem
+import com.example.ui.components.MatchDetailsDialog
 import com.example.ui.components.SaribDrawerContent
+import com.example.ui.components.SettingsDialog
 import com.example.ui.screens.CategoryDetailScreen
 import com.example.ui.screens.EntertainmentScreen
 import com.example.ui.screens.FavoritesScreen
@@ -89,6 +93,10 @@ fun SaribApp(
 
     var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
+    // Dialog state for Match Details and Settings
+    var selectedMatchForDetails by remember { mutableStateOf<MatchItem?>(null) }
+    var showSettingsDialog by remember { mutableStateOf(false) }
+
     val openTelegram: () -> Unit = {
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://t.me/sarib_tv"))
@@ -115,6 +123,10 @@ fun SaribApp(
     BackHandler {
         if (drawerState.isOpen) {
             scope.launch { drawerState.close() }
+        } else if (selectedMatchForDetails != null) {
+            selectedMatchForDetails = null
+        } else if (showSettingsDialog) {
+            showSettingsDialog = false
         } else {
             val handled = viewModel.popBack()
             if (!handled) {
@@ -131,6 +143,33 @@ fun SaribApp(
                 }
             }
         }
+    }
+
+    // MATCH DETAILS & MULTI-SERVER DIALOG
+    selectedMatchForDetails?.let { match ->
+        MatchDetailsDialog(
+            match = match,
+            onDismissRequest = { selectedMatchForDetails = null },
+            onWatchMatch = { selectedMatch, streamUrl ->
+                selectedMatchForDetails = null
+                viewModel.playMedia(
+                    title = "${selectedMatch.homeTeam} vs ${selectedMatch.awayTeam}",
+                    subtitle = "${selectedMatch.leagueName} • ${selectedMatch.commentator.ifEmpty { "بث مباشر" }}",
+                    streamUrl = streamUrl,
+                    isLive = selectedMatch.isLive
+                )
+            }
+        )
+    }
+
+    // SETTINGS DIALOG (Theme, Language, Cache)
+    if (showSettingsDialog) {
+        SettingsDialog(
+            onDismissRequest = { showSettingsDialog = false },
+            onClearCache = {
+                viewModel.clearDatabaseCache()
+            }
+        )
     }
 
     ModalNavigationDrawer(
@@ -213,12 +252,7 @@ fun SaribApp(
                                     )
                                 },
                                 onMatchClick = { match ->
-                                    viewModel.playMedia(
-                                        title = "${match.homeTeam} vs ${match.awayTeam}",
-                                        subtitle = match.leagueName,
-                                        streamUrl = match.streamUrl,
-                                        isLive = match.isLive
-                                    )
+                                    selectedMatchForDetails = match
                                 },
                                 onMediaClick = handleMediaClick,
                                 onHeroWatchClick = { banner ->
@@ -260,12 +294,7 @@ fun SaribApp(
                                 selectedDate = selectedMatchDate,
                                 onDateSelected = { date, offset -> viewModel.selectMatchDate(date, offset) },
                                 onMatchClick = { match ->
-                                    viewModel.playMedia(
-                                        title = "${match.homeTeam} vs ${match.awayTeam}",
-                                        subtitle = match.leagueName,
-                                        streamUrl = match.streamUrl,
-                                        isLive = match.isLive
-                                    )
+                                    selectedMatchForDetails = match
                                 },
                                 onMenuClick = { scope.launch { drawerState.open() } },
                                 onTelegramClick = openTelegram,

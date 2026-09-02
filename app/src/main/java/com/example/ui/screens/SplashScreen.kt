@@ -1,6 +1,7 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -24,7 +26,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -40,13 +42,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
-import com.example.ui.theme.SaribBlueGlow
+import com.example.data.local.tr
+import com.example.ui.components.SaribLoadingIndicator
 import com.example.ui.theme.SaribCardBg
 import com.example.ui.theme.SaribCardBgSecondary
 import com.example.ui.theme.SaribCardBorder
@@ -66,12 +68,34 @@ fun SplashScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse")
+    val infiniteTransition = rememberInfiniteTransition(label = "splash_motion")
+    
+    // Smooth cinematic poster scrolling offsets
+    val colOffset1 by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -300f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(12000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "col1"
+    )
+
+    val colOffset2 by infiniteTransition.animateFloat(
+        initialValue = -300f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(14000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "col2"
+    )
+
     val pulseScale by infiniteTransition.animateFloat(
         initialValue = 0.98f,
         targetValue = 1.02f,
         animationSpec = infiniteRepeatable(
-            animation = tween(1500, easing = FastOutSlowInEasing),
+            animation = tween(1600, easing = FastOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "scale"
@@ -82,13 +106,37 @@ fun SplashScreen(
             .fillMaxSize()
             .background(SaribDarkBackground)
     ) {
-        // Angled Posters Wallpaper Background
-        Image(
-            painter = painterResource(id = R.drawable.splash_posters_bg),
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
+        // Animated Angled Posters Wallpaper Background
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .rotate(-8f)
+                .scale(1.25f)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Column 1
+                Box(modifier = Modifier.weight(1f).offset(y = colOffset1.dp)) {
+                    Image(
+                        painter = painterResource(id = R.drawable.splash_posters_bg),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+                // Column 2
+                Box(modifier = Modifier.weight(1f).offset(y = colOffset2.dp)) {
+                    Image(
+                        painter = painterResource(id = R.drawable.splash_posters_bg),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+        }
 
         // Dark Vignette & Gradient Overlay
         Box(
@@ -97,8 +145,8 @@ fun SplashScreen(
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0xCC070C14),
-                            Color(0xEE070C14),
+                            Color(0xDD070C14),
+                            Color(0xFA070C14),
                             Color(0xFF070C14)
                         )
                     )
@@ -112,19 +160,19 @@ fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Main SARIB TV Center Card matching Screenshot 1
+            // Main SARIB TV Center Card
             Surface(
                 modifier = Modifier
-                    .fillMaxWidth(0.85f)
+                    .fillMaxWidth(0.88f)
                     .scale(pulseScale)
-                    .shadow(24.dp, RoundedCornerShape(26.dp))
-                    .clip(RoundedCornerShape(26.dp))
+                    .shadow(32.dp, RoundedCornerShape(28.dp))
+                    .clip(RoundedCornerShape(28.dp))
                     .border(
                         1.5.dp,
                         Brush.verticalGradient(
-                            listOf(SaribCyanAccent.copy(alpha = 0.6f), SaribCardBorder)
+                            listOf(SaribCyanAccent.copy(alpha = 0.7f), SaribCardBorder)
                         ),
-                        RoundedCornerShape(26.dp)
+                        RoundedCornerShape(28.dp)
                     ),
                 color = SaribCardBg
             ) {
@@ -135,20 +183,20 @@ fun SplashScreen(
                                 listOf(SaribCardBgSecondary, SaribCardBg)
                             )
                         )
-                        .padding(vertical = 36.dp, horizontal = 20.dp),
+                        .padding(vertical = 36.dp, horizontal = 22.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        // Glowing Emblem
+                        // Glowing Logo Emblem
                         Box(
                             modifier = Modifier
-                                .size(90.dp)
-                                .shadow(16.dp, CircleShape)
+                                .size(92.dp)
+                                .shadow(20.dp, CircleShape)
                                 .clip(CircleShape)
                                 .background(Color(0xFF060B12))
-                                .border(2.dp, SaribCyanAccent, CircleShape),
+                                .border(2.5.dp, SaribCyanAccent, CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Image(
@@ -197,30 +245,28 @@ fun SplashScreen(
 
             Spacer(modifier = Modifier.height(30.dp))
 
-            // Loading / Status Card below central card matching Screenshot 1
+            // Loading / Status Card
             if (errorMessage == null) {
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth(0.75f)
-                        .clip(RoundedCornerShape(18.dp))
-                        .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(18.dp)),
+                        .fillMaxWidth(0.82f)
+                        .clip(RoundedCornerShape(20.dp))
+                        .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(20.dp)),
                     color = SaribCardBg
                 ) {
                     Row(
                         modifier = Modifier
                             .background(SaribCardBg)
-                            .padding(horizontal = 18.dp, vertical = 14.dp),
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(22.dp),
-                            color = SaribCyanAccent,
-                            strokeWidth = 2.5.dp
+                        SaribLoadingIndicator(
+                            size = 28.dp
                         )
                         Spacer(modifier = Modifier.width(14.dp))
                         Text(
-                            text = stringResource(id = R.string.connecting_to_server),
+                            text = tr("connecting"),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 color = SaribTextPrimary,
                                 fontWeight = FontWeight.SemiBold
@@ -232,13 +278,13 @@ fun SplashScreen(
                 // Connection Error & Retry
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth(0.85f)
-                        .clip(RoundedCornerShape(18.dp))
-                        .border(1.dp, SaribLiveRed.copy(alpha = 0.5f), RoundedCornerShape(18.dp)),
+                        .fillMaxWidth(0.88f)
+                        .clip(RoundedCornerShape(20.dp))
+                        .border(1.dp, SaribLiveRed.copy(alpha = 0.6f), RoundedCornerShape(20.dp)),
                     color = SaribCardBg
                 ) {
                     Column(
-                        modifier = Modifier.padding(18.dp),
+                        modifier = Modifier.padding(20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -260,7 +306,7 @@ fun SplashScreen(
                             modifier = Modifier.testTag("retry_button")
                         ) {
                             Text(
-                                text = stringResource(id = R.string.retry),
+                                text = tr("retry"),
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold

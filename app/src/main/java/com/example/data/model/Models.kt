@@ -26,7 +26,12 @@ data class ChannelItem(
     val isFavorite: Boolean = false,
     val isEnabled: Boolean = true,
     val sortOrder: Int = 0,
-    val viewsCount: Int = 0
+    val viewsCount: Int = 0,
+    val server1: String = "",
+    val server2: String = "",
+    val server3: String = "",
+    val server4: String = "",
+    val server5: String = ""
 )
 
 data class ChannelCategory(
@@ -68,7 +73,16 @@ data class MatchItem(
     val awayScore: Int = 0,
     val streamUrl: String = "",
     val isLive: Boolean = false,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val stadium: String = "الملعب الرئيسي",
+    val commentator: String = "معلق المباراة",
+    val channelName: String = "قناة البث المباشر",
+    val server1: String = "",
+    val server2: String = "",
+    val server3: String = "",
+    val server4: String = "",
+    val server5: String = "",
+    val hasAlert: Boolean = false
 )
 
 data class MediaItem(
@@ -88,7 +102,12 @@ data class MediaItem(
     val isTop: Boolean = false,
     val topRank: String = "01",
     val isFavorite: Boolean = false,
-    val rawSeriesId: String = "" // Series ID in Xtream
+    val rawSeriesId: String = "", // Series ID in Xtream
+    val server1: String = "",
+    val server2: String = "",
+    val server3: String = "",
+    val server4: String = "",
+    val server5: String = ""
 )
 
 data class EpisodeItem(
@@ -139,16 +158,7 @@ data class ApiSourceConfig(
 data class AdminLog(
     val id: Long = 0,
     val timestamp: String,
-    val action: String,
-    val details: String
-)
-
-data class ServerStats(
-    val totalChannels: Int = 0,
-    val totalMovies: Int = 0,
-    val totalSeries: Int = 0,
-    val totalMatches: Int = 0,
-    val activeUsers: Int = 1420,
-    val serverStatus: String = "متصل وسريع",
-    val lastSyncTime: String = "الآن"
+    val actionType: String,
+    val details: String,
+    val operator: String = "System"
 )

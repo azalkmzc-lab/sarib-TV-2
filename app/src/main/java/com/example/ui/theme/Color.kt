@@ -12,6 +12,23 @@ val SaribCardBgSecondary = Color(0xFF16253C)
 val SaribCardBorder = Color(0xFF223652)
 val SaribCardBorderSubtle = Color(0xFF1A2B42)
 
+// AMOLED Theme Palette
+val SaribAmoledBackground = Color(0xFF000000)
+val SaribAmoledSurface = Color(0xFF080808)
+val SaribAmoledCard = Color(0xFF101010)
+val SaribAmoledBorder = Color(0xFF262626)
+
+// Light Theme Palette
+val SaribLightBackground = Color(0xFFF1F5F9)
+val SaribLightSurface = Color(0xFFFFFFFF)
+val SaribLightSurfaceVariant = Color(0xFFE2E8F0)
+val SaribLightCard = Color(0xFFFFFFFF)
+val SaribLightCardBorder = Color(0xFFCBD5E1)
+val SaribLightCardBorderSubtle = Color(0xFFE2E8F0)
+val SaribLightTextPrimary = Color(0xFF0F172A)
+val SaribLightTextSecondary = Color(0xFF475569)
+val SaribLightTextMuted = Color(0xFF64748B)
+
 // Neon & Electric Accents
 val SaribElectricBlue = Color(0xFF0088FF)
 val SaribCyanAccent = Color(0xFF00C8FF)

@@ -332,4 +332,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             repository.toggleFavorite(itemId, title, subtitle, type, streamUrl, isFav)
         }
     }
+
+    fun clearDatabaseCache() {
+        viewModelScope.launch {
+            repository.clearAllCache()
+            startConnectionFlow()
+        }
+    }
 }

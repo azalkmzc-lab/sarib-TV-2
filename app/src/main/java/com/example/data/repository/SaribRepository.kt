@@ -52,14 +52,14 @@ class SaribRepository(private val context: Context) {
 
     suspend fun initializeBackendConnection(): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            // 1. Security Check (Anti-VPN & Proxy / CA certificate tampering protection)
+            // 1. Security Check
             val securityStatus = SecurityChecker.performSecurityAudit(context)
             if (!securityStatus.isSecure) {
                 Log.w("SaribRepository", "Security issue detected: ${securityStatus.message}")
                 return@withContext Result.failure(Exception(securityStatus.message))
             }
 
-            // 2. Fetch remote config & multi-sliders from Firebase
+            // 2. Fetch remote config from Firebase
             try {
                 val firebaseConfig = firebaseStreamManager.fetchRemoteConfig()
                 currentRemoteConfig = firebaseConfig
@@ -85,7 +85,7 @@ class SaribRepository(private val context: Context) {
                 Log.w("SaribRepository", "Could not load Firebase sliders: ${e.message}")
             }
 
-            // 4. Fast Startup: Fetch Categories & Home essentials only (8 items max for preview, on-demand loading for rest!)
+            // 4. Ultra-Fast Startup: Fetch categories and ONLY 3 preview items per category for lightning fast entrance!
             val syncResult = coroutineScope {
                 val liveCategoriesDeferred = async { xtreamClient.fetchLiveCategories() }
                 val vodCategoriesDeferred = async { xtreamClient.fetchVodCategories() }
@@ -94,10 +94,11 @@ class SaribRepository(private val context: Context) {
                 val customChannelsDeferred = async { firebaseStreamManager.fetchCustomChannels() }
                 val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies() }
                 val matchesDeferred = async { matchesClient.fetchMatches(0) }
-                // Fetch only 8 preview items for Home screen carousel to ensure ultra-fast startup
-                val topLiveStreamsDeferred = async { xtreamClient.fetchLiveStreams(limit = 8) }
-                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 8) }
-                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 8) }
+                
+                // Fetch only 3 preview items for Home screen carousel to ensure ultra-fast startup
+                val topLiveStreamsDeferred = async { xtreamClient.fetchLiveStreams(limit = 3) }
+                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 3) }
+                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 3) }
 
                 val remoteCategories = liveCategoriesDeferred.await()
                 val vodCategories = vodCategoriesDeferred.await()
@@ -158,7 +159,6 @@ class SaribRepository(private val context: Context) {
                         )
                     }
 
-                    // Add top movie from real server data if available
                     allMovs.firstOrNull()?.let { movie ->
                         fallbackSliders.add(
                             HeroBannerItem(
@@ -177,7 +177,6 @@ class SaribRepository(private val context: Context) {
                         )
                     }
 
-                    // Add top live channel from real server data if available
                     allChans.firstOrNull()?.let { ch ->
                         fallbackSliders.add(
                             HeroBannerItem(
@@ -201,7 +200,6 @@ class SaribRepository(private val context: Context) {
                     }
                 }
 
-                // Server connection verification: check if any data was retrieved
                 val hasRemoteData = remoteCategories.isNotEmpty() || customCats.isNotEmpty() || topStreams.isNotEmpty()
                 hasRemoteData
             }
@@ -209,7 +207,6 @@ class SaribRepository(private val context: Context) {
             if (syncResult) {
                 Result.success(true)
             } else {
-                // If offline cache exists in DB, let user proceed, else show error
                 val localCats = dao.getChannelsCount()
                 if (localCats > 0) {
                     Result.success(true)
@@ -224,18 +221,20 @@ class SaribRepository(private val context: Context) {
         }
     }
 
-    /**
-     * Lazy on-demand loading of channels when user opens a category.
-     */
+    suspend fun clearCache() = withContext(Dispatchers.IO) {
+        dao.clearAllChannels()
+        dao.clearAllCategories()
+        dao.clearAllMedia()
+        dao.clearAllMatches()
+    }
+
     suspend fun getChannelsForCategoryOnDemand(categoryId: String, forceRefresh: Boolean = false): List<ChannelItem> = withContext(Dispatchers.IO) {
         try {
-            // Check local database first if not forced
             val cached = dao.getChannelsListByCategory(categoryId)
             if (cached.isNotEmpty() && !forceRefresh) {
                 return@withContext cached.map { it.toModel() }
             }
 
-            // Fetch from Xtream server for this specific category
             val remoteChannels = xtreamClient.fetchLiveStreams(categoryId = categoryId)
             if (remoteChannels.isNotEmpty()) {
                 dao.insertChannels(remoteChannels.map { it.toEntity() })
@@ -249,9 +248,6 @@ class SaribRepository(private val context: Context) {
         }
     }
 
-    /**
-     * Lazy on-demand loading of VOD Movies when user selects a category.
-     */
     suspend fun getMoviesForCategoryOnDemand(categoryId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
             val remoteMovies = xtreamClient.fetchVodStreams(categoryId = categoryId)
@@ -265,9 +261,6 @@ class SaribRepository(private val context: Context) {
         }
     }
 
-    /**
-     * Lazy on-demand loading of Series when user selects a category.
-     */
     suspend fun getSeriesForCategoryOnDemand(categoryId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
             val remoteSeries = xtreamClient.fetchSeries(categoryId = categoryId)
@@ -319,27 +312,28 @@ class SaribRepository(private val context: Context) {
         )
     }
 
+    // Filter out categories with empty titles / empty indicators
     fun getAllCategories(): Flow<List<ChannelCategory>> {
         return dao.getAllCategories().map { list ->
-            list.map { it.toModel() }
+            list.filter { it.name.isNotBlank() && (it.channelCount > 0 || it.id.isNotBlank()) }.map { it.toModel() }
         }.flowOn(Dispatchers.IO)
     }
 
     fun getEntertainmentCategories(): Flow<List<ChannelCategory>> {
         return dao.getCategoriesByTypes(listOf("movies", "series", "entertainment", "anime")).map { list ->
-            list.map { it.toModel() }
+            list.filter { it.name.isNotBlank() }.map { it.toModel() }
         }.flowOn(Dispatchers.IO)
     }
 
     fun getVodCategories(): Flow<List<ChannelCategory>> {
         return dao.getCategoriesByType("movies").map { list ->
-            list.map { it.toModel() }
+            list.filter { it.name.isNotBlank() }.map { it.toModel() }
         }.flowOn(Dispatchers.IO)
     }
 
     fun getSeriesCategories(): Flow<List<ChannelCategory>> {
         return dao.getCategoriesByType("series").map { list ->
-            list.map { it.toModel() }
+            list.filter { it.name.isNotBlank() }.map { it.toModel() }
         }.flowOn(Dispatchers.IO)
     }
 
@@ -427,6 +421,13 @@ class SaribRepository(private val context: Context) {
     suspend fun getSeriesDetails(seriesId: String): com.example.data.model.SeriesDetail? = withContext(Dispatchers.IO) {
         xtreamClient.fetchSeriesDetails(seriesId)
     }
+
+    suspend fun clearAllCache() = withContext(Dispatchers.IO) {
+        dao.clearAllChannels()
+        dao.clearAllCategories()
+        dao.clearAllMatches()
+        dao.clearAllMedia()
+    }
 }
 
 // Extension converters
@@ -438,4 +439,3 @@ fun MatchEntity.toModel() = MatchItem(id, leagueName, leagueIconUrl, homeTeam, h
 fun MatchItem.toEntity() = MatchEntity(id, leagueName, leagueIconUrl, homeTeam, homeLogoUrl, awayTeam, awayLogoUrl, matchTime, matchDate, status, homeScore, awayScore, streamUrl, isLive, isFavorite)
 fun MediaEntity.toModel() = MediaItem(id, title, posterUrl, backdropUrl, ContentType.valueOf(type), year, rating, genre, description, duration, seasonsCount, episodesCount, streamUrl, isTop, topRank, isFavorite)
 fun MediaItem.toEntity() = MediaEntity(id, title, posterUrl, backdropUrl, type.name, year, rating, genre, description, duration, seasonsCount, episodesCount, streamUrl, isTop, topRank, isFavorite)
-
