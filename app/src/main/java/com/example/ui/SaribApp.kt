@@ -189,10 +189,6 @@ fun SaribApp(
                         scope.launch { drawerState.close() }
                         viewModel.selectTab("channels")
                     },
-                    onNavigateToMatches = {
-                        scope.launch { drawerState.close() }
-                        viewModel.selectTab("matches")
-                    },
                     onNavigateToEntertainment = {
                         scope.launch { drawerState.close() }
                         viewModel.selectTab("entertainment")
@@ -233,10 +229,6 @@ fun SaribApp(
                             HomeScreen(
                                 heroSliders = heroSliders,
                                 popularChannels = mostWatchedChannels,
-                                todaysMatches = allMatches,
-                                featuredMovies = featuredMovies,
-                                featuredSeries = featuredSeries,
-                                animePicks = animePicks,
                                 selectedChip = selectedHomeChip,
                                 onChipSelected = { viewModel.selectHomeChip(it) },
                                 onMenuClick = { scope.launch { drawerState.open() } },
@@ -246,8 +238,8 @@ fun SaribApp(
                                 onCategoryClick = { route ->
                                     when (route) {
                                         "channels" -> viewModel.selectTab("channels")
-                                        "matches" -> viewModel.selectTab("matches")
                                         "movies", "series", "anime" -> viewModel.selectTab("entertainment")
+                                        else -> viewModel.selectTab("channels")
                                     }
                                 },
                                 onChannelClick = { channel ->
@@ -259,10 +251,6 @@ fun SaribApp(
                                         servers = channel.getActiveServers()
                                     )
                                 },
-                                onMatchClick = { match ->
-                                    selectedMatchForDetails = match
-                                },
-                                onMediaClick = handleMediaClick,
                                 onHeroWatchClick = { banner ->
                                     viewModel.playMedia(
                                         title = banner.title,
@@ -273,8 +261,6 @@ fun SaribApp(
                                     )
                                 },
                                 onViewAllChannelsClick = { viewModel.selectTab("channels") },
-                                onViewAllMatchesClick = { viewModel.selectTab("matches") },
-                                onViewAllMoviesClick = { viewModel.selectTab("entertainment") },
                                 currentTab = currentTab,
                                 onTabSelected = { viewModel.selectTab(it) },
                                 listState = homeListState

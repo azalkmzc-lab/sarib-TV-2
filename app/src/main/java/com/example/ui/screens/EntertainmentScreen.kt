@@ -177,7 +177,7 @@ fun EntertainmentScreen(
                             contentPadding = PaddingValues(horizontal = 14.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(movies) { item ->
+                            items(movies, key = { it.id }) { item ->
                                 MediaCardItem(
                                     item = item,
                                     onClick = onMediaClick
@@ -212,7 +212,7 @@ fun EntertainmentScreen(
                             contentPadding = PaddingValues(horizontal = 14.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(series) { item ->
+                            items(series, key = { it.id }) { item ->
                                 MediaCardItem(
                                     item = item,
                                     onClick = onMediaClick
@@ -237,7 +237,7 @@ fun EntertainmentScreen(
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                     }
-                    items(vodCategories.take(5)) { cat ->
+                    items(vodCategories.take(5), key = { it.id }) { cat ->
                         Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
                             LargeChannelCategoryCard(
                                 category = cat,
@@ -257,7 +257,7 @@ fun EntertainmentScreen(
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                     }
-                    items(seriesCategories.take(5)) { cat ->
+                    items(seriesCategories.take(5), key = { it.id }) { cat ->
                         Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
                             LargeChannelCategoryCard(
                                 category = cat,
@@ -289,7 +289,7 @@ fun EntertainmentScreen(
                             contentPadding = PaddingValues(horizontal = 14.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(anime) { item ->
+                            items(anime, key = { it.id }) { item ->
                                 MediaCardItem(
                                     item = item,
                                     onClick = onMediaClick
@@ -321,7 +321,7 @@ fun EntertainmentScreen(
                         contentPadding = PaddingValues(horizontal = 14.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(movies) { item ->
+                        items(movies, key = { it.id }) { item ->
                             MediaCardItem(
                                 item = item,
                                 onClick = onMediaClick
@@ -340,7 +340,7 @@ fun EntertainmentScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                 }
 
-                items(vodCategories) { cat ->
+                items(vodCategories, key = { it.id }) { cat ->
                     Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
                         LargeChannelCategoryCard(
                             category = cat,
@@ -371,7 +371,7 @@ fun EntertainmentScreen(
                         contentPadding = PaddingValues(horizontal = 14.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(series) { item ->
+                        items(series, key = { it.id }) { item ->
                             MediaCardItem(
                                 item = item,
                                 onClick = onMediaClick
@@ -390,7 +390,7 @@ fun EntertainmentScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                 }
 
-                items(seriesCategories) { cat ->
+                items(seriesCategories, key = { it.id }) { cat ->
                     Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
                         LargeChannelCategoryCard(
                             category = cat,
@@ -414,7 +414,7 @@ fun EntertainmentScreen(
                     Spacer(modifier = Modifier.height(6.dp))
                 }
 
-                items(entertainmentCategories) { cat ->
+                items(entertainmentCategories, key = { it.id }) { cat ->
                     Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 4.dp)) {
                         LargeChannelCategoryCard(
                             category = cat,

@@ -55,7 +55,6 @@ import com.example.ui.theme.SaribTextPrimary
 fun SaribDrawerContent(
     onNavigateToHome: () -> Unit,
     onNavigateToChannels: () -> Unit,
-    onNavigateToMatches: () -> Unit,
     onNavigateToEntertainment: () -> Unit,
     onNavigateToFavorites: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -145,13 +144,6 @@ fun SaribDrawerContent(
                         icon = Icons.Default.Tv,
                         title = "باقات القنوات المشفرة والمفتوحة",
                         onClick = onNavigateToChannels
-                    )
-                }
-                item {
-                    DrawerItem(
-                        icon = Icons.Default.SportsSoccer,
-                        title = "جدول ونتائج المباريات",
-                        onClick = onNavigateToMatches
                     )
                 }
                 item {

@@ -211,18 +211,19 @@ fun PlayerScreen(
     val exoPlayer = remember(currentActiveUrl) {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                2000,
-                15000,
-                1000,
-                1500
+                15000,  // Min buffer 15s
+                50000,  // Max buffer 50s
+                2000,   // Buffer for initial playback 2s
+                3000    // Buffer for resume after rebuffer 3s
             )
+            .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
             .setUserAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 SARIB-TV-Player/1.0")
             .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(15000)
-            .setReadTimeoutMs(15000)
+            .setConnectTimeoutMs(20000)
+            .setReadTimeoutMs(20000)
 
         val mediaSourceFactory = DefaultMediaSourceFactory(context)
             .setDataSourceFactory(httpDataSourceFactory)

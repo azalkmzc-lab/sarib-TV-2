@@ -163,7 +163,7 @@ fun ChannelsScreen(
             }
 
             // Categories List
-            items(categories) { category ->
+            items(categories, key = { it.id }) { category ->
                 Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)) {
                     LargeChannelCategoryCard(
                         category = category,
@@ -403,7 +403,7 @@ fun CategoryDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredChannels) { channel ->
+                    items(filteredChannels, key = { it.id }) { channel ->
                         ChannelCardItem(
                             channel = channel,
                             onClick = onChannelClick,
@@ -418,7 +418,7 @@ fun CategoryDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredChannels) { channel ->
+                    items(filteredChannels, key = { it.id }) { channel ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()

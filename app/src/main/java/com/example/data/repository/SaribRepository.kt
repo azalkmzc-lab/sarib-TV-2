@@ -85,44 +85,40 @@ class SaribRepository(private val context: Context) {
                 Log.w("SaribRepository", "Could not load Firebase sliders: ${e.message}")
             }
 
-            // 4. Ultra-Fast Startup: Fetch categories and ONLY 3 preview items per category for lightning fast entrance!
+            // 4. Ultra-Fast Startup: Channels exclusively from Firebase, Xtream exclusively for VOD Movies & Series
             val syncResult = coroutineScope {
-                val liveCategoriesDeferred = async { xtreamClient.fetchLiveCategories() }
-                val vodCategoriesDeferred = async { xtreamClient.fetchVodCategories() }
-                val seriesCategoriesDeferred = async { xtreamClient.fetchSeriesCategories() }
+                // Firebase: Channels, Categories, Custom Movies, Matches
                 val customCatsDeferred = async { firebaseStreamManager.fetchCustomCategories() }
                 val customChannelsDeferred = async { firebaseStreamManager.fetchCustomChannels() }
                 val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies() }
                 val matchesDeferred = async { matchesClient.fetchMatches(0) }
-                
-                // Fetch only 3 preview items for Home screen carousel to ensure ultra-fast startup
-                val topLiveStreamsDeferred = async { xtreamClient.fetchLiveStreams(limit = 3) }
-                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 3) }
-                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 3) }
 
-                val remoteCategories = liveCategoriesDeferred.await()
-                val vodCategories = vodCategoriesDeferred.await()
-                val seriesCategories = seriesCategoriesDeferred.await()
+                // Xtream: VOD Movies & Series categories and previews only
+                val vodCategoriesDeferred = async { xtreamClient.fetchVodCategories() }
+                val seriesCategoriesDeferred = async { xtreamClient.fetchSeriesCategories() }
+                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 10) }
+                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 10) }
+
                 val customCats = customCatsDeferred.await()
                 val customChannels = customChannelsDeferred.await()
                 val customMovies = customMoviesDeferred.await()
                 val remoteMatches = matchesDeferred.await()
-                val topStreams = topLiveStreamsDeferred.await()
+                val vodCategories = vodCategoriesDeferred.await()
+                val seriesCategories = seriesCategoriesDeferred.await()
                 val topMovies = topMoviesDeferred.await()
                 val topSeries = topSeriesDeferred.await()
 
-                val allCats = (customCats + remoteCategories + vodCategories + seriesCategories).distinctBy { it.id }
-                val allChans = (customChannels + topStreams).distinctBy { it.id }
+                val allCats = (customCats + vodCategories + seriesCategories).distinctBy { it.id }
                 val allMovs = (customMovies + topMovies).distinctBy { it.id }
 
-                // Clear previous server's cached categories and content if fresh categories received
+                // Update local Room database with fresh items
                 if (allCats.isNotEmpty()) {
                     dao.clearAllCategories()
                     dao.insertCategories(allCats.map { it.toEntity() })
                 }
-                if (allChans.isNotEmpty()) {
+                if (customChannels.isNotEmpty()) {
                     dao.clearAllChannels()
-                    dao.insertChannels(allChans.map { it.toEntity() })
+                    dao.insertChannels(customChannels.map { it.toEntity() })
                 }
                 if (allMovs.isNotEmpty() || topSeries.isNotEmpty()) {
                     dao.clearAllMedia()
@@ -177,7 +173,7 @@ class SaribRepository(private val context: Context) {
                         )
                     }
 
-                    allChans.firstOrNull()?.let { ch ->
+                    customChannels.firstOrNull()?.let { ch ->
                         fallbackSliders.add(
                             HeroBannerItem(
                                 id = ch.id,
@@ -200,7 +196,7 @@ class SaribRepository(private val context: Context) {
                     }
                 }
 
-                val hasRemoteData = remoteCategories.isNotEmpty() || customCats.isNotEmpty() || topStreams.isNotEmpty()
+                val hasRemoteData = customCats.isNotEmpty() || customChannels.isNotEmpty() || allMovs.isNotEmpty() || topSeries.isNotEmpty()
                 hasRemoteData
             }
 
@@ -230,21 +226,27 @@ class SaribRepository(private val context: Context) {
 
     suspend fun getChannelsForCategoryOnDemand(categoryId: String, forceRefresh: Boolean = false): List<ChannelItem> = withContext(Dispatchers.IO) {
         try {
-            val cached = dao.getChannelsListByCategory(categoryId)
-            if (cached.isNotEmpty() && !forceRefresh) {
-                return@withContext cached.map { it.toModel() }
+            if (forceRefresh) {
+                val freshFirebaseChannels = firebaseStreamManager.fetchCustomChannels()
+                if (freshFirebaseChannels.isNotEmpty()) {
+                    dao.clearAllChannels()
+                    dao.insertChannels(freshFirebaseChannels.map { it.toEntity() })
+                }
             }
 
-            val remoteChannels = xtreamClient.fetchLiveStreams(categoryId = categoryId)
-            if (remoteChannels.isNotEmpty()) {
-                dao.insertChannels(remoteChannels.map { it.toEntity() })
-                remoteChannels
+            if (categoryId.isBlank() || categoryId == "all" || categoryId == "custom") {
+                return@withContext dao.getAllChannelsList().map { it.toModel() }
+            }
+
+            val categoryChannels = dao.getChannelsListByCategory(categoryId)
+            if (categoryChannels.isNotEmpty()) {
+                categoryChannels.map { it.toModel() }
             } else {
-                cached.map { it.toModel() }
+                dao.getAllChannelsList().map { it.toModel() }
             }
         } catch (e: Exception) {
             Log.e("SaribRepository", "Error fetching channels for category $categoryId: ${e.message}", e)
-            dao.getChannelsListByCategory(categoryId).map { it.toModel() }
+            dao.getAllChannelsList().map { it.toModel() }
         }
     }
 
@@ -315,18 +317,19 @@ class SaribRepository(private val context: Context) {
     // Filter out categories with empty titles / empty indicators
     fun getAllCategories(): Flow<List<ChannelCategory>> {
         return dao.getAllCategories().map { list ->
-            list.filter { it.name.isNotBlank() && (it.channelCount > 0 || it.id.isNotBlank()) }.map { it.toModel() }
+            list.filter { it.name.isNotBlank() && it.categoryType !in listOf("movies", "vod", "series") }
+                .map { it.toModel() }
         }.flowOn(Dispatchers.IO)
     }
 
     fun getEntertainmentCategories(): Flow<List<ChannelCategory>> {
-        return dao.getCategoriesByTypes(listOf("movies", "series", "entertainment", "anime")).map { list ->
+        return dao.getCategoriesByTypes(listOf("movies", "vod", "series", "entertainment", "anime")).map { list ->
             list.filter { it.name.isNotBlank() }.map { it.toModel() }
         }.flowOn(Dispatchers.IO)
     }
 
     fun getVodCategories(): Flow<List<ChannelCategory>> {
-        return dao.getCategoriesByType("movies").map { list ->
+        return dao.getCategoriesByTypes(listOf("movies", "vod")).map { list ->
             list.filter { it.name.isNotBlank() }.map { it.toModel() }
         }.flowOn(Dispatchers.IO)
     }

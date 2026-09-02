@@ -510,7 +510,6 @@ fun MainCategoriesRoundGrid(
 ) {
     val items = listOf(
         Triple("القنوات", Icons.Default.Tv, "channels"),
-        Triple("المباريات", Icons.Default.SportsSoccer, "matches"),
         Triple("الأفلام", Icons.Default.Movie, "movies"),
         Triple("المسلسلات", Icons.Default.VideoLibrary, "series"),
         Triple("الأنمي", Icons.Default.PlayArrow, "anime")
@@ -520,7 +519,7 @@ fun MainCategoriesRoundGrid(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 14.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically
     ) {
         items.forEach { (title, icon, route) ->
@@ -1126,7 +1125,6 @@ fun SaribBottomNav(
     val items = listOf(
         Triple("الرئيسية", Icons.Outlined.Home, "home"),
         Triple("القنوات", Icons.Outlined.LiveTv, "channels"),
-        Triple("المباريات", Icons.Outlined.SportsSoccer, "matches"),
         Triple("الترفيه", Icons.Outlined.VideoLibrary, "entertainment"),
         Triple("المفضلة", Icons.Default.FavoriteBorder, "favorites")
     )

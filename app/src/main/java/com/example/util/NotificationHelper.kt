@@ -5,10 +5,12 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.RingtoneManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.MainActivity
+import com.example.R
 
 object NotificationHelper {
 
@@ -21,19 +23,22 @@ object NotificationHelper {
 
             val matchesChannel = NotificationChannel(
                 MATCHES_CHANNEL_ID,
-                "إشعارات المباريات والأندية",
+                "إشعارات وتنبيهات المباريات",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "تنبيهات انطلاق المباريات المباشرة وأهداف الفرق المفضلة"
+                description = "تنبيهات انطلاق المباريات المباشرة وتحديثات البث"
                 enableVibration(true)
+                setShowBadge(true)
             }
 
             val newsChannel = NotificationChannel(
                 NEWS_CHANNEL_ID,
-                "تنبيهات وأخبار SARIB TV",
-                NotificationManager.IMPORTANCE_DEFAULT
+                "إشعارات وإعلانات SARIB TV",
+                NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "إشعارات القنوات والتحديثات الجديدة"
+                description = "تنبيهات القنوات والمحتوى الجديد ورسائل لوحة التحكم السحابية"
+                enableVibration(true)
+                setShowBadge(true)
             }
 
             notificationManager.createNotificationChannel(matchesChannel)
@@ -60,12 +65,16 @@ object NotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
+            val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
             val notification = NotificationCompat.Builder(context, MATCHES_CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                .setSmallIcon(R.drawable.ic_sarib_logo)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(message))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSound(defaultSoundUri)
+                .setVibrate(longArrayOf(0, 300, 200, 300))
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .build()
@@ -77,7 +86,7 @@ object NotificationHelper {
                 manager.notify(matchId.hashCode(), notification)
             }
         } catch (e: Exception) {
-            // Ignored if permissions not granted
+            // Ignored
         }
     }
 
@@ -100,12 +109,16 @@ object NotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
+            val defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
             val notification = NotificationCompat.Builder(context, NEWS_CHANNEL_ID)
-                .setSmallIcon(android.R.drawable.ic_popup_reminder)
+                .setSmallIcon(R.drawable.ic_sarib_logo)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSound(defaultSoundUri)
+                .setVibrate(longArrayOf(0, 300, 200, 300))
                 .setContentIntent(pendingIntent)
                 .setAutoCancel(true)
                 .build()

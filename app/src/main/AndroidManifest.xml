@@ -9,6 +9,7 @@
     <uses-sdk tools:overrideLibrary="androidx.core, androidx.core.ktx, com.google.android.gms.base, com.google.android.gms.tasks, com.google.android.gms.common, com.google.android.gms, com.google.android.recaptcha, com.google.firebase.components, com.google.firebase.installations, com.google.firebase.annotations, com.google.firebase.appcheck.debug, com.google.firebase.appcheck.playintegrity, com.google.firebase.appcheck, com.google.firebase.appcheck.recaptcha, com.google.firebase.firestore, com.google.firebase.ai, com.google.firebase.ai.ondevice.interop, com.google.firebase.auth, com.google.firebase.database, com.google.firebase, com.google.firebase.common" />
 
     <application
+        android:name=".SaribApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
