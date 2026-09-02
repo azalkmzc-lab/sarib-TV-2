@@ -28,6 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.model.ContentType
 import com.example.data.model.MatchItem
+import com.example.data.model.getActiveServers
 import com.example.ui.components.MatchDetailsDialog
 import com.example.ui.components.SaribDrawerContent
 import com.example.ui.components.SettingsDialog
@@ -114,7 +115,8 @@ fun SaribApp(
                 title = media.title,
                 subtitle = "${media.year} • ${media.genre}",
                 streamUrl = media.streamUrl,
-                isLive = false
+                isLive = false,
+                servers = media.getActiveServers()
             )
         }
     }
@@ -156,7 +158,8 @@ fun SaribApp(
                     title = "${selectedMatch.homeTeam} vs ${selectedMatch.awayTeam}",
                     subtitle = "${selectedMatch.leagueName} • ${selectedMatch.commentator.ifEmpty { "بث مباشر" }}",
                     streamUrl = streamUrl,
-                    isLive = selectedMatch.isLive
+                    isLive = selectedMatch.isLive,
+                    servers = selectedMatch.getActiveServers()
                 )
             }
         )
@@ -197,6 +200,10 @@ fun SaribApp(
                     onNavigateToFavorites = {
                         scope.launch { drawerState.close() }
                         viewModel.selectTab("favorites")
+                    },
+                    onSettingsClick = {
+                        scope.launch { drawerState.close() }
+                        showSettingsDialog = true
                     },
                     onTelegramClick = {
                         scope.launch { drawerState.close() }
@@ -248,7 +255,8 @@ fun SaribApp(
                                         title = channel.name,
                                         subtitle = "${channel.categoryName} • ${channel.country}",
                                         streamUrl = channel.streamUrl,
-                                        isLive = true
+                                        isLive = true,
+                                        servers = channel.getActiveServers()
                                     )
                                 },
                                 onMatchClick = { match ->
@@ -260,7 +268,8 @@ fun SaribApp(
                                         title = banner.title,
                                         subtitle = banner.subtitle,
                                         streamUrl = banner.streamUrl,
-                                        isLive = banner.isLive
+                                        isLive = banner.isLive,
+                                        servers = banner.getActiveServers()
                                     )
                                 },
                                 onViewAllChannelsClick = { viewModel.selectTab("channels") },
@@ -373,7 +382,8 @@ fun SaribApp(
                                 title = channel.name,
                                 subtitle = "${channel.categoryName} • ${channel.country}",
                                 streamUrl = channel.streamUrl,
-                                isLive = true
+                                isLive = true,
+                                servers = channel.getActiveServers()
                             )
                         },
                         onFavoriteToggle = { channel ->
@@ -411,7 +421,8 @@ fun SaribApp(
                                 title = epTitle,
                                 subtitle = "${screen.mediaItem.title} • الحلقة ${ep.episodeNum}",
                                 streamUrl = ep.streamUrl,
-                                isLive = false
+                                isLive = false,
+                                servers = screen.mediaItem.getActiveServers()
                             )
                         },
                         onPlayDirect = {
@@ -419,7 +430,8 @@ fun SaribApp(
                                 title = screen.mediaItem.title,
                                 subtitle = "${screen.mediaItem.year} • ${screen.mediaItem.genre}",
                                 streamUrl = screen.mediaItem.streamUrl,
-                                isLive = false
+                                isLive = false,
+                                servers = screen.mediaItem.getActiveServers()
                             )
                         }
                     )
@@ -431,7 +443,8 @@ fun SaribApp(
                         subtitle = screen.subtitle,
                         streamUrl = screen.streamUrl,
                         isLive = screen.isLive,
-                        onBackClick = { viewModel.popBack() }
+                        onBackClick = { viewModel.popBack() },
+                        servers = screen.servers
                     )
                 }
 
@@ -445,7 +458,8 @@ fun SaribApp(
                                 title = channel.name,
                                 subtitle = "${channel.categoryName} • ${channel.country}",
                                 streamUrl = channel.streamUrl,
-                                isLive = true
+                                isLive = true,
+                                servers = channel.getActiveServers()
                             )
                         },
                         onMediaClick = handleMediaClick,

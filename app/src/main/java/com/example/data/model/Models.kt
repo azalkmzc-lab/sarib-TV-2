@@ -55,8 +55,68 @@ data class HeroBannerItem(
     val contentType: ContentType = ContentType.SERIES,
     val isLive: Boolean = false,
     val sortOrder: Int = 0,
-    val isActive: Boolean = true
+    val isActive: Boolean = true,
+    val server1: String = "",
+    val server2: String = "",
+    val server3: String = "",
+    val server4: String = "",
+    val server5: String = ""
 )
+
+fun ChannelItem.getActiveServers(): List<Pair<String, String>> {
+    val list = mutableListOf<Pair<String, String>>()
+    if (server1.isNotBlank()) list.add("سيرفر 1 (الرئيسي FHD)" to server1)
+    if (server2.isNotBlank()) list.add("سيرفر 2 (احتياطي HD)" to server2)
+    if (server3.isNotBlank()) list.add("سيرفر 3 (سريع CDN)" to server3)
+    if (server4.isNotBlank()) list.add("سيرفر 4 (توفير البيانات)" to server4)
+    if (server5.isNotBlank()) list.add("سيرفر 5 (بث مباشر عالي السرعة)" to server5)
+    if (list.isEmpty() && streamUrl.isNotBlank()) {
+        list.add("سيرفر البث المباشر (الرئيسي)" to streamUrl)
+    }
+    if (backupUrl.isNotBlank() && backupUrl != streamUrl && list.none { it.second == backupUrl }) {
+        list.add("سيرفر احتياطي" to backupUrl)
+    }
+    return list
+}
+
+fun MatchItem.getActiveServers(): List<Pair<String, String>> {
+    val list = mutableListOf<Pair<String, String>>()
+    if (server1.isNotBlank()) list.add("سيرفر 1 (الرئيسي FHD)" to server1)
+    if (server2.isNotBlank()) list.add("سيرفر 2 (احتياطي HD)" to server2)
+    if (server3.isNotBlank()) list.add("سيرفر 3 (سريع CDN)" to server3)
+    if (server4.isNotBlank()) list.add("سيرفر 4 (توفير البيانات)" to server4)
+    if (server5.isNotBlank()) list.add("سيرفر 5 (بث مباشر عالي السرعة)" to server5)
+    if (list.isEmpty() && streamUrl.isNotBlank()) {
+        list.add("سيرفر البث المباشر للمباراة" to streamUrl)
+    }
+    return list
+}
+
+fun MediaItem.getActiveServers(): List<Pair<String, String>> {
+    val list = mutableListOf<Pair<String, String>>()
+    if (server1.isNotBlank()) list.add("سيرفر 1 (الرئيسي FHD)" to server1)
+    if (server2.isNotBlank()) list.add("سيرفر 2 (احتياطي HD)" to server2)
+    if (server3.isNotBlank()) list.add("سيرفر 3 (سريع CDN)" to server3)
+    if (server4.isNotBlank()) list.add("سيرفر 4 (توفير البيانات)" to server4)
+    if (server5.isNotBlank()) list.add("سيرفر 5 (مشاهدة مباشرة)" to server5)
+    if (list.isEmpty() && streamUrl.isNotBlank()) {
+        list.add("سيرفر المشاهدة المباشرة" to streamUrl)
+    }
+    return list
+}
+
+fun HeroBannerItem.getActiveServers(): List<Pair<String, String>> {
+    val list = mutableListOf<Pair<String, String>>()
+    if (server1.isNotBlank()) list.add("سيرفر 1 (الرئيسي FHD)" to server1)
+    if (server2.isNotBlank()) list.add("سيرفر 2 (احتياطي HD)" to server2)
+    if (server3.isNotBlank()) list.add("سيرفر 3 (سريع CDN)" to server3)
+    if (server4.isNotBlank()) list.add("سيرفر 4 (توفير البيانات)" to server4)
+    if (server5.isNotBlank()) list.add("سيرفر 5 (بث مباشر)" to server5)
+    if (list.isEmpty() && streamUrl.isNotBlank()) {
+        list.add("سيرفر المشاهدة المميز" to streamUrl)
+    }
+    return list
+}
 
 data class MatchItem(
     val id: String,

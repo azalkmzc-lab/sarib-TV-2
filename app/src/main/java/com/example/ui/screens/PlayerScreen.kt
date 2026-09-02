@@ -152,22 +152,24 @@ fun PlayerScreen(
     streamUrl: String,
     isLive: Boolean,
     onBackClick: () -> Unit,
+    servers: List<Pair<String, String>> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
 
-    var currentActiveUrl by remember { mutableStateOf(streamUrl) }
-    var selectedServerIndex by remember { mutableIntStateOf(0) }
+    val serverOptions = remember(streamUrl, servers) {
+        val valid = servers.filter { it.second.isNotBlank() }
+        if (valid.isNotEmpty()) {
+            valid
+        } else {
+            listOf("سيرفر البث المباشر (الرئيسي)" to streamUrl)
+        }
+    }
 
-    val serverOptions = remember(streamUrl) {
-        listOf(
-            "سيرفر 1 (الرئيسي FHD)" to streamUrl,
-            "سيرفر 2 (احتياطي HD)" to streamUrl,
-            "سيرفر 3 (سريع CDN)" to streamUrl,
-            "سيرفر 4 (توفير البيانات)" to streamUrl,
-            "سيرفر 5 (مباشر M3U8)" to streamUrl
-        )
+    var selectedServerIndex by remember { mutableIntStateOf(0) }
+    var currentActiveUrl by remember(selectedServerIndex, serverOptions) {
+        mutableStateOf(serverOptions.getOrNull(selectedServerIndex)?.second ?: streamUrl)
     }
 
     var isPlaying by remember { mutableStateOf(true) }
@@ -186,13 +188,15 @@ fun PlayerScreen(
     var showSubtitleDialog by remember { mutableStateOf(false) }
     var showServerDialog by remember { mutableStateOf(false) }
 
-    val qualityOptions = remember {
-        listOf(
-            QualityOption("تلقائي (الأفضل)", "Auto Adaptive", Int.MAX_VALUE, Int.MAX_VALUE),
-            QualityOption("1080p FHD", "Full HD 60fps", 1080, 8_000_000),
-            QualityOption("720p HD", "High Definition", 720, 4_000_000),
-            QualityOption("480p SD", "Standard Def", 480, 1_500_000),
-            QualityOption("360p توفير البيانات", "Data Saver", 360, 800_000)
+    var availableQualityOptions by remember {
+        mutableStateOf(
+            listOf(
+                QualityOption("تلقائي (الأفضل متكيف)", "Auto Adaptive", Int.MAX_VALUE, Int.MAX_VALUE),
+                QualityOption("1080p FHD", "Full HD 60fps", 1080, 8_000_000),
+                QualityOption("720p HD", "High Definition", 720, 4_000_000),
+                QualityOption("480p SD", "Standard Def", 480, 1_500_000),
+                QualityOption("360p توفير البيانات", "Data Saver", 360, 800_000)
+            )
         )
     }
     var selectedQualityIndex by remember { mutableIntStateOf(0) }
@@ -270,11 +274,68 @@ fun PlayerScreen(
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                hasError = true
-                isBuffering = false
+                // Automatic failover to next available server if available
+                if (selectedServerIndex < serverOptions.size - 1) {
+                    val nextIdx = selectedServerIndex + 1
+                    val nextServer = serverOptions[nextIdx]
+                    selectedServerIndex = nextIdx
+                    currentActiveUrl = nextServer.second
+                    hasError = false
+                    isBuffering = true
+                    Toast.makeText(
+                        context,
+                        "تعذر تشغيل السيرفر الحالي. جاري الانتقال التلقائي إلى: ${nextServer.first}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    hasError = true
+                    isBuffering = false
+                    Toast.makeText(
+                        context,
+                        "تعذر تشغيل البث من كافة السيرفرات المتاحة",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
             }
 
             override fun onTracksChanged(tracks: Tracks) {
+                // 1. Dynamic Video Quality Extraction
+                val dynamicQualities = mutableListOf<QualityOption>()
+                dynamicQualities.add(
+                    QualityOption("تلقائي (الأفضل متكيف)", "Auto Adaptive (تلقائي حسب سرعة النت)", Int.MAX_VALUE, Int.MAX_VALUE)
+                )
+
+                for (groupIndex in 0 until tracks.groups.size) {
+                    val group = tracks.groups[groupIndex]
+                    if (group.type == C.TRACK_TYPE_VIDEO) {
+                        for (trackIndex in 0 until group.length) {
+                            val format = group.getTrackFormat(trackIndex)
+                            val h = format.height
+                            val w = format.width
+                            val bitrate = format.bitrate
+                            if (h > 0) {
+                                val label = when {
+                                    h >= 2160 -> "4K UHD ($w x $h)"
+                                    h >= 1080 -> "1080p FHD ($w x $h)"
+                                    h >= 720 -> "720p HD ($w x $h)"
+                                    h >= 480 -> "480p SD ($w x $h)"
+                                    else -> "${h}p ($w x $h)"
+                                }
+                                val brLabel = if (bitrate > 0) "${bitrate / 1000} kbps" else "معدل بت أصلي"
+                                if (dynamicQualities.none { it.maxHeight == h }) {
+                                    dynamicQualities.add(
+                                        QualityOption(label, brLabel, h, if (bitrate > 0) bitrate else (h * 5000))
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                if (dynamicQualities.size > 1) {
+                    availableQualityOptions = dynamicQualities.sortedByDescending { it.maxHeight }
+                }
+
+                // 2. Audio & Subtitles Tracks
                 val audioList = mutableListOf<AudioTrackOption>()
                 audioList.add(AudioTrackOption("default", "الصوت الافتراضي (تلقائي)", "ar", -1, -1))
                 
@@ -856,7 +917,7 @@ fun PlayerScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = if (isLive) "سيرفر البث المباشر: ${serverOptions[selectedServerIndex].first}" else qualityOptions[selectedQualityIndex].label,
+                            text = if (isLive) "سيرفر البث: ${serverOptions.getOrNull(selectedServerIndex)?.first ?: ""}" else availableQualityOptions.getOrNull(selectedQualityIndex)?.label ?: "تلقائي",
                             style = MaterialTheme.typography.labelMedium.copy(
                                 color = SaribCyanAccent,
                                 fontWeight = FontWeight.Bold
@@ -1106,7 +1167,7 @@ fun PlayerScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    qualityOptions.forEachIndexed { index, option ->
+                    availableQualityOptions.forEachIndexed { index, option ->
                         val isSelected = selectedQualityIndex == index
                         Box(
                             modifier = Modifier
@@ -1121,11 +1182,20 @@ fun PlayerScreen(
                                 )
                                 .clickable {
                                     selectedQualityIndex = index
-                                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
-                                        .buildUpon()
-                                        .setMaxVideoSize(option.maxHeight * 2, option.maxHeight)
-                                        .setMaxVideoBitrate(option.maxBitrate)
-                                        .build()
+                                    if (option.maxHeight == Int.MAX_VALUE) {
+                                        exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                                            .buildUpon()
+                                            .clearOverridesOfType(C.TRACK_TYPE_VIDEO)
+                                            .setMaxVideoSize(Int.MAX_VALUE, Int.MAX_VALUE)
+                                            .setMaxVideoBitrate(Int.MAX_VALUE)
+                                            .build()
+                                    } else {
+                                        exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                                            .buildUpon()
+                                            .setMaxVideoSize(option.maxHeight * 2, option.maxHeight)
+                                            .setMaxVideoBitrate(option.maxBitrate)
+                                            .build()
+                                    }
                                     Toast.makeText(context, "تم ضبط الجودة: ${option.label}", Toast.LENGTH_SHORT).show()
                                     showQualityDialog = false
                                 }

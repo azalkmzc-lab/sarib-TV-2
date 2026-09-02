@@ -24,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.HorizontalDivider
@@ -57,6 +58,7 @@ fun SaribDrawerContent(
     onNavigateToMatches: () -> Unit,
     onNavigateToEntertainment: () -> Unit,
     onNavigateToFavorites: () -> Unit,
+    onSettingsClick: () -> Unit,
     onTelegramClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -164,6 +166,15 @@ fun SaribDrawerContent(
                         icon = Icons.Default.Favorite,
                         title = "المفضلة",
                         onClick = onNavigateToFavorites
+                    )
+                }
+
+                item {
+                    DrawerItem(
+                        icon = Icons.Default.Settings,
+                        title = "الإعدادات والمظهر واللغة",
+                        tint = SaribCyanAccent,
+                        onClick = onSettingsClick
                     )
                 }
 

@@ -26,7 +26,13 @@ sealed interface AppScreen {
     data class CategoryDetail(val category: ChannelCategory) : AppScreen
     data class MediaCategoryDetail(val category: ChannelCategory) : AppScreen
     data class SeriesDetail(val mediaItem: MediaItem) : AppScreen
-    data class Player(val title: String, val subtitle: String, val streamUrl: String, val isLive: Boolean = false) : AppScreen
+    data class Player(
+        val title: String,
+        val subtitle: String,
+        val streamUrl: String,
+        val isLive: Boolean = false,
+        val servers: List<Pair<String, String>> = emptyList()
+    ) : AppScreen
     object Search : AppScreen
 }
 
@@ -314,7 +320,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _searchQuery.value = query
     }
 
-    fun playMedia(title: String, subtitle: String, streamUrl: String, isLive: Boolean = false) {
+    fun playMedia(
+        title: String,
+        subtitle: String,
+        streamUrl: String,
+        isLive: Boolean = false,
+        servers: List<Pair<String, String>> = emptyList()
+    ) {
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.Player) {
             backStack.add(curr)
@@ -323,7 +335,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             title = title,
             subtitle = subtitle,
             streamUrl = streamUrl,
-            isLive = isLive
+            isLive = isLive,
+            servers = servers
         )
     }
 
