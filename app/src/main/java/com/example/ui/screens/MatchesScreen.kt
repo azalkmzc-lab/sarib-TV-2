@@ -33,6 +33,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.data.local.tr
 import com.example.data.model.MatchItem
 import com.example.ui.components.MatchCardItem
 import com.example.ui.components.SaribBottomNav
@@ -76,7 +77,7 @@ fun MatchesScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = SaribDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             SaribTopHeader(
                 onMenuClick = onMenuClick,
@@ -97,7 +98,7 @@ fun MatchesScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(SaribDarkBackground),
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             // Date Selector Header Row
@@ -119,10 +120,10 @@ fun MatchesScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = "جدول المباريات المباشرة",
+                            text = tr("todays_matches"),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = SaribTextPrimary
+                                color = MaterialTheme.colorScheme.onBackground
                             )
                         )
                     }

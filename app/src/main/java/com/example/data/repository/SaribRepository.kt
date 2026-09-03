@@ -87,9 +87,39 @@ class SaribRepository(private val context: Context) {
 
             // 4. Ultra-Fast Startup: Channels exclusively from Firebase, Xtream exclusively for VOD Movies & Series
             val syncResult = coroutineScope {
-                // Firebase: Channels, Categories, Custom Movies, Matches
+                // Firebase & M3U: Channels, Categories, Custom Movies, Matches
                 val customCatsDeferred = async { firebaseStreamManager.fetchCustomCategories() }
                 val customChannelsDeferred = async { firebaseStreamManager.fetchCustomChannels() }
+                val m3uResultDeferred = async {
+                    val m3uSources = firebaseStreamManager.fetchM3uSources()
+                    val sourcesToFetch = mutableListOf<Pair<String, String>>()
+                    if (currentRemoteConfig.m3uPlaylistUrl.isNotBlank()) {
+                        sourcesToFetch.add(Pair(currentRemoteConfig.m3uPlaylistUrl, "باقة القنوات المباشرة"))
+                    }
+                    for (src in m3uSources) {
+                        if (src.url.isNotBlank() && src.isEnabled) {
+                            sourcesToFetch.add(Pair(src.url, src.name.ifBlank { "باقة M3U سحابية" }))
+                        }
+                    }
+
+                    val aggregatedCategories = mutableListOf<com.example.data.model.ChannelCategory>()
+                    val aggregatedChannels = mutableListOf<com.example.data.model.ChannelItem>()
+
+                    for ((url, name) in sourcesToFetch.distinctBy { it.first }) {
+                        try {
+                            val parsed = firebaseStreamManager.fetchM3uPlaylist(url, name)
+                            aggregatedCategories.addAll(parsed.categories)
+                            aggregatedChannels.addAll(parsed.channels)
+                        } catch (e: Exception) {
+                            Log.w("SaribRepository", "Error parsing M3U source $url: ${e.message}")
+                        }
+                    }
+
+                    com.example.util.ParsedM3uResult(
+                        categories = aggregatedCategories.distinctBy { it.id },
+                        channels = aggregatedChannels.distinctBy { it.id }
+                    )
+                }
                 val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies() }
                 val matchesDeferred = async { matchesClient.fetchMatches(0) }
 
@@ -101,6 +131,7 @@ class SaribRepository(private val context: Context) {
 
                 val customCats = customCatsDeferred.await()
                 val customChannels = customChannelsDeferred.await()
+                val m3uResult = m3uResultDeferred.await()
                 val customMovies = customMoviesDeferred.await()
                 val remoteMatches = matchesDeferred.await()
                 val vodCategories = vodCategoriesDeferred.await()
@@ -108,7 +139,8 @@ class SaribRepository(private val context: Context) {
                 val topMovies = topMoviesDeferred.await()
                 val topSeries = topSeriesDeferred.await()
 
-                val allCats = (customCats + vodCategories + seriesCategories).distinctBy { it.id }
+                val combinedChannels = (customChannels + m3uResult.channels).distinctBy { it.id }
+                val allCats = (customCats + m3uResult.categories + vodCategories + seriesCategories).distinctBy { it.id }
                 val allMovs = (customMovies + topMovies).distinctBy { it.id }
 
                 // Update local Room database with fresh items
@@ -116,9 +148,9 @@ class SaribRepository(private val context: Context) {
                     dao.clearAllCategories()
                     dao.insertCategories(allCats.map { it.toEntity() })
                 }
-                if (customChannels.isNotEmpty()) {
+                if (combinedChannels.isNotEmpty()) {
                     dao.clearAllChannels()
-                    dao.insertChannels(customChannels.map { it.toEntity() })
+                    dao.insertChannels(combinedChannels.map { it.toEntity() })
                 }
                 if (allMovs.isNotEmpty() || topSeries.isNotEmpty()) {
                     dao.clearAllMedia()

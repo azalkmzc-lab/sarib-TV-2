@@ -21,7 +21,7 @@ enum class AppLanguage(val code: String, val displayName: String, val nativeName
 }
 
 object LocalStrings {
-    // English & Arabic dictionary for instant reactive localization
+    // English & Arabic dictionary for instant reactive localization across all screens
     private val arStrings = mapOf(
         "app_name" to "SARIB TV",
         "home" to "الرئيسية",
@@ -30,6 +30,13 @@ object LocalStrings {
         "entertainment" to "الترفيه",
         "favorites" to "المفضلة",
         "settings" to "الإعدادات",
+        "movies" to "الأفلام",
+        "series" to "المسلسلات",
+        "anime" to "الأنمي",
+        "cinema_library" to "مكتبة السينما والأفلام",
+        "series_library" to "مكتبة المسلسلات العالمية",
+        "anime_library" to "مكتبة الأنمي المترجم والمدبلج",
+        "all_channels_packages" to "باقات القنوات المشفرة والمفتوحة",
         "theme" to "المظهر والسمة",
         "theme_dark" to "الوضع الداكن (الافتراضي)",
         "theme_light" to "الوضع الفاتح (العادي)",
@@ -38,7 +45,7 @@ object LocalStrings {
         "language_ar" to "العربية",
         "language_en" to "English",
         "search" to "البحث",
-        "search_hint" to "ابحث عن قنوات، أفلام، مسلسلات، أو مباريات...",
+        "search_hint" to "ابحث عن قنوات، أفلام، مسلسلات...",
         "watch_now" to "مشاهدة الآن",
         "view_all" to "عرض الكل",
         "connecting" to "جارٍ تجهيز الاتصال بالسيرفر...",
@@ -77,7 +84,19 @@ object LocalStrings {
         "close" to "إغلاق",
         "apply" to "تطبيق",
         "filter_all" to "الكل",
-        "no_favorites" to "لم تقم بإضافة أي عناصر للمفضلة بعد"
+        "no_favorites" to "لم تقم بإضافة أي عناصر للمفضلة بعد",
+        "vpn_warning_title" to "تم رصد اتصال VPN أو بروكسي!",
+        "vpn_warning_msg" to "لأسباب أمنية وحماية لحقوق البث، يمنع تشغيل البث أثناء تفعيل برامج الـ VPN. يرجى إيقاف الـ VPN ومتابعة المشاهدة.",
+        "exit_player" to "إغلاق المشغل",
+        "exit_app" to "إغلاق التطبيق نهائياً",
+        "security_protected" to "محمي بنظام أمان فائق",
+        "search_title" to "البحث الفوري والشامل",
+        "search_results" to "نتائج البحث",
+        "no_results" to "لم يتم العثور على أي نتائج مطابقة",
+        "telegram_channel" to "قناة التيليجرام الرسمية",
+        "grid_view" to "شبكة",
+        "list_view" to "قائمة",
+        "all" to "الكل"
     )
 
     private val enStrings = mapOf(
@@ -88,6 +107,13 @@ object LocalStrings {
         "entertainment" to "Entertainment",
         "favorites" to "Favorites",
         "settings" to "Settings",
+        "movies" to "Movies",
+        "series" to "TV Series",
+        "anime" to "Anime",
+        "cinema_library" to "Cinema & Movies Library",
+        "series_library" to "Global TV Series Library",
+        "anime_library" to "Subbed & Dubbed Anime Library",
+        "all_channels_packages" to "Encrypted & Free Channels Packages",
         "theme" to "Theme & Appearance",
         "theme_dark" to "Dark Mode (Default)",
         "theme_light" to "Light Mode (Standard)",
@@ -96,7 +122,7 @@ object LocalStrings {
         "language_ar" to "العربية",
         "language_en" to "English",
         "search" to "Search",
-        "search_hint" to "Search channels, movies, series, or matches...",
+        "search_hint" to "Search channels, movies, series...",
         "watch_now" to "Watch Now",
         "view_all" to "View All",
         "connecting" to "Connecting to ultra-fast servers...",
@@ -135,7 +161,19 @@ object LocalStrings {
         "close" to "Close",
         "apply" to "Apply",
         "filter_all" to "All",
-        "no_favorites" to "No favorites added yet"
+        "no_favorites" to "No favorites added yet",
+        "vpn_warning_title" to "VPN or Proxy Connection Detected!",
+        "vpn_warning_msg" to "For security and content protection reasons, streaming over VPN or Proxy is strictly prohibited. Please disconnect your VPN to resume playback.",
+        "exit_player" to "Close Player",
+        "exit_app" to "Exit Application",
+        "security_protected" to "High-Grade Security Protected",
+        "search_title" to "Instant Global Search",
+        "search_results" to "Search Results",
+        "no_results" to "No matching results found",
+        "telegram_channel" to "Official Telegram Channel",
+        "grid_view" to "Grid",
+        "list_view" to "List",
+        "all" to "All"
     )
 
     fun getString(key: String, language: AppLanguage): String {

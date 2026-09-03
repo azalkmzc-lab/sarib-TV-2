@@ -14,17 +14,27 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
+import com.example.util.M3uPlaylistParser
+import com.example.util.ParsedM3uResult
 
 data class RemoteStreamConfig(
     val serverHost: String = "http://cliccck52258.club:2082",
     val username: String = "khaledsliman",
     val password: String = "755246419856",
     val matchesApiUrl: String = "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
+    val m3uPlaylistUrl: String = "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
     val announcement: String = "",
     val telegramLink: String = "https://t.me/sarib_tv",
     val heroTitle: String = "بلدة الضياع S1-S4",
     val heroSubtitle: String = "مسلسل • دراما • رعب • أحجية",
     val heroStreamUrl: String = "http://cliccck52258.club:2082/series/khaledsliman/755246419856/1.mp4"
+)
+
+data class RemoteM3uSource(
+    val id: String,
+    val name: String,
+    val url: String,
+    val isEnabled: Boolean = true
 )
 
 class FirebaseStreamManager(private val context: Context) {
@@ -60,6 +70,9 @@ class FirebaseStreamManager(private val context: Context) {
                         username = docSnapshot.getString("username") ?: "khaledsliman",
                         password = docSnapshot.getString("password") ?: "755246419856",
                         matchesApiUrl = docSnapshot.getString("matches_api_url") ?: "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
+                        m3uPlaylistUrl = docSnapshot.getString("m3u_playlist_url") 
+                            ?: docSnapshot.getString("m3u_url") 
+                            ?: "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
                         announcement = docSnapshot.getString("announcement") ?: "",
                         telegramLink = docSnapshot.getString("telegram_link") ?: "https://t.me/sarib_tv",
                         heroTitle = docSnapshot.getString("hero_title") ?: "بلدة الضياع S1-S4",
@@ -97,6 +110,7 @@ class FirebaseStreamManager(private val context: Context) {
                             username = targetObj.optString("username", "khaledsliman"),
                             password = targetObj.optString("password", "755246419856"),
                             matchesApiUrl = targetObj.optString("matches_api_url", "https://bab-elmoshahd.online/api/index.php?path=matches&day="),
+                            m3uPlaylistUrl = targetObj.optString("m3u_playlist_url", targetObj.optString("m3u_url", "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U")),
                             announcement = targetObj.optString("announcement", ""),
                             telegramLink = targetObj.optString("telegram_link", "https://t.me/sarib_tv"),
                             heroTitle = targetObj.optString("hero_title", "بلدة الضياع S1-S4"),
@@ -401,7 +415,7 @@ class FirebaseStreamManager(private val context: Context) {
                                 id = "fb_ch_$key",
                                 name = name,
                                 categoryId = catId,
-                                categoryName = "قنوات Firebase",
+                                categoryName = "باقة البث المباشر السحابي",
                                 logoUrl = logo,
                                 streamUrl = streamUrl,
                                 backupUrl = backupUrl,
@@ -420,6 +434,37 @@ class FirebaseStreamManager(private val context: Context) {
             Log.w(TAG, "Custom channels fetch error: ${e.message}")
         }
         list
+    }
+
+    suspend fun fetchM3uSources(): List<RemoteM3uSource> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<RemoteM3uSource>()
+        try {
+            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/m3u_playlists.json"
+            val request = Request.Builder().url(url).build()
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                val jsonObj = JSONObject(body)
+                val keys = jsonObj.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    val obj = jsonObj.optJSONObject(key) ?: continue
+                    val name = obj.optString("name", obj.optString("title", "باقة قنوات M3U"))
+                    val playlistUrl = obj.optString("url", obj.optString("playlist_url", obj.optString("streamUrl", "")))
+                    val isEnabled = obj.optBoolean("enabled", obj.optBoolean("isEnabled", true))
+                    if (playlistUrl.isNotBlank() && isEnabled) {
+                        list.add(RemoteM3uSource(id = key, name = name, url = playlistUrl, isEnabled = isEnabled))
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "M3U sources fetch error: ${e.message}")
+        }
+        list
+    }
+
+    suspend fun fetchM3uPlaylist(url: String, defaultName: String = "باقة القنوات المباشرة"): ParsedM3uResult {
+        return M3uPlaylistParser.parseFromUrl(url, defaultName)
     }
 
     suspend fun fetchCustomMovies(): List<com.example.data.model.MediaItem> = withContext(Dispatchers.IO) {

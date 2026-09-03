@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.data.local.tr
 import com.example.data.model.ChannelCategory
 import com.example.data.model.MediaItem
 import com.example.ui.components.ActionButtonCard
@@ -89,7 +90,7 @@ fun EntertainmentScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = SaribDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             SaribTopHeader(
                 onMenuClick = onMenuClick,
@@ -110,7 +111,7 @@ fun EntertainmentScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(SaribDarkBackground),
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             // Action Navigation Shortcut Cards
@@ -123,19 +124,19 @@ fun EntertainmentScreen(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     ActionButtonCard(
-                        title = "البحث",
+                        title = tr("search"),
                         icon = Icons.Default.Search,
                         onClick = onSearchClick,
                         modifier = Modifier.weight(1f)
                     )
                     ActionButtonCard(
-                        title = "أفلام VOD",
+                        title = tr("movies"),
                         icon = Icons.Default.Movie,
                         onClick = { selectedFilterIndex = 1 },
                         modifier = Modifier.weight(1f)
                     )
                     ActionButtonCard(
-                        title = "مسلسلات",
+                        title = tr("series"),
                         icon = Icons.Default.Tv,
                         onClick = { selectedFilterIndex = 2 },
                         modifier = Modifier.weight(1f)

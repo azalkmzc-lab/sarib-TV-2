@@ -65,6 +65,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.data.local.tr
 import com.example.data.model.ChannelCategory
 import com.example.data.model.ChannelItem
 import com.example.data.model.ViewMode
@@ -101,7 +102,7 @@ fun ChannelsScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = SaribDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             SaribTopHeader(
                 onMenuClick = onMenuClick,
@@ -122,7 +123,7 @@ fun ChannelsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(SaribDarkBackground),
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             // 3 Large Action Buttons Row matching Screenshot 3
@@ -136,7 +137,7 @@ fun ChannelsScreen(
                 ) {
                     // Search Button
                     ActionButtonCard(
-                        title = "البحث",
+                        title = tr("search"),
                         icon = Icons.Default.Search,
                         onClick = onSearchClick,
                         modifier = Modifier.weight(1f)
@@ -144,7 +145,7 @@ fun ChannelsScreen(
 
                     // View Mode Button (Grid / List toggle)
                     ActionButtonCard(
-                        title = "الشكل",
+                        title = if (viewMode == ViewMode.GRID) tr("list_view") else tr("grid_view"),
                         icon = if (viewMode == ViewMode.GRID) Icons.Default.GridView else Icons.Default.ViewList,
                         onClick = onToggleViewMode,
                         modifier = Modifier.weight(1f)
@@ -152,7 +153,7 @@ fun ChannelsScreen(
 
                     // Categories Button
                     ActionButtonCard(
-                        title = "الأصناف",
+                        title = tr("channels"),
                         icon = Icons.Default.Category,
                         onClick = { /* Stay on categories */ },
                         isActive = true,
@@ -196,13 +197,13 @@ fun CategoryDetailScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = SaribDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             // Header for Category Detail
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(SaribCardBg)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
@@ -214,8 +215,8 @@ fun CategoryDetailScreen(
                             .testTag("back_button")
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(SaribDarkBackground)
-                            .border(1.dp, SaribCardBorder, CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -229,13 +230,13 @@ fun CategoryDetailScreen(
                             text = category.name,
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = SaribTextPrimary
+                                color = MaterialTheme.colorScheme.onSurface
                             )
                         )
                         Text(
                             text = if (isLoading) "جاري سحب القنوات..." else "${filteredChannels.size} قناة متاحة",
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = if (isLoading) SaribCyanAccent else SaribTextSecondary
+                                color = if (isLoading) SaribCyanAccent else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         )
                     }
@@ -247,8 +248,8 @@ fun CategoryDetailScreen(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(SaribDarkBackground)
-                            .border(1.dp, SaribCardBorder, CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -263,8 +264,8 @@ fun CategoryDetailScreen(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(SaribDarkBackground)
-                            .border(1.dp, SaribCardBorder, CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
                     ) {
                         Icon(
                             imageVector = if (viewMode == ViewMode.GRID) Icons.Default.ViewList else Icons.Default.GridView,
@@ -280,7 +281,7 @@ fun CategoryDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(SaribDarkBackground)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             // Search field within category
             OutlinedTextField(

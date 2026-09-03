@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ClosedCaption
+import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Forward10
 import androidx.compose.material.icons.filled.HighQuality
@@ -56,6 +57,8 @@ import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Subtitles
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -102,6 +105,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.example.data.local.tr
+import com.example.security.AppSecurityGuard
 import com.example.ui.components.SaribLoadingIndicator
 import com.example.ui.theme.SaribCyanAccent
 import com.example.ui.theme.SaribDarkBackground
@@ -111,6 +115,7 @@ import com.example.ui.theme.SaribLiveRed
 import com.example.ui.theme.SaribTextMuted
 import com.example.ui.theme.SaribTextPrimary
 import com.example.ui.theme.SaribTextSecondary
+import com.example.util.StreamUrlParser
 import kotlinx.coroutines.delay
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -207,42 +212,153 @@ fun PlayerScreen(
     var availableSubtitleTracks by remember { mutableStateOf<List<SubtitleTrackOption>>(emptyList()) }
     var selectedSubtitleIndex by remember { mutableIntStateOf(0) }
 
-    // High performance ExoPlayer configuration
-    val exoPlayer = remember(currentActiveUrl) {
+    // Multi-View state (3 simultaneous channels)
+    var isMultiViewMode by remember { mutableStateOf(false) }
+    var activeAudioSlot by remember { mutableIntStateOf(0) } // 0 = main, 1 = slot2, 2 = slot3
+
+    // High performance SINGLE ExoPlayer configuration (reused across server switches)
+    val exoPlayer = remember {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                15000,  // Min buffer 15s
-                50000,  // Max buffer 50s
-                2000,   // Buffer for initial playback 2s
-                3000    // Buffer for resume after rebuffer 3s
+                8000,   // Min buffer 8s
+                35000,  // Max buffer 35s
+                1500,   // Buffer for initial playback 1.5s
+                2500    // Buffer for resume after rebuffer 2.5s
             )
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
-        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
-            .setUserAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 SARIB-TV-Player/1.0")
-            .setAllowCrossProtocolRedirects(true)
-            .setConnectTimeoutMs(20000)
-            .setReadTimeoutMs(20000)
-
-        val mediaSourceFactory = DefaultMediaSourceFactory(context)
-            .setDataSourceFactory(httpDataSourceFactory)
-
-        val mediaItemBuilder = MediaItem.Builder().setUri(Uri.parse(currentActiveUrl))
-        if (currentActiveUrl.contains(".mpd", ignoreCase = true) || currentActiveUrl.contains("dash", ignoreCase = true)) {
-            mediaItemBuilder.setMimeType(MimeTypes.APPLICATION_MPD)
-        } else if (currentActiveUrl.contains(".m3u8", ignoreCase = true) || currentActiveUrl.contains("hls", ignoreCase = true)) {
-            mediaItemBuilder.setMimeType(MimeTypes.APPLICATION_M3U8)
-        }
-
         ExoPlayer.Builder(context)
-            .setMediaSourceFactory(mediaSourceFactory)
             .setLoadControl(loadControl)
             .build().apply {
                 playWhenReady = true
-                setMediaItem(mediaItemBuilder.build())
-                prepare()
             }
+    }
+
+    // Function to play or switch stream cleanly using StreamUrlParser (ClearKey DRM, MPD, HLS, headers)
+    val playStream: (String) -> Unit = remember(exoPlayer) {
+        { url ->
+            if (url.isNotBlank()) {
+                isBuffering = true
+                hasError = false
+                try {
+                    exoPlayer.stop()
+                    exoPlayer.clearMediaItems()
+
+                    val parsed = StreamUrlParser.parse(url)
+                    val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+                        .setUserAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 SARIB-TV-Player/1.0")
+                        .setAllowCrossProtocolRedirects(true)
+                        .setConnectTimeoutMs(15000)
+                        .setReadTimeoutMs(15000)
+                    StreamUrlParser.configureHttpDataSource(httpDataSourceFactory, parsed)
+
+                    val mediaSourceFactory = DefaultMediaSourceFactory(httpDataSourceFactory)
+                    val drmManager = StreamUrlParser.createDrmSessionManager(parsed)
+                    if (drmManager != null) {
+                        mediaSourceFactory.setDrmSessionManagerProvider { drmManager }
+                    }
+
+                    val mediaItemBuilder = MediaItem.Builder().setUri(Uri.parse(parsed.cleanUrl))
+                    if (parsed.mimeType != null) {
+                        mediaItemBuilder.setMimeType(parsed.mimeType)
+                    }
+                    val mediaSource = mediaSourceFactory.createMediaSource(mediaItemBuilder.build())
+                    exoPlayer.setMediaSource(mediaSource)
+                    exoPlayer.prepare()
+                    exoPlayer.play()
+                } catch (e: Exception) {
+                    android.util.Log.e("PlayerScreen", "Error playing stream: ${e.message}", e)
+                    hasError = true
+                    isBuffering = false
+                }
+            }
+        }
+    }
+
+    // Secondary sub-players for Multi-View 3-channel mode
+    val subPlayer1 = remember(isMultiViewMode) {
+        if (isMultiViewMode) {
+            val url1 = serverOptions.getOrNull(1)?.second ?: currentActiveUrl
+            ExoPlayer.Builder(context).build().apply {
+                playWhenReady = true
+                try {
+                    val parsed = StreamUrlParser.parse(url1)
+                    val httpFactory = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
+                    StreamUrlParser.configureHttpDataSource(httpFactory, parsed)
+                    val msFactory = DefaultMediaSourceFactory(httpFactory)
+                    val drm = StreamUrlParser.createDrmSessionManager(parsed)
+                    if (drm != null) msFactory.setDrmSessionManagerProvider { drm }
+                    val mb = MediaItem.Builder().setUri(Uri.parse(parsed.cleanUrl))
+                    if (parsed.mimeType != null) mb.setMimeType(parsed.mimeType)
+                    setMediaSource(msFactory.createMediaSource(mb.build()))
+                    prepare()
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
+        } else null
+    }
+
+    val subPlayer2 = remember(isMultiViewMode) {
+        if (isMultiViewMode) {
+            val url2 = serverOptions.getOrNull(2)?.second ?: serverOptions.getOrNull(0)?.second ?: currentActiveUrl
+            ExoPlayer.Builder(context).build().apply {
+                playWhenReady = true
+                try {
+                    val parsed = StreamUrlParser.parse(url2)
+                    val httpFactory = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
+                    StreamUrlParser.configureHttpDataSource(httpFactory, parsed)
+                    val msFactory = DefaultMediaSourceFactory(httpFactory)
+                    val drm = StreamUrlParser.createDrmSessionManager(parsed)
+                    if (drm != null) msFactory.setDrmSessionManagerProvider { drm }
+                    val mb = MediaItem.Builder().setUri(Uri.parse(parsed.cleanUrl))
+                    if (parsed.mimeType != null) mb.setMimeType(parsed.mimeType)
+                    setMediaSource(msFactory.createMediaSource(mb.build()))
+                    prepare()
+                } catch (e: Exception) {
+                    // Ignore
+                }
+            }
+        } else null
+    }
+
+    // Cleanup subplayers when exiting multi-view
+    DisposableEffect(isMultiViewMode) {
+        onDispose {
+            subPlayer1?.release()
+            subPlayer2?.release()
+        }
+    }
+
+    // Audio routing between the 3 channels
+    LaunchedEffect(isMultiViewMode, activeAudioSlot) {
+        if (isMultiViewMode) {
+            exoPlayer.volume = if (activeAudioSlot == 0) 1f else 0f
+            subPlayer1?.volume = if (activeAudioSlot == 1) 1f else 0f
+            subPlayer2?.volume = if (activeAudioSlot == 2) 1f else 0f
+        } else {
+            exoPlayer.volume = 1f
+        }
+    }
+
+    // Play active url whenever it changes (e.g., server switch)
+    LaunchedEffect(currentActiveUrl) {
+        playStream(currentActiveUrl)
+    }
+
+    // Active 2-second VPN / Proxy Security Monitor
+    val isVpnDetected = AppSecurityGuard.rememberVpnSecurityMonitor(context) {
+        try {
+            exoPlayer.stop()
+            exoPlayer.release()
+            subPlayer1?.release()
+            subPlayer2?.release()
+        } catch (e: Exception) {
+            // Ignore
+        }
+        Toast.makeText(context, "تم رصد تشغيل VPN أو بروكسي! تم إيقاف المشغل لأسباب أمنية.", Toast.LENGTH_LONG).show()
+        AppSecurityGuard.terminateApp(activity)
     }
 
     // Keep Screen On & Orientation configuration
@@ -405,7 +521,8 @@ fun PlayerScreen(
             activity?.requestedOrientation = originalOrientation
             if (window != null) {
                 val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-                insetsController.show(WindowInsetsCompat.Type.systemBars())
+                insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                insetsController.hide(WindowInsetsCompat.Type.navigationBars())
             }
         }
     }
@@ -469,26 +586,194 @@ fun PlayerScreen(
                 }
             }
     ) {
-        // Player Surface View with keepScreenOn enabled
-        AndroidView(
-            factory = { ctx ->
-                PlayerView(ctx).apply {
-                    player = exoPlayer
-                    useController = false
-                    this.resizeMode = resizeMode
-                    keepScreenOn = true
-                    layoutParams = FrameLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
+        // Player Surface View with Multi-View 3-channel support
+        if (isMultiViewMode) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                // Primary Channel (Slot 0)
+                Box(
+                    modifier = Modifier
+                        .weight(1.3f)
+                        .fillMaxSize()
+                        .border(
+                            width = if (activeAudioSlot == 0) 2.5.dp else 1.dp,
+                            color = if (activeAudioSlot == 0) SaribCyanAccent else Color.DarkGray
+                        )
+                        .clickable { activeAudioSlot = 0 }
+                ) {
+                    AndroidView(
+                        factory = { ctx ->
+                            PlayerView(ctx).apply {
+                                player = exoPlayer
+                                useController = false
+                                this.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                keepScreenOn = true
+                            }
+                        },
+                        update = { pv ->
+                            if (pv.player != exoPlayer) pv.player = exoPlayer
+                        },
+                        modifier = Modifier.fillMaxSize()
                     )
+                    Surface(
+                        color = if (activeAudioSlot == 0) SaribCyanAccent else Color(0x99000000),
+                        shape = RoundedCornerShape(bottomEnd = 8.dp),
+                        modifier = Modifier.align(Alignment.TopStart)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (activeAudioSlot == 0) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                                contentDescription = null,
+                                tint = if (activeAudioSlot == 0) Color.Black else Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (activeAudioSlot == 0) "الصوت يعمل (1)" else "قناة 1 (صامت)",
+                                color = if (activeAudioSlot == 0) Color.Black else Color.White,
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                            )
+                        }
+                    }
                 }
-            },
-            update = { playerView ->
-                playerView.resizeMode = resizeMode
-                playerView.keepScreenOn = true
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+
+                // Sub-Channels Column (Slot 1 & Slot 2)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxSize()
+                ) {
+                    // Channel 2 (Slot 1)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .border(
+                                width = if (activeAudioSlot == 1) 2.5.dp else 1.dp,
+                                color = if (activeAudioSlot == 1) SaribCyanAccent else Color.DarkGray
+                            )
+                            .clickable { activeAudioSlot = 1 }
+                    ) {
+                        if (subPlayer1 != null) {
+                            AndroidView(
+                                factory = { ctx ->
+                                    PlayerView(ctx).apply {
+                                        player = subPlayer1
+                                        useController = false
+                                        this.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                        keepScreenOn = true
+                                    }
+                                },
+                                update = { pv ->
+                                    if (pv.player != subPlayer1) pv.player = subPlayer1
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        Surface(
+                            color = if (activeAudioSlot == 1) SaribCyanAccent else Color(0x99000000),
+                            shape = RoundedCornerShape(bottomEnd = 8.dp),
+                            modifier = Modifier.align(Alignment.TopStart)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (activeAudioSlot == 1) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                                    contentDescription = null,
+                                    tint = if (activeAudioSlot == 1) Color.Black else Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (activeAudioSlot == 1) "الصوت يعمل (2)" else "قناة 2 (صامت)",
+                                    color = if (activeAudioSlot == 1) Color.Black else Color.White,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                                )
+                            }
+                        }
+                    }
+
+                    // Channel 3 (Slot 2)
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                            .border(
+                                width = if (activeAudioSlot == 2) 2.5.dp else 1.dp,
+                                color = if (activeAudioSlot == 2) SaribCyanAccent else Color.DarkGray
+                            )
+                            .clickable { activeAudioSlot = 2 }
+                    ) {
+                        if (subPlayer2 != null) {
+                            AndroidView(
+                                factory = { ctx ->
+                                    PlayerView(ctx).apply {
+                                        player = subPlayer2
+                                        useController = false
+                                        this.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                        keepScreenOn = true
+                                    }
+                                },
+                                update = { pv ->
+                                    if (pv.player != subPlayer2) pv.player = subPlayer2
+                                },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                        Surface(
+                            color = if (activeAudioSlot == 2) SaribCyanAccent else Color(0x99000000),
+                            shape = RoundedCornerShape(bottomEnd = 8.dp),
+                            modifier = Modifier.align(Alignment.TopStart)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = if (activeAudioSlot == 2) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
+                                    contentDescription = null,
+                                    tint = if (activeAudioSlot == 2) Color.Black else Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = if (activeAudioSlot == 2) "الصوت يعمل (3)" else "قناة 3 (صامت)",
+                                    color = if (activeAudioSlot == 2) Color.Black else Color.White,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player = exoPlayer
+                        useController = false
+                        this.resizeMode = resizeMode
+                        keepScreenOn = true
+                        layoutParams = FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
+                    }
+                },
+                update = { playerView ->
+                    playerView.resizeMode = resizeMode
+                    playerView.keepScreenOn = true
+                    if (playerView.player != exoPlayer) {
+                        playerView.player = exoPlayer
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
 
         // Modern Buffering Indicator
         if (isBuffering && !hasError) {
@@ -744,6 +1029,28 @@ fun PlayerScreen(
                                 imageVector = Icons.Default.Audiotrack,
                                 contentDescription = "مسارات الصوت",
                                 tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        // Multi-View (3 Channels) Button
+                        IconButton(
+                            onClick = {
+                                isMultiViewMode = !isMultiViewMode
+                                if (isMultiViewMode) {
+                                    Toast.makeText(context, "تم تفعيل عرض 3 شاشات متعددة (اضغط على أي شاشة لسماع صوتها)", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(if (isMultiViewMode) SaribCyanAccent else Color(0x66000000))
+                                .testTag("multiview_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Dashboard,
+                                contentDescription = "عرض 3 شاشات متعددة",
+                                tint = if (isMultiViewMode) Color.Black else Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -1103,6 +1410,9 @@ fun PlayerScreen(
                                 .border(1.dp, if (isSelected) SaribCyanAccent else Color.Transparent, RoundedCornerShape(10.dp))
                                 .clickable {
                                     selectedServerIndex = index
+                                    val newUrl = serverOptions.getOrNull(index)?.second ?: streamUrl
+                                    currentActiveUrl = newUrl
+                                    playStream(newUrl)
                                     Toast.makeText(context, "تم التبديل إلى $srvName", Toast.LENGTH_SHORT).show()
                                     showServerDialog = false
                                 }

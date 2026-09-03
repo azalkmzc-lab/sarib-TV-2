@@ -1123,11 +1123,15 @@ fun SaribBottomNav(
     modifier: Modifier = Modifier
 ) {
     val items = listOf(
-        Triple("الرئيسية", Icons.Outlined.Home, "home"),
-        Triple("القنوات", Icons.Outlined.LiveTv, "channels"),
-        Triple("الترفيه", Icons.Outlined.VideoLibrary, "entertainment"),
-        Triple("المفضلة", Icons.Default.FavoriteBorder, "favorites")
+        Triple(com.example.data.local.tr("home"), Icons.Outlined.Home, "home"),
+        Triple(com.example.data.local.tr("channels"), Icons.Outlined.LiveTv, "channels"),
+        Triple(com.example.data.local.tr("entertainment"), Icons.Outlined.VideoLibrary, "entertainment"),
+        Triple(com.example.data.local.tr("favorites"), Icons.Default.FavoriteBorder, "favorites")
     )
+
+    val navBg = MaterialTheme.colorScheme.surface
+    val navSurfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val borderColor = MaterialTheme.colorScheme.outline
 
     Surface(
         modifier = modifier
@@ -1137,17 +1141,17 @@ fun SaribBottomNav(
             .clip(RoundedCornerShape(26.dp))
             .border(
                 1.dp,
-                Brush.horizontalGradient(listOf(SaribCardBorder, SaribBlueGlow, SaribCardBorder)),
+                Brush.horizontalGradient(listOf(borderColor, SaribBlueGlow, borderColor)),
                 RoundedCornerShape(26.dp)
             ),
-        color = SaribHeaderGradientStart
+        color = navBg
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     Brush.verticalGradient(
-                        listOf(SaribHeaderGradientStart, Color(0xFF070B12))
+                        listOf(navBg, navSurfaceVariant)
                     )
                 )
                 .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -1185,7 +1189,7 @@ fun SaribBottomNav(
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.labelMedium.copy(
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onSurface,
                                     fontWeight = FontWeight.Bold
                                 )
                             )
@@ -1201,7 +1205,7 @@ fun SaribBottomNav(
                             imageVector = icon,
                             contentDescription = label,
                             tint = SaribTextMuted,
-                            modifier = Modifier.size(22.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }

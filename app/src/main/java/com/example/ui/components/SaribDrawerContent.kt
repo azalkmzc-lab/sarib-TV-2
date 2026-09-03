@@ -45,6 +45,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
+import com.example.data.local.tr
 import com.example.ui.theme.SaribCardBorder
 import com.example.ui.theme.SaribCyanAccent
 import com.example.ui.theme.SaribDarkBackground
@@ -61,18 +62,23 @@ fun SaribDrawerContent(
     onTelegramClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val drawerBg = MaterialTheme.colorScheme.surface
+    val onSurfaceColor = MaterialTheme.colorScheme.onSurface
+    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
+    val borderColor = MaterialTheme.colorScheme.outline
+
     Surface(
         modifier = modifier
             .fillMaxHeight()
             .width(300.dp),
-        color = SaribDarkBackground
+        color = drawerBg
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        listOf(Color(0xFF0F1826), SaribDarkBackground)
+                        listOf(surfaceVariant, drawerBg)
                     )
                 )
                 .padding(20.dp)
@@ -104,7 +110,7 @@ fun SaribDrawerContent(
                             text = "SARIB",
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Black,
-                                color = SaribTextPrimary
+                                color = onSurfaceColor
                             )
                         )
                         Spacer(modifier = Modifier.width(4.dp))
@@ -124,7 +130,7 @@ fun SaribDrawerContent(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-            HorizontalDivider(color = SaribCardBorder, thickness = 1.dp)
+            HorizontalDivider(color = borderColor, thickness = 1.dp)
             Spacer(modifier = Modifier.height(14.dp))
 
             // Navigation items list
@@ -135,28 +141,32 @@ fun SaribDrawerContent(
                 item {
                     DrawerItem(
                         icon = Icons.Default.Home,
-                        title = "الرئيسية",
+                        title = tr("home"),
+                        tint = onSurfaceColor,
                         onClick = onNavigateToHome
                     )
                 }
                 item {
                     DrawerItem(
                         icon = Icons.Default.Tv,
-                        title = "باقات القنوات المشفرة والمفتوحة",
+                        title = tr("channels"),
+                        tint = onSurfaceColor,
                         onClick = onNavigateToChannels
                     )
                 }
                 item {
                     DrawerItem(
                         icon = Icons.Default.Movie,
-                        title = "مكتبة السينما والمسلسلات والأنمي",
+                        title = tr("entertainment"),
+                        tint = onSurfaceColor,
                         onClick = onNavigateToEntertainment
                     )
                 }
                 item {
                     DrawerItem(
                         icon = Icons.Default.Favorite,
-                        title = "المفضلة",
+                        title = tr("favorites"),
+                        tint = onSurfaceColor,
                         onClick = onNavigateToFavorites
                     )
                 }
@@ -164,7 +174,7 @@ fun SaribDrawerContent(
                 item {
                     DrawerItem(
                         icon = Icons.Default.Settings,
-                        title = "الإعدادات والمظهر واللغة",
+                        title = tr("settings"),
                         tint = SaribCyanAccent,
                         onClick = onSettingsClick
                     )
@@ -172,14 +182,14 @@ fun SaribDrawerContent(
 
                 item {
                     Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = SaribCardBorder, thickness = 1.dp)
+                    HorizontalDivider(color = borderColor, thickness = 1.dp)
                     Spacer(modifier = Modifier.height(14.dp))
                 }
 
                 item {
                     DrawerItem(
                         icon = Icons.AutoMirrored.Filled.Send,
-                        title = "قناة التليجرام الرسمية",
+                        title = tr("telegram_channel"),
                         tint = SaribCyanAccent,
                         onClick = onTelegramClick
                     )

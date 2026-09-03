@@ -43,6 +43,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.local.FavoriteEntity
+import com.example.data.local.tr
 import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribTopHeader
 import com.example.ui.theme.SaribBlueGlow
@@ -72,7 +73,7 @@ fun FavoritesScreen(
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = SaribDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             SaribTopHeader(
                 onMenuClick = onMenuClick,
@@ -94,7 +95,7 @@ fun FavoritesScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .background(SaribDarkBackground)
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
             ) {

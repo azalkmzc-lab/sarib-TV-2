@@ -11,10 +11,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.data.local.tr
 import com.example.data.model.ChannelItem
 import com.example.data.model.HeroBannerItem
 import com.example.ui.components.CategoryChipsRow
@@ -24,7 +26,6 @@ import com.example.ui.components.MainCategoriesRoundGrid
 import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribTopHeader
 import com.example.ui.components.SectionHeader
-import com.example.ui.theme.SaribDarkBackground
 
 @Composable
 fun HomeScreen(
@@ -49,7 +50,7 @@ fun HomeScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = SaribDarkBackground,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             SaribTopHeader(
                 onMenuClick = onMenuClick,
@@ -70,7 +71,7 @@ fun HomeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(SaribDarkBackground),
+                .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(bottom = 24.dp)
         ) {
             // Category Chips Row
@@ -104,7 +105,7 @@ fun HomeScreen(
             // Most Watched Channels (القنوات الأكثر مشاهدة)
             item {
                 SectionHeader(
-                    title = "القنوات الأكثر مشاهدة",
+                    title = tr("most_watched"),
                     onViewAllClick = onViewAllChannelsClick
                 )
                 Spacer(modifier = Modifier.height(8.dp))
