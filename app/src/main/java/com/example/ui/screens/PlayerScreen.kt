@@ -347,20 +347,6 @@ fun PlayerScreen(
         playStream(currentActiveUrl)
     }
 
-    // Active 2-second VPN / Proxy Security Monitor
-    val isVpnDetected = AppSecurityGuard.rememberVpnSecurityMonitor(context) {
-        try {
-            exoPlayer.stop()
-            exoPlayer.release()
-            subPlayer1?.release()
-            subPlayer2?.release()
-        } catch (e: Exception) {
-            // Ignore
-        }
-        Toast.makeText(context, "تم رصد تشغيل VPN أو بروكسي! تم إيقاف المشغل لأسباب أمنية.", Toast.LENGTH_LONG).show()
-        AppSecurityGuard.terminateApp(activity)
-    }
-
     // Keep Screen On & Orientation configuration
     DisposableEffect(activity) {
         val window = activity?.window
