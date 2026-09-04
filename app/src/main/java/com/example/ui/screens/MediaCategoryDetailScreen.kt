@@ -28,6 +28,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PlayArrow
@@ -72,6 +74,7 @@ import com.example.data.model.MediaItem
 import com.example.ui.components.MediaCardItem
 import com.example.ui.theme.SaribCardBg
 import com.example.ui.theme.SaribCardBorder
+import com.example.ui.theme.SaribCardBorderSubtle
 import com.example.ui.theme.SaribCyanAccent
 import com.example.ui.theme.SaribDarkBackground
 import com.example.ui.theme.SaribElectricBlue
@@ -88,6 +91,7 @@ fun MediaCategoryDetailScreen(
     onBackClick: () -> Unit,
     onRefresh: () -> Unit,
     onMediaClick: (MediaItem) -> Unit,
+    onFavoriteToggle: ((MediaItem) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -321,6 +325,7 @@ fun MediaCategoryDetailScreen(
                         MediaCardItem(
                             item = item,
                             onClick = onMediaClick,
+                            onFavoriteToggle = onFavoriteToggle,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -407,19 +412,47 @@ fun MediaCategoryDetailScreen(
                                     }
                                 }
 
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(SaribElectricBlue.copy(alpha = 0.2f)),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PlayArrow,
-                                        contentDescription = "تشغيل",
-                                        tint = SaribCyanAccent,
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                                    if (onFavoriteToggle != null) {
+                                        IconButton(
+                                            onClick = { onFavoriteToggle(item) },
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .background(if (item.isFavorite) Color(0x33FF2A4B) else Color(0xFF0C1929))
+                                                .border(
+                                                    1.dp,
+                                                    if (item.isFavorite) Color(0xFFFF2A4B) else SaribCardBorderSubtle,
+                                                    CircleShape
+                                                )
+                                        ) {
+                                            Icon(
+                                                imageVector = if (item.isFavorite) Icons.Filled.Favorite else Icons.Default.FavoriteBorder,
+                                                contentDescription = "المفضلة",
+                                                tint = if (item.isFavorite) Color(0xFFFF2A4B) else Color.White,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(SaribElectricBlue.copy(alpha = 0.2f))
+                                            .clickable { onMediaClick(item) },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = "تشغيل",
+                                            tint = SaribCyanAccent,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

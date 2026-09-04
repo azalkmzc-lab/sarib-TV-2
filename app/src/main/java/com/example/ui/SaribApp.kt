@@ -125,6 +125,17 @@ fun SaribApp(
         }
     }
 
+    val handleMediaFavoriteToggle: (com.example.data.model.MediaItem) -> Unit = { media ->
+        viewModel.toggleFavorite(
+            itemId = media.id,
+            title = media.title,
+            subtitle = "${media.year} • ${media.genre}",
+            type = if (media.type == ContentType.SERIES) "SERIES" else "MOVIE",
+            streamUrl = media.streamUrl,
+            isFav = media.isFavorite
+        )
+    }
+
     // Context-aware Back Button handling
     BackHandler {
         if (drawerState.isOpen) {
@@ -267,6 +278,16 @@ fun SaribApp(
                                 onViewAllChannelsClick = { viewModel.selectTab("channels") },
                                 currentTab = currentTab,
                                 onTabSelected = { viewModel.selectTab(it) },
+                                onFavoriteToggle = { channel ->
+                                    viewModel.toggleFavorite(
+                                        itemId = channel.id,
+                                        title = channel.name,
+                                        subtitle = channel.categoryName,
+                                        type = "CHANNEL",
+                                        streamUrl = channel.streamUrl,
+                                        isFav = channel.isFavorite
+                                    )
+                                },
                                 listState = homeListState
                             )
                         }
@@ -315,6 +336,7 @@ fun SaribApp(
                                 seriesCategories = seriesCategories,
                                 onCategoryClick = { cat -> viewModel.openMediaCategory(cat) },
                                 onMediaClick = handleMediaClick,
+                                onFavoriteToggle = handleMediaFavoriteToggle,
                                 onMenuClick = { scope.launch { drawerState.open() } },
                                 onTelegramClick = openTelegram,
                                 onFavoritesClick = { viewModel.selectTab("favorites") },
@@ -396,7 +418,8 @@ fun SaribApp(
                         isLoading = isCategoryLoading,
                         onBackClick = { viewModel.popBack() },
                         onRefresh = { viewModel.refreshMediaCategory(screen.category) },
-                        onMediaClick = handleMediaClick
+                        onMediaClick = handleMediaClick,
+                        onFavoriteToggle = handleMediaFavoriteToggle
                     )
                 }
 

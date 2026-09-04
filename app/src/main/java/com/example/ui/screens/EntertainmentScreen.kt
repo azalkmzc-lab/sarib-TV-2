@@ -76,6 +76,7 @@ fun EntertainmentScreen(
     seriesCategories: List<ChannelCategory>,
     onCategoryClick: (ChannelCategory) -> Unit,
     onMediaClick: (MediaItem) -> Unit,
+    onFavoriteToggle: ((MediaItem) -> Unit)? = null,
     onMenuClick: () -> Unit,
     onTelegramClick: () -> Unit,
     onFavoritesClick: () -> Unit,
@@ -181,7 +182,8 @@ fun EntertainmentScreen(
                             items(movies, key = { it.id }) { item ->
                                 MediaCardItem(
                                     item = item,
-                                    onClick = onMediaClick
+                                    onClick = onMediaClick,
+                                    onFavoriteToggle = onFavoriteToggle
                                 )
                             }
                         }
@@ -216,7 +218,8 @@ fun EntertainmentScreen(
                             items(series, key = { it.id }) { item ->
                                 MediaCardItem(
                                     item = item,
-                                    onClick = onMediaClick
+                                    onClick = onMediaClick,
+                                    onFavoriteToggle = onFavoriteToggle
                                 )
                             }
                         }
@@ -293,7 +296,8 @@ fun EntertainmentScreen(
                             items(anime, key = { it.id }) { item ->
                                 MediaCardItem(
                                     item = item,
-                                    onClick = onMediaClick
+                                    onClick = onMediaClick,
+                                    onFavoriteToggle = onFavoriteToggle
                                 )
                             }
                         }
@@ -325,7 +329,8 @@ fun EntertainmentScreen(
                         items(movies, key = { it.id }) { item ->
                             MediaCardItem(
                                 item = item,
-                                onClick = onMediaClick
+                                onClick = onMediaClick,
+                                onFavoriteToggle = onFavoriteToggle
                             )
                         }
                     }
@@ -375,7 +380,8 @@ fun EntertainmentScreen(
                         items(series, key = { it.id }) { item ->
                             MediaCardItem(
                                 item = item,
-                                onClick = onMediaClick
+                                onClick = onMediaClick,
+                                onFavoriteToggle = onFavoriteToggle
                             )
                         }
                     }

@@ -43,6 +43,7 @@ fun HomeScreen(
     onViewAllChannelsClick: () -> Unit,
     currentTab: String,
     onTabSelected: (String) -> Unit,
+    onFavoriteToggle: (ChannelItem) -> Unit = {},
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
@@ -120,7 +121,7 @@ fun HomeScreen(
                         ChannelCardItem(
                             channel = channel,
                             onClick = onChannelClick,
-                            onFavoriteToggle = { /* handled in detail or long press */ }
+                            onFavoriteToggle = onFavoriteToggle
                         )
                     }
                 }

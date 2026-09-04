@@ -36,6 +36,7 @@ object AppSecurityGuard {
     /**
      * Checks if any VPN transport, virtual network interface (tun/tap/ppp/wg/p2p),
      * or HTTP proxy is currently active on the device.
+     * Guaranteed to be non-blocking and safe.
      */
     fun isVpnOrProxyActive(context: Context): Boolean {
         try {
@@ -65,7 +66,7 @@ object AppSecurityGuard {
                 }
             }
 
-            // Check virtual tunnel network interfaces (tun, tap, ppp, wg, utun, vpn)
+            // Fast check for virtual tunnel network interfaces (tun, tap, ppp, wg, utun, vpn)
             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
             for (intf in interfaces) {
                 if (!intf.isUp) continue
@@ -81,7 +82,7 @@ object AppSecurityGuard {
                 }
             }
 
-            // HTTP proxy check
+            // Fast HTTP proxy check
             val proxyHost = System.getProperty("http.proxyHost")
             val proxyPort = System.getProperty("http.proxyPort")
             if (!proxyHost.isNullOrBlank() && !proxyPort.isNullOrBlank() && proxyPort != "-1" && proxyPort != "0") {

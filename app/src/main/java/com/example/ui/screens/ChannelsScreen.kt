@@ -28,6 +28,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -58,6 +60,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -190,6 +193,14 @@ fun CategoryDetailScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
+    val context = LocalContext.current
+    val copyM3u8: (ChannelItem) -> Unit = { ch ->
+        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+        val clip = android.content.ClipData.newPlainText("M3U8 Stream URL", ch.streamUrl)
+        clipboard?.setPrimaryClip(clip)
+        Toast.makeText(context, "تم سحب رابط m3u8 بنجاح: ${ch.name}", Toast.LENGTH_SHORT).show()
+    }
+
     val filteredChannels = remember(channels, searchQuery) {
         if (searchQuery.isBlank()) channels
         else channels.filter { it.name.contains(searchQuery, ignoreCase = true) }
@@ -408,7 +419,8 @@ fun CategoryDetailScreen(
                         ChannelCardItem(
                             channel = channel,
                             onClick = onChannelClick,
-                            onFavoriteToggle = onFavoriteToggle
+                            onFavoriteToggle = onFavoriteToggle,
+                            onCopyStreamUrl = copyM3u8
                         )
                     }
                 }
@@ -435,10 +447,13 @@ fun CategoryDetailScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.weight(1f)
+                                ) {
                                     Box(
                                         modifier = Modifier
-                                            .size(44.dp)
+                                            .size(46.dp)
                                             .clip(RoundedCornerShape(12.dp))
                                             .background(Color(0xFF09111E)),
                                         contentAlignment = Alignment.Center
@@ -457,30 +472,78 @@ fun CategoryDetailScreen(
                                             style = MaterialTheme.typography.labelLarge.copy(
                                                 color = SaribTextPrimary,
                                                 fontWeight = FontWeight.Bold
-                                            )
+                                            ),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                         Text(
                                             text = "${channel.country} • ${channel.language}",
                                             style = MaterialTheme.typography.bodySmall.copy(
                                                 color = SaribTextSecondary
-                                            )
+                                            ),
+                                            maxLines = 1
                                         )
                                     }
                                 }
 
-                                Box(
-                                    modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(CircleShape)
-                                        .background(SaribElectricBlue.copy(alpha = 0.2f)),
-                                    contentAlignment = Alignment.Center
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Icon(
-                                        imageVector = Icons.Default.PlayArrow,
-                                        contentDescription = "تشغيل",
-                                        tint = SaribCyanAccent,
-                                        modifier = Modifier.size(20.dp)
-                                    )
+                                    // Copy M3U8 Stream URL Button
+                                    IconButton(
+                                        onClick = { copyM3u8(channel) },
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFF0C1929))
+                                            .border(1.dp, SaribCyanAccent.copy(alpha = 0.4f), CircleShape)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Link,
+                                            contentDescription = "سحب رابط m3u8",
+                                            tint = SaribCyanAccent,
+                                            modifier = Modifier.size(17.dp)
+                                        )
+                                    }
+
+                                    // Favorite Toggle Button
+                                    IconButton(
+                                        onClick = { onFavoriteToggle(channel) },
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(if (channel.isFavorite) Color(0x33FF2A4B) else Color(0xFF0C1929))
+                                            .border(
+                                                1.dp,
+                                                if (channel.isFavorite) Color(0xFFFF2A4B) else SaribCardBorderSubtle,
+                                                CircleShape
+                                            )
+                                    ) {
+                                        Icon(
+                                            imageVector = if (channel.isFavorite) Icons.Filled.Favorite else Icons.Default.FavoriteBorder,
+                                            contentDescription = "المفضلة",
+                                            tint = if (channel.isFavorite) Color(0xFFFF2A4B) else Color.White,
+                                            modifier = Modifier.size(17.dp)
+                                        )
+                                    }
+
+                                    // Play Button
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(SaribElectricBlue.copy(alpha = 0.2f))
+                                            .clickable { onChannelClick(channel) },
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.PlayArrow,
+                                            contentDescription = "تشغيل",
+                                            tint = SaribCyanAccent,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

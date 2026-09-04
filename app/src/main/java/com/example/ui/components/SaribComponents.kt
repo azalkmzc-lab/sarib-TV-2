@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,6 +40,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
@@ -657,13 +659,13 @@ fun ChannelCardItem(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // Channel Logo Box
             Box(
                 modifier = Modifier
-                    .size(72.dp)
+                    .size(76.dp)
                     .clip(RoundedCornerShape(14.dp))
                     .background(Color(0xFF09111E))
                     .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(14.dp)),
@@ -702,9 +704,28 @@ fun ChannelCardItem(
                         )
                     }
                 }
+
+                // Favorite Toggle Button (Top-Right)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(2.dp)
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xAA000000))
+                        .clickable { onFavoriteToggle(channel) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = if (channel.isFavorite) Icons.Filled.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "المفضلة",
+                        tint = if (channel.isFavorite) Color(0xFFFF2A4B) else Color.White,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
                 text = channel.name,
@@ -931,6 +952,7 @@ fun MatchCardItem(
 fun MediaCardItem(
     item: MediaItem,
     onClick: (MediaItem) -> Unit,
+    onFavoriteToggle: ((MediaItem) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val displayImageUrl = item.posterUrl.ifBlank { item.backdropUrl }
@@ -987,6 +1009,27 @@ fun MediaCardItem(
                                 color = Color.White,
                                 fontWeight = FontWeight.Black
                             )
+                        )
+                    }
+                }
+
+                // Favorite Toggle Button (Top-Start)
+                if (onFavoriteToggle != null) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(6.dp)
+                            .size(30.dp)
+                            .clip(CircleShape)
+                            .background(Color(0xAA000000))
+                            .clickable { onFavoriteToggle(item) },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (item.isFavorite) Icons.Filled.Favorite else Icons.Default.FavoriteBorder,
+                            contentDescription = "المفضلة",
+                            tint = if (item.isFavorite) Color(0xFFFF2A4B) else Color.White,
+                            modifier = Modifier.size(17.dp)
                         )
                     }
                 }
@@ -1122,12 +1165,14 @@ fun SaribBottomNav(
     onTabSelected: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val items = listOf(
-        Triple(com.example.data.local.tr("home"), Icons.Outlined.Home, "home"),
-        Triple(com.example.data.local.tr("channels"), Icons.Outlined.LiveTv, "channels"),
-        Triple(com.example.data.local.tr("entertainment"), Icons.Outlined.VideoLibrary, "entertainment"),
-        Triple(com.example.data.local.tr("favorites"), Icons.Default.FavoriteBorder, "favorites")
-    )
+    val items = remember {
+        listOf(
+            Triple("home", Icons.Outlined.Home, "home"),
+            Triple("channels", Icons.Outlined.LiveTv, "channels"),
+            Triple("entertainment", Icons.Outlined.VideoLibrary, "entertainment"),
+            Triple("favorites", Icons.Default.FavoriteBorder, "favorites")
+        )
+    }
 
     val navBg = MaterialTheme.colorScheme.surface
     val navSurfaceVariant = MaterialTheme.colorScheme.surfaceVariant
@@ -1136,8 +1181,8 @@ fun SaribBottomNav(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 12.dp)
-            .shadow(20.dp, RoundedCornerShape(26.dp))
+            .padding(horizontal = 14.dp, vertical = 10.dp)
+            .shadow(16.dp, RoundedCornerShape(26.dp))
             .clip(RoundedCornerShape(26.dp))
             .border(
                 1.dp,
@@ -1149,64 +1194,86 @@ fun SaribBottomNav(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .height(62.dp)
                 .background(
                     Brush.verticalGradient(
                         listOf(navBg, navSurfaceVariant)
                     )
                 )
-                .padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
+                .padding(horizontal = 6.dp, vertical = 5.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            items.forEach { (label, icon, tabKey) ->
+            items.forEach { (labelKey, icon, tabKey) ->
+                val label = com.example.data.local.tr(labelKey)
                 val isSelected = currentTab == tabKey
 
-                if (isSelected) {
-                    // Selected active pill
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(
-                                Brush.horizontalGradient(
-                                    listOf(SaribElectricBlue.copy(alpha = 0.25f), SaribCyanAccent.copy(alpha = 0.15f))
-                                )
-                            )
-                            .border(1.dp, SaribCyanAccent, RoundedCornerShape(20.dp))
-                            .clickable { onTabSelected(tabKey) }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                    ) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(
+                            if (isSelected) SaribElectricBlue.copy(alpha = 0.35f) else Color.Transparent
+                        )
+                        .border(
+                            width = if (isSelected) 1.dp else 0.dp,
+                            color = if (isSelected) SaribCyanAccent else Color.Transparent,
+                            shape = RoundedCornerShape(20.dp)
+                        )
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) {
+                            if (!isSelected) {
+                                onTabSelected(tabKey)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(horizontal = 6.dp)
                         ) {
                             Icon(
                                 imageVector = icon,
                                 contentDescription = label,
                                 tint = SaribCyanAccent,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(19.dp)
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     color = MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp
+                                ),
+                                maxLines = 1
                             )
                         }
-                    }
-                } else {
-                    // Inactive Icon
-                    IconButton(
-                        onClick = { onTabSelected(tabKey) },
-                        modifier = Modifier.size(42.dp)
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = label,
-                            tint = SaribTextMuted,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    } else {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = label,
+                                tint = SaribTextMuted,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = label,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = SaribTextMuted,
+                                    fontSize = 10.sp
+                                ),
+                                maxLines = 1
+                            )
+                        }
                     }
                 }
             }
