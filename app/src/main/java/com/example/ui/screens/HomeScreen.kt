@@ -46,7 +46,9 @@ fun HomeScreen(
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     modifier: Modifier = Modifier
 ) {
-    val homeCategoryChips = listOf("الكل", "مسلسل", "دراما", "رعب", "أكشن", "أجنبية", "أحجية", "وثائقي", "كوميدي")
+    val homeCategoryChips = androidx.compose.runtime.remember {
+        listOf("الكل", "مسلسل", "دراما", "رعب", "أكشن", "أجنبية", "أحجية", "وثائقي", "كوميدي")
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),

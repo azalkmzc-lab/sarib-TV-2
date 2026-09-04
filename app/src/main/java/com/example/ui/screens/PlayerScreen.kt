@@ -30,10 +30,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,6 +50,7 @@ import androidx.compose.material.icons.filled.ClosedCaption
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Dns
 import androidx.compose.material.icons.filled.Forward10
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.HighQuality
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
@@ -55,13 +59,18 @@ import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.ScreenRotation
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Subtitles
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -81,9 +90,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -92,7 +103,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
@@ -104,9 +114,11 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
-import com.example.data.local.tr
+import coil.compose.AsyncImage
+import com.example.data.model.ChannelItem
 import com.example.security.AppSecurityGuard
 import com.example.ui.components.SaribLoadingIndicator
+import com.example.ui.components.VpnBlockedDialog
 import com.example.ui.theme.SaribCyanAccent
 import com.example.ui.theme.SaribDarkBackground
 import com.example.ui.theme.SaribDarkCard
@@ -117,6 +129,7 @@ import com.example.ui.theme.SaribTextPrimary
 import com.example.ui.theme.SaribTextSecondary
 import com.example.util.StreamUrlParser
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
@@ -158,6 +171,7 @@ fun PlayerScreen(
     isLive: Boolean,
     onBackClick: () -> Unit,
     servers: List<Pair<String, String>> = emptyList(),
+    availableChannels: List<ChannelItem> = emptyList(),
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -192,6 +206,8 @@ fun PlayerScreen(
     var showAudioDialog by remember { mutableStateOf(false) }
     var showSubtitleDialog by remember { mutableStateOf(false) }
     var showServerDialog by remember { mutableStateOf(false) }
+    var showChannelPickerSheet by remember { mutableStateOf(false) }
+    var activePickingSlot by remember { mutableIntStateOf(1) } // 0 = main, 1 = slot2, 2 = slot3
 
     var availableQualityOptions by remember {
         mutableStateOf(
@@ -212,9 +228,15 @@ fun PlayerScreen(
     var availableSubtitleTracks by remember { mutableStateOf<List<SubtitleTrackOption>>(emptyList()) }
     var selectedSubtitleIndex by remember { mutableIntStateOf(0) }
 
-    // Multi-View state (3 simultaneous channels)
+    // Multi-View state (3 simultaneous independent channels)
     var isMultiViewMode by remember { mutableStateOf(false) }
     var activeAudioSlot by remember { mutableIntStateOf(0) } // 0 = main, 1 = slot2, 2 = slot3
+    var slot0Title by remember(title) { mutableStateOf(title) }
+    var slot1Channel by remember { mutableStateOf<ChannelItem?>(null) }
+    var slot2Channel by remember { mutableStateOf<ChannelItem?>(null) }
+
+    // Anti-VPN 3-Second Security Scanner state
+    var isVpnDetectedInPlayer by remember { mutableStateOf(false) }
 
     // High performance SINGLE ExoPlayer configuration (reused across server switches)
     val exoPlayer = remember {
@@ -276,51 +298,117 @@ fun PlayerScreen(
         }
     }
 
-    // Secondary sub-players for Multi-View 3-channel mode
-    val subPlayer1 = remember(isMultiViewMode) {
-        if (isMultiViewMode) {
-            val url1 = serverOptions.getOrNull(1)?.second ?: currentActiveUrl
-            ExoPlayer.Builder(context).build().apply {
-                playWhenReady = true
+    // Secondary sub-players for Multi-View 3-channel mode with low-latency lightweight buffering
+    val subLoadControl = remember {
+        DefaultLoadControl.Builder()
+            .setBufferDurationsMs(2500, 10000, 800, 1200)
+            .setPrioritizeTimeOverSizeThresholds(true)
+            .build()
+    }
+
+    val playInSubPlayer: (ExoPlayer?, String) -> Unit = remember {
+        { player, url ->
+            if (player != null && url.isNotBlank()) {
                 try {
-                    val parsed = StreamUrlParser.parse(url1)
-                    val httpFactory = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
+                    player.stop()
+                    player.clearMediaItems()
+                    val parsed = StreamUrlParser.parse(url)
+                    val httpFactory = DefaultHttpDataSource.Factory()
+                        .setUserAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 SARIB-TV-Player/1.0")
+                        .setAllowCrossProtocolRedirects(true)
+                        .setConnectTimeoutMs(8000)
+                        .setReadTimeoutMs(8000)
                     StreamUrlParser.configureHttpDataSource(httpFactory, parsed)
                     val msFactory = DefaultMediaSourceFactory(httpFactory)
                     val drm = StreamUrlParser.createDrmSessionManager(parsed)
                     if (drm != null) msFactory.setDrmSessionManagerProvider { drm }
                     val mb = MediaItem.Builder().setUri(Uri.parse(parsed.cleanUrl))
                     if (parsed.mimeType != null) mb.setMimeType(parsed.mimeType)
-                    setMediaSource(msFactory.createMediaSource(mb.build()))
-                    prepare()
+                    player.setMediaSource(msFactory.createMediaSource(mb.build()))
+                    player.prepare()
+                    player.play()
                 } catch (e: Exception) {
-                    // Ignore
+                    android.util.Log.e("PlayerScreen", "Error playing subplayer stream: ${e.message}")
                 }
             }
+        }
+    }
+
+    val subPlayer1 = remember(isMultiViewMode) {
+        if (isMultiViewMode) {
+            ExoPlayer.Builder(context)
+                .setLoadControl(subLoadControl)
+                .build().apply {
+                    playWhenReady = true
+                    volume = if (activeAudioSlot == 1) 1f else 0f
+                }
         } else null
     }
 
     val subPlayer2 = remember(isMultiViewMode) {
         if (isMultiViewMode) {
-            val url2 = serverOptions.getOrNull(2)?.second ?: serverOptions.getOrNull(0)?.second ?: currentActiveUrl
-            ExoPlayer.Builder(context).build().apply {
-                playWhenReady = true
-                try {
-                    val parsed = StreamUrlParser.parse(url2)
-                    val httpFactory = DefaultHttpDataSource.Factory().setAllowCrossProtocolRedirects(true)
-                    StreamUrlParser.configureHttpDataSource(httpFactory, parsed)
-                    val msFactory = DefaultMediaSourceFactory(httpFactory)
-                    val drm = StreamUrlParser.createDrmSessionManager(parsed)
-                    if (drm != null) msFactory.setDrmSessionManagerProvider { drm }
-                    val mb = MediaItem.Builder().setUri(Uri.parse(parsed.cleanUrl))
-                    if (parsed.mimeType != null) mb.setMimeType(parsed.mimeType)
-                    setMediaSource(msFactory.createMediaSource(mb.build()))
-                    prepare()
-                } catch (e: Exception) {
-                    // Ignore
+            ExoPlayer.Builder(context)
+                .setLoadControl(subLoadControl)
+                .build().apply {
+                    playWhenReady = true
+                    volume = if (activeAudioSlot == 2) 1f else 0f
+                }
+        } else null
+    }
+
+    // Anti-VPN 3-Second Periodic Security Scanner in Player
+    LaunchedEffect(exoPlayer, subPlayer1, subPlayer2) {
+        while (isActive) {
+            val vpnOn = AppSecurityGuard.isVpnOrProxyActive(context)
+            if (vpnOn != isVpnDetectedInPlayer) {
+                isVpnDetectedInPlayer = vpnOn
+                if (vpnOn) {
+                    exoPlayer.pause()
+                    subPlayer1?.pause()
+                    subPlayer2?.pause()
+                } else {
+                    exoPlayer.play()
+                    if (isMultiViewMode) {
+                        subPlayer1?.play()
+                        subPlayer2?.play()
+                    }
                 }
             }
-        } else null
+            delay(3000L) // Continuous 3-second check in player
+        }
+    }
+
+    // Default channels initialization when entering Multi-View mode
+    LaunchedEffect(isMultiViewMode, availableChannels) {
+        if (isMultiViewMode) {
+            if (slot1Channel == null && availableChannels.isNotEmpty()) {
+                val candidate1 = availableChannels.firstOrNull { it.name != slot0Title && it.streamUrl != currentActiveUrl }
+                    ?: availableChannels.firstOrNull()
+                slot1Channel = candidate1
+            }
+            if (slot2Channel == null && availableChannels.isNotEmpty()) {
+                val candidate2 = availableChannels.firstOrNull { 
+                    it.name != slot0Title && it.streamUrl != currentActiveUrl && it.id != slot1Channel?.id 
+                } ?: availableChannels.getOrNull(1) ?: availableChannels.firstOrNull()
+                slot2Channel = candidate2
+            }
+        }
+    }
+
+    // Reactive playback for slot 1 channel
+    LaunchedEffect(subPlayer1, slot1Channel) {
+        if (subPlayer1 != null) {
+            val url = slot1Channel?.streamUrl ?: serverOptions.getOrNull(1)?.second ?: currentActiveUrl
+            playInSubPlayer(subPlayer1, url)
+        }
+    }
+
+    // Reactive playback for slot 2 channel
+    LaunchedEffect(subPlayer2, slot2Channel) {
+        if (subPlayer2 != null) {
+            val url = slot2Channel?.streamUrl ?: serverOptions.getOrNull(2)?.second ?: serverOptions.getOrNull(0)?.second ?: currentActiveUrl
+            playInSubPlayer(subPlayer2, url)
+        }
     }
 
     // Cleanup subplayers when exiting multi-view
@@ -513,17 +601,19 @@ fun PlayerScreen(
         }
     }
 
-    // Position tracker loop
-    LaunchedEffect(isPlaying) {
-        while (isPlaying) {
-            currentPosition = exoPlayer.currentPosition.coerceAtLeast(0L)
-            delay(1000)
+    // Position tracker loop - optimized: only run if duration > 0 and not live TV stream, preventing periodic UI frame drops
+    LaunchedEffect(isPlaying, duration, isLive) {
+        if (!isLive && duration > 0) {
+            while (isPlaying) {
+                currentPosition = exoPlayer.currentPosition.coerceAtLeast(0L)
+                delay(1000)
+            }
         }
     }
 
     // Auto-hide controls timer
-    LaunchedEffect(areControlsVisible, isPlaying, isControlsLocked) {
-        if (areControlsVisible && isPlaying && !isControlsLocked && !showQualityDialog && !showAudioDialog && !showSubtitleDialog && !showServerDialog) {
+    LaunchedEffect(areControlsVisible, isPlaying, isControlsLocked, showChannelPickerSheet) {
+        if (areControlsVisible && isPlaying && !isControlsLocked && !showQualityDialog && !showAudioDialog && !showSubtitleDialog && !showServerDialog && !showChannelPickerSheet) {
             delay(4500)
             areControlsVisible = false
         }
@@ -582,7 +672,7 @@ fun PlayerScreen(
                         .fillMaxSize()
                         .border(
                             width = if (activeAudioSlot == 0) 2.5.dp else 1.dp,
-                            color = if (activeAudioSlot == 0) SaribCyanAccent else Color.DarkGray
+                            color = if (activeAudioSlot == 0) SaribCyanAccent else Color(0x55FFFFFF)
                         )
                         .clickable { activeAudioSlot = 0 }
                 ) {
@@ -601,8 +691,8 @@ fun PlayerScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                     Surface(
-                        color = if (activeAudioSlot == 0) SaribCyanAccent else Color(0x99000000),
-                        shape = RoundedCornerShape(bottomEnd = 8.dp),
+                        color = Color(0xDD000000),
+                        shape = RoundedCornerShape(bottomEnd = 10.dp),
                         modifier = Modifier.align(Alignment.TopStart)
                     ) {
                         Row(
@@ -612,15 +702,45 @@ fun PlayerScreen(
                             Icon(
                                 imageVector = if (activeAudioSlot == 0) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
                                 contentDescription = null,
-                                tint = if (activeAudioSlot == 0) Color.Black else Color.White,
+                                tint = if (activeAudioSlot == 0) SaribCyanAccent else Color.White,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (activeAudioSlot == 0) "الصوت يعمل (1)" else "قناة 1 (صامت)",
-                                color = if (activeAudioSlot == 0) Color.Black else Color.White,
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                                text = "1: $slot0Title",
+                                color = if (activeAudioSlot == 0) SaribCyanAccent else Color.White,
+                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                maxLines = 1,
+                                modifier = Modifier.widthIn(max = 140.dp)
                             )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            // Change channel button
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(6.dp))
+                                    .background(SaribElectricBlue.copy(alpha = 0.6f))
+                                    .clickable {
+                                        activePickingSlot = 0
+                                        showChannelPickerSheet = true
+                                    }
+                                    .padding(horizontal = 6.dp, vertical = 3.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Tv, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(12.dp))
+                                    Spacer(modifier = Modifier.width(3.dp))
+                                    Text("تغيير القناة", color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold))
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            IconButton(
+                                onClick = {
+                                    isMultiViewMode = false
+                                    activeAudioSlot = 0
+                                },
+                                modifier = Modifier.size(24.dp)
+                            ) {
+                                Icon(Icons.Default.Fullscreen, contentDescription = "ملء الشاشة", tint = Color.White, modifier = Modifier.size(16.dp))
+                            }
                         }
                     }
                 }
@@ -638,7 +758,7 @@ fun PlayerScreen(
                             .fillMaxWidth()
                             .border(
                                 width = if (activeAudioSlot == 1) 2.5.dp else 1.dp,
-                                color = if (activeAudioSlot == 1) SaribCyanAccent else Color.DarkGray
+                                color = if (activeAudioSlot == 1) SaribCyanAccent else Color(0x55FFFFFF)
                             )
                             .clickable { activeAudioSlot = 1 }
                     ) {
@@ -659,8 +779,8 @@ fun PlayerScreen(
                             )
                         }
                         Surface(
-                            color = if (activeAudioSlot == 1) SaribCyanAccent else Color(0x99000000),
-                            shape = RoundedCornerShape(bottomEnd = 8.dp),
+                            color = Color(0xDD000000),
+                            shape = RoundedCornerShape(bottomEnd = 10.dp),
                             modifier = Modifier.align(Alignment.TopStart)
                         ) {
                             Row(
@@ -670,15 +790,53 @@ fun PlayerScreen(
                                 Icon(
                                     imageVector = if (activeAudioSlot == 1) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
                                     contentDescription = null,
-                                    tint = if (activeAudioSlot == 1) Color.Black else Color.White,
+                                    tint = if (activeAudioSlot == 1) SaribCyanAccent else Color.White,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = if (activeAudioSlot == 1) "الصوت يعمل (2)" else "قناة 2 (صامت)",
-                                    color = if (activeAudioSlot == 1) Color.Black else Color.White,
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                                    text = "2: ${slot1Channel?.name ?: "قناة 2"}",
+                                    color = if (activeAudioSlot == 1) SaribCyanAccent else Color.White,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    maxLines = 1,
+                                    modifier = Modifier.widthIn(max = 120.dp)
                                 )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(SaribElectricBlue.copy(alpha = 0.6f))
+                                        .clickable {
+                                            activePickingSlot = 1
+                                            showChannelPickerSheet = true
+                                        }
+                                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Tv, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(12.dp))
+                                        Spacer(modifier = Modifier.width(3.dp))
+                                        Text("تغيير القناة", color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold))
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                IconButton(
+                                    onClick = {
+                                        val currentSlot0Url = currentActiveUrl
+                                        val currentSlot0Name = slot0Title
+                                        val newMain = slot1Channel
+                                        if (newMain != null) {
+                                            slot0Title = newMain.name
+                                            currentActiveUrl = newMain.streamUrl
+                                            val oldMainChannel = availableChannels.find { it.streamUrl == currentSlot0Url }
+                                                ?: ChannelItem(id = "slot0_prev", name = currentSlot0Name, categoryId = "", categoryName = "", streamUrl = currentSlot0Url)
+                                            slot1Channel = oldMainChannel
+                                            activeAudioSlot = 0
+                                        }
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(Icons.Default.SwapHoriz, contentDescription = "تبديل للرئيسية", tint = SaribCyanAccent, modifier = Modifier.size(16.dp))
+                                }
                             }
                         }
                     }
@@ -690,7 +848,7 @@ fun PlayerScreen(
                             .fillMaxWidth()
                             .border(
                                 width = if (activeAudioSlot == 2) 2.5.dp else 1.dp,
-                                color = if (activeAudioSlot == 2) SaribCyanAccent else Color.DarkGray
+                                color = if (activeAudioSlot == 2) SaribCyanAccent else Color(0x55FFFFFF)
                             )
                             .clickable { activeAudioSlot = 2 }
                     ) {
@@ -711,8 +869,8 @@ fun PlayerScreen(
                             )
                         }
                         Surface(
-                            color = if (activeAudioSlot == 2) SaribCyanAccent else Color(0x99000000),
-                            shape = RoundedCornerShape(bottomEnd = 8.dp),
+                            color = Color(0xDD000000),
+                            shape = RoundedCornerShape(bottomEnd = 10.dp),
                             modifier = Modifier.align(Alignment.TopStart)
                         ) {
                             Row(
@@ -722,15 +880,53 @@ fun PlayerScreen(
                                 Icon(
                                     imageVector = if (activeAudioSlot == 2) Icons.Default.VolumeUp else Icons.Default.VolumeOff,
                                     contentDescription = null,
-                                    tint = if (activeAudioSlot == 2) Color.Black else Color.White,
+                                    tint = if (activeAudioSlot == 2) SaribCyanAccent else Color.White,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = if (activeAudioSlot == 2) "الصوت يعمل (3)" else "قناة 3 (صامت)",
-                                    color = if (activeAudioSlot == 2) Color.Black else Color.White,
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                                    text = "3: ${slot2Channel?.name ?: "قناة 3"}",
+                                    color = if (activeAudioSlot == 2) SaribCyanAccent else Color.White,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                    maxLines = 1,
+                                    modifier = Modifier.widthIn(max = 120.dp)
                                 )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(SaribElectricBlue.copy(alpha = 0.6f))
+                                        .clickable {
+                                            activePickingSlot = 2
+                                            showChannelPickerSheet = true
+                                        }
+                                        .padding(horizontal = 6.dp, vertical = 3.dp)
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.Tv, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(12.dp))
+                                        Spacer(modifier = Modifier.width(3.dp))
+                                        Text("تغيير القناة", color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, fontWeight = FontWeight.Bold))
+                                    }
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+                                IconButton(
+                                    onClick = {
+                                        val currentSlot0Url = currentActiveUrl
+                                        val currentSlot0Name = slot0Title
+                                        val newMain = slot2Channel
+                                        if (newMain != null) {
+                                            slot0Title = newMain.name
+                                            currentActiveUrl = newMain.streamUrl
+                                            val oldMainChannel = availableChannels.find { it.streamUrl == currentSlot0Url }
+                                                ?: ChannelItem(id = "slot0_prev", name = currentSlot0Name, categoryId = "", categoryName = "", streamUrl = currentSlot0Url)
+                                            slot2Channel = oldMainChannel
+                                            activeAudioSlot = 0
+                                        }
+                                    },
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Icon(Icons.Default.SwapHoriz, contentDescription = "تبديل للرئيسية", tint = SaribCyanAccent, modifier = Modifier.size(16.dp))
+                                }
                             }
                         }
                     }
@@ -1639,6 +1835,297 @@ fun PlayerScreen(
                     }
                 }
             }
+        }
+
+        // MULTI-VIEW CHANNEL SELECTOR MODAL (اختيار القنوات للعرض المتعدد)
+        AnimatedVisibility(
+            visible = showChannelPickerSheet,
+            enter = slideInVertically { it / 2 } + fadeIn(),
+            exit = slideOutVertically { it / 2 } + fadeOut(),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            var channelSearchQuery by remember { mutableStateOf("") }
+            var selectedCategoryFilter by remember { mutableStateOf("الكل") }
+
+            val categoriesList = remember(availableChannels) {
+                listOf("الكل") + availableChannels.map { it.categoryName }.filter { it.isNotBlank() }.distinct()
+            }
+
+            val filteredChannels = remember(channelSearchQuery, selectedCategoryFilter, availableChannels) {
+                availableChannels.filter { ch ->
+                    val matchesQuery = channelSearchQuery.isBlank() ||
+                        ch.name.contains(channelSearchQuery, ignoreCase = true) ||
+                        ch.categoryName.contains(channelSearchQuery, ignoreCase = true)
+                    val matchesCategory = selectedCategoryFilter == "الكل" || ch.categoryName == selectedCategoryFilter
+                    matchesQuery && matchesCategory
+                }
+            }
+
+            val slotName = when (activePickingSlot) {
+                0 -> "الشاشة 1 (الرئيسية)"
+                1 -> "الشاشة 2"
+                else -> "الشاشة 3"
+            }
+
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 440.dp)
+                    .fillMaxWidth(0.88f)
+                    .heightIn(max = 460.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(SaribDarkCard)
+                    .border(1.5.dp, SaribCyanAccent.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+                    .padding(16.dp)
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Tv,
+                                contentDescription = null,
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Column {
+                                Text(
+                                    text = "اختيار قناة لـ $slotName",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                                Text(
+                                    text = "اختر أي قناة لتشغيلها فوراً في هذه الشاشة",
+                                    style = MaterialTheme.typography.bodySmall.copy(color = SaribTextSecondary)
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = { showChannelPickerSheet = false },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(Icons.Default.Close, contentDescription = "إغلاق", tint = SaribTextMuted)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Search Field
+                    OutlinedTextField(
+                        value = channelSearchQuery,
+                        onValueChange = { channelSearchQuery = it },
+                        placeholder = {
+                            Text("بحث عن قناة بالاسم...", color = SaribTextMuted, style = MaterialTheme.typography.bodySmall)
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.Search, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(18.dp))
+                        },
+                        trailingIcon = {
+                            if (channelSearchQuery.isNotEmpty()) {
+                                IconButton(onClick = { channelSearchQuery = "" }, modifier = Modifier.size(20.dp)) {
+                                    Icon(Icons.Default.Close, contentDescription = null, tint = SaribTextMuted)
+                                }
+                            }
+                        },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = SaribCyanAccent,
+                            unfocusedBorderColor = Color(0x44FFFFFF),
+                            focusedContainerColor = Color(0x33000000),
+                            unfocusedContainerColor = Color(0x33000000),
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Category Chips Filter
+                    if (categoriesList.size > 2) {
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp)
+                        ) {
+                            items(categoriesList) { cat ->
+                                val isSelected = selectedCategoryFilter == cat
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(if (isSelected) SaribCyanAccent else Color(0x22FFFFFF))
+                                        .clickable { selectedCategoryFilter = cat }
+                                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                                ) {
+                                    Text(
+                                        text = cat,
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = if (isSelected) Color.Black else Color.White,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Channels List
+                    if (filteredChannels.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (availableChannels.isEmpty()) "لا توجد قنوات مسجلة حالياً" else "لا توجد قنوات تطابق البحث",
+                                color = SaribTextSecondary,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                        ) {
+                            items(filteredChannels, key = { it.id }) { channel ->
+                                val isCurrentInThisSlot = when (activePickingSlot) {
+                                    0 -> slot0Title == channel.name
+                                    1 -> slot1Channel?.id == channel.id
+                                    else -> slot2Channel?.id == channel.id
+                                }
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(if (isCurrentInThisSlot) SaribElectricBlue.copy(alpha = 0.35f) else Color(0x22000000))
+                                        .border(
+                                            width = 1.dp,
+                                            color = if (isCurrentInThisSlot) SaribCyanAccent else Color(0x22FFFFFF),
+                                            shape = RoundedCornerShape(10.dp)
+                                        )
+                                        .clickable {
+                                            when (activePickingSlot) {
+                                                0 -> {
+                                                    slot0Title = channel.name
+                                                    currentActiveUrl = channel.streamUrl
+                                                    playStream(channel.streamUrl)
+                                                }
+                                                1 -> {
+                                                    slot1Channel = channel
+                                                    playInSubPlayer(subPlayer1, channel.streamUrl)
+                                                }
+                                                2 -> {
+                                                    slot2Channel = channel
+                                                    playInSubPlayer(subPlayer2, channel.streamUrl)
+                                                }
+                                            }
+                                            showChannelPickerSheet = false
+                                            Toast.makeText(context, "تم تشغيل ${channel.name} في $slotName", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(34.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(Color(0xFF09111E)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (channel.logoUrl.isNotBlank()) {
+                                                AsyncImage(
+                                                    model = channel.logoUrl,
+                                                    contentDescription = channel.name,
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(3.dp),
+                                                    contentScale = ContentScale.Fit
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = Icons.Default.Tv,
+                                                    contentDescription = null,
+                                                    tint = SaribCyanAccent,
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Column {
+                                            Text(
+                                                text = channel.name,
+                                                style = MaterialTheme.typography.labelMedium.copy(
+                                                    color = Color.White,
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = "${channel.categoryName.ifBlank { "عام" }} • ${channel.country}",
+                                                style = MaterialTheme.typography.bodySmall.copy(color = SaribTextSecondary),
+                                                maxLines = 1
+                                            )
+                                        }
+                                    }
+
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(if (isCurrentInThisSlot) SaribCyanAccent else SaribElectricBlue.copy(alpha = 0.5f))
+                                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                                    ) {
+                                        Text(
+                                            text = if (isCurrentInThisSlot) "تعمل الآن" else "تشغيل",
+                                            color = if (isCurrentInThisSlot) Color.Black else Color.White,
+                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Anti-VPN Fullscreen Blocker inside Player (Checked every 3 seconds)
+        if (isVpnDetectedInPlayer) {
+            VpnBlockedDialog(
+                onRecheckClick = {
+                    val stillActive = AppSecurityGuard.isVpnOrProxyActive(context)
+                    isVpnDetectedInPlayer = stillActive
+                    if (!stillActive) {
+                        exoPlayer.play()
+                        if (isMultiViewMode) {
+                            subPlayer1?.play()
+                            subPlayer2?.play()
+                        }
+                    }
+                },
+                onExitApp = {
+                    onBackClick()
+                }
+            )
         }
     }
 }

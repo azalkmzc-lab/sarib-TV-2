@@ -12,12 +12,16 @@ import com.example.data.model.MatchItem
 import com.example.data.model.MediaItem
 import com.example.data.model.ViewMode
 import com.example.data.repository.SaribRepository
+import com.example.security.AppSecurityGuard
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 sealed interface AppScreen {
@@ -54,6 +58,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _connectionError = MutableStateFlow<String?>(null)
     val connectionError: StateFlow<String?> = _connectionError.asStateFlow()
+
+    // Global Anti-VPN Security State (Scanned every 3 seconds)
+    private val _isVpnDetected = MutableStateFlow(false)
+    val isVpnDetected: StateFlow<Boolean> = _isVpnDetected.asStateFlow()
 
     // Home & Content States
     val heroBanner: HeroBannerItem
@@ -148,7 +156,30 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Pair(emptyList(), emptyList()))
 
     init {
+        startVpnPeriodicScanner()
         startConnectionFlow()
+    }
+
+    private fun startVpnPeriodicScanner() {
+        viewModelScope.launch(Dispatchers.IO) {
+            while (isActive) {
+                val detected = AppSecurityGuard.isVpnOrProxyActive(getApplication())
+                if (_isVpnDetected.value != detected) {
+                    _isVpnDetected.value = detected
+                }
+                delay(3000L) // Continuous 3-second check across the entire app
+            }
+        }
+    }
+
+    fun recheckVpnNow() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val detected = AppSecurityGuard.isVpnOrProxyActive(getApplication())
+            _isVpnDetected.value = detected
+            if (!detected && _connectionError.value != null && _currentScreen.value is AppScreen.Splash) {
+                startConnectionFlow()
+            }
+        }
     }
 
     fun startConnectionFlow() {
@@ -170,7 +201,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun navigateTo(screen: AppScreen) {
         val curr = _currentScreen.value
-        if (curr != screen && curr != AppScreen.Splash) {
+        if (curr == screen) return
+        if (curr != AppScreen.Splash) {
             backStack.add(curr)
         }
         _currentScreen.value = screen
@@ -178,6 +210,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun openSeriesDetails(media: MediaItem) {
         val curr = _currentScreen.value
+        if (curr is AppScreen.SeriesDetail && curr.mediaItem.id == media.id) return
         if (curr != AppScreen.Splash && curr !is AppScreen.SeriesDetail) {
             backStack.add(curr)
         }
@@ -242,12 +275,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectTab(tab: String) {
+        if (_currentTab.value == tab && _currentScreen.value == AppScreen.Main) return
         _currentTab.value = tab
         backStack.clear()
         _currentScreen.value = AppScreen.Main
     }
 
     fun openCategory(category: ChannelCategory, forceRefresh: Boolean = false) {
+        if (!forceRefresh && _selectedCategory.value?.id == category.id && _currentScreen.value is AppScreen.CategoryDetail) {
+            return
+        }
         _selectedCategory.value = category
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.CategoryDetail) {
@@ -273,6 +310,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun openMediaCategory(category: ChannelCategory, forceRefresh: Boolean = false) {
+        if (!forceRefresh && _selectedCategory.value?.id == category.id && _currentScreen.value is AppScreen.MediaCategoryDetail) {
+            return
+        }
         _selectedCategory.value = category
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.MediaCategoryDetail) {
@@ -313,6 +353,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun selectHomeChip(chip: String) {
+        if (_selectedHomeChip.value == chip) return
         _selectedHomeChip.value = chip
     }
 
@@ -328,6 +369,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         servers: List<Pair<String, String>> = emptyList()
     ) {
         val curr = _currentScreen.value
+        if (curr is AppScreen.Player && curr.streamUrl == streamUrl) return
         if (curr != AppScreen.Splash && curr !is AppScreen.Player) {
             backStack.add(curr)
         }

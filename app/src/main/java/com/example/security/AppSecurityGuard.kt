@@ -38,7 +38,58 @@ object AppSecurityGuard {
      * or HTTP proxy is currently active on the device.
      */
     fun isVpnOrProxyActive(context: Context): Boolean {
-        // Disabled to prevent false positive VPN detection (e.g. Wi-Fi Direct, Private DNS, mobile carrier tunnels)
+        try {
+            val cm = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+            if (cm != null) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    val activeNet = cm.activeNetwork
+                    if (activeNet != null) {
+                        val caps = cm.getNetworkCapabilities(activeNet)
+                        if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                            return true
+                        }
+                    }
+                    val allNetworks = cm.allNetworks
+                    for (network in allNetworks) {
+                        val caps = cm.getNetworkCapabilities(network)
+                        if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) {
+                            return true
+                        }
+                    }
+                } else {
+                    @Suppress("DEPRECATION")
+                    val vpnInfo = cm.getNetworkInfo(ConnectivityManager.TYPE_VPN)
+                    if (vpnInfo != null && vpnInfo.isConnectedOrConnecting) {
+                        return true
+                    }
+                }
+            }
+
+            // Check virtual tunnel network interfaces (tun, tap, ppp, wg, utun, vpn)
+            val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
+            for (intf in interfaces) {
+                if (!intf.isUp) continue
+                val name = intf.name.lowercase()
+                if (name.startsWith("tun") ||
+                    name.startsWith("tap") ||
+                    name.startsWith("ppp") ||
+                    name.startsWith("wg") ||
+                    name.startsWith("utun") ||
+                    name.contains("vpn")
+                ) {
+                    return true
+                }
+            }
+
+            // HTTP proxy check
+            val proxyHost = System.getProperty("http.proxyHost")
+            val proxyPort = System.getProperty("http.proxyPort")
+            if (!proxyHost.isNullOrBlank() && !proxyPort.isNullOrBlank() && proxyPort != "-1" && proxyPort != "0") {
+                return true
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error checking VPN/Proxy status: ${e.message}")
+        }
         return false
     }
 
@@ -75,27 +126,55 @@ object AppSecurityGuard {
     }
 
     /**
-     * Composable hook that launches a 2-second interval periodic VPN security check.
+     * Composable hook that launches a 3-second interval periodic VPN security check.
      */
     @Composable
     fun rememberVpnSecurityMonitor(
         context: Context,
-        onVpnDetected: () -> Unit
+        intervalMs: Long = 3000L,
+        onVpnDetected: () -> Unit = {}
     ): Boolean {
-        // Disabled: VPN check removed upon user request to avoid blocking playback
-        return false
+        var isVpnActive by remember { mutableStateOf(isVpnOrProxyActive(context)) }
+
+        androidx.compose.runtime.LaunchedEffect(context) {
+            while (isActive) {
+                val active = isVpnOrProxyActive(context)
+                if (active != isVpnActive) {
+                    isVpnActive = active
+                    if (active) {
+                        onVpnDetected()
+                    }
+                }
+                delay(intervalMs)
+            }
+        }
+        return isVpnActive
     }
 }
 
 /**
- * Composable hook that launches a 2-second interval periodic VPN security check.
+ * Composable hook that launches a 3-second interval periodic VPN security check.
  * If VPN is detected, [onVpnDetected] is invoked immediately.
  */
 @Composable
 fun rememberVpnSecurityMonitor(
     context: Context,
-    onVpnDetected: () -> Unit
+    intervalMs: Long = 3000L,
+    onVpnDetected: () -> Unit = {}
 ): Boolean {
-    // Disabled: VPN check removed upon user request to avoid blocking playback
-    return false
+    var isVpnActive by remember { mutableStateOf(AppSecurityGuard.isVpnOrProxyActive(context)) }
+
+    androidx.compose.runtime.LaunchedEffect(context) {
+        while (isActive) {
+            val active = AppSecurityGuard.isVpnOrProxyActive(context)
+            if (active != isVpnActive) {
+                isVpnActive = active
+                if (active) {
+                    onVpnDetected()
+                }
+            }
+            delay(intervalMs)
+        }
+    }
+    return isVpnActive
 }

@@ -32,6 +32,7 @@ import com.example.data.model.getActiveServers
 import com.example.ui.components.MatchDetailsDialog
 import com.example.ui.components.SaribDrawerContent
 import com.example.ui.components.SettingsDialog
+import com.example.ui.components.VpnBlockedDialog
 import com.example.ui.screens.CategoryDetailScreen
 import com.example.ui.screens.EntertainmentScreen
 import com.example.ui.screens.FavoritesScreen
@@ -67,6 +68,7 @@ fun SaribApp(
     val vodCategories by viewModel.vodCategories.collectAsState()
     val seriesCategories by viewModel.seriesCategories.collectAsState()
     val mostWatchedChannels by viewModel.mostWatchedChannels.collectAsState()
+    val allChannels by viewModel.allChannels.collectAsState()
     val allMatches by viewModel.allMatches.collectAsState()
     val featuredMovies by viewModel.featuredMovies.collectAsState()
     val featuredSeries by viewModel.featuredSeries.collectAsState()
@@ -91,6 +93,8 @@ fun SaribApp(
 
     val searchQuery by viewModel.searchQuery.collectAsState()
     val searchResults by viewModel.searchResults.collectAsState()
+
+    val isVpnDetected by viewModel.isVpnDetected.collectAsState()
 
     var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
@@ -430,7 +434,8 @@ fun SaribApp(
                         streamUrl = screen.streamUrl,
                         isLive = screen.isLive,
                         onBackClick = { viewModel.popBack() },
-                        servers = screen.servers
+                        servers = screen.servers,
+                        availableChannels = allChannels
                     )
                 }
 
@@ -454,5 +459,17 @@ fun SaribApp(
                 }
             }
         }
+    }
+
+    // Global Anti-VPN Security Overlay (Periodic check every 3 seconds across entire app)
+    if (isVpnDetected && currentScreen !is AppScreen.Player) {
+        VpnBlockedDialog(
+            onRecheckClick = {
+                viewModel.recheckVpnNow()
+            },
+            onExitApp = {
+                (context as? android.app.Activity)?.finish()
+            }
+        )
     }
 }
