@@ -144,7 +144,7 @@ fun MatchesScreen(
                     contentPadding = PaddingValues(horizontal = 14.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(dateFilters) { filter ->
+                    items(dateFilters, key = { it.dayName + it.dateLabel }, contentType = { "date_filter" }) { filter ->
                         val isSelected = filter.dayName == selectedDate || filter.dateLabel == selectedDate
                         Box(
                             modifier = Modifier
@@ -213,7 +213,7 @@ fun MatchesScreen(
                     }
                 }
             } else {
-                items(matches) { match ->
+                items(matches, key = { it.id }, contentType = { "match_card" }) { match ->
                     Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)) {
                         MatchCardItem(
                             match = match,

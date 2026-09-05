@@ -30,18 +30,19 @@ class SaribApplication : Application(), ImageLoaderFactory {
 
         return ImageLoader.Builder(this)
             .okHttpClient(okHttpClient)
+            .allowRgb565(true)
             .memoryCache {
                 MemoryCache.Builder(this)
-                    .maxSizePercent(0.25)
+                    .maxSizePercent(0.20)
                     .build()
             }
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("sarib_image_cache"))
-                    .maxSizeBytes(100L * 1024 * 1024) // 100 MB disk cache
+                    .maxSizeBytes(80L * 1024 * 1024) // 80 MB disk cache
                     .build()
             }
-            .crossfade(true)
+            .crossfade(150)
             .respectCacheHeaders(false)
             .build()
     }

@@ -115,6 +115,8 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.example.data.model.ChannelItem
 import com.example.security.AppSecurityGuard
 import com.example.ui.components.SaribLoadingIndicator
@@ -242,11 +244,12 @@ fun PlayerScreen(
     val exoPlayer = remember {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                8000,   // Min buffer 8s
-                35000,  // Max buffer 35s
-                1500,   // Buffer for initial playback 1.5s
-                2500    // Buffer for resume after rebuffer 2.5s
+                4000,   // Min buffer 4s: fast startup on weak devices & slow connections
+                20000,  // Max buffer 20s: keeps memory overhead constrained on low-RAM devices
+                1000,   // Buffer for initial playback 1.0s
+                1800    // Buffer for resume after rebuffer 1.8s
             )
+            .setTargetBufferBytes(12 * 1024 * 1024) // 12 MB buffer ceiling prevents high-RAM footprint
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
@@ -356,25 +359,29 @@ fun PlayerScreen(
         } else null
     }
 
-    // Anti-VPN 3-Second Periodic Security Scanner in Player
+    // Anti-VPN Periodic Security Scanner in Player (Runs safely on Dispatchers.IO)
     LaunchedEffect(exoPlayer, subPlayer1, subPlayer2) {
-        while (isActive) {
-            val vpnOn = AppSecurityGuard.isVpnOrProxyActive(context)
-            if (vpnOn != isVpnDetectedInPlayer) {
-                isVpnDetectedInPlayer = vpnOn
-                if (vpnOn) {
-                    exoPlayer.pause()
-                    subPlayer1?.pause()
-                    subPlayer2?.pause()
-                } else {
-                    exoPlayer.play()
-                    if (isMultiViewMode) {
-                        subPlayer1?.play()
-                        subPlayer2?.play()
+        withContext(Dispatchers.IO) {
+            while (isActive) {
+                val vpnOn = AppSecurityGuard.isVpnOrProxyActive(context)
+                if (vpnOn != isVpnDetectedInPlayer) {
+                    withContext(Dispatchers.Main) {
+                        isVpnDetectedInPlayer = vpnOn
+                        if (vpnOn) {
+                            exoPlayer.pause()
+                            subPlayer1?.pause()
+                            subPlayer2?.pause()
+                        } else {
+                            exoPlayer.play()
+                            if (isMultiViewMode) {
+                                subPlayer1?.play()
+                                subPlayer2?.play()
+                            }
+                        }
                     }
                 }
+                delay(5000L) // 5-second interval on IO thread prevents CPU load
             }
-            delay(3000L) // Continuous 3-second check in player
         }
     }
 

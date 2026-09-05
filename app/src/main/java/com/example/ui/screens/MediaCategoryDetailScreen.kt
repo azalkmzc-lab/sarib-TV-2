@@ -321,7 +321,7 @@ fun MediaCategoryDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredMedia, key = { it.id }) { item ->
+                    items(filteredMedia, key = { it.id }, contentType = { "media_grid" }) { item ->
                         MediaCardItem(
                             item = item,
                             onClick = onMediaClick,
@@ -337,7 +337,7 @@ fun MediaCategoryDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredMedia, key = { it.id }) { item ->
+                    items(filteredMedia, key = { it.id }, contentType = { "media_list" }) { item ->
                         val displayImageUrl = item.posterUrl.ifBlank { item.backdropUrl }
                         Card(
                             modifier = Modifier

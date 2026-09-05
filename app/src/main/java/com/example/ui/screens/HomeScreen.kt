@@ -117,7 +117,7 @@ fun HomeScreen(
                     contentPadding = PaddingValues(horizontal = 14.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    items(popularChannels, key = { it.id }) { channel ->
+                    items(popularChannels, key = { it.id }, contentType = { "popular_channel" }) { channel ->
                         ChannelCardItem(
                             channel = channel,
                             onClick = onChannelClick,

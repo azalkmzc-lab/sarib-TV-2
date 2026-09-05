@@ -60,7 +60,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -167,7 +166,7 @@ fun ChannelsScreen(
             }
 
             // Categories List
-            items(categories, key = { it.id }) { category ->
+            items(categories, key = { it.id }, contentType = { "category" }) { category ->
                 Box(modifier = Modifier.padding(horizontal = 14.dp, vertical = 5.dp)) {
                     LargeChannelCategoryCard(
                         category = category,
@@ -193,13 +192,6 @@ fun CategoryDetailScreen(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
-    val context = LocalContext.current
-    val copyM3u8: (ChannelItem) -> Unit = { ch ->
-        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
-        val clip = android.content.ClipData.newPlainText("M3U8 Stream URL", ch.streamUrl)
-        clipboard?.setPrimaryClip(clip)
-        Toast.makeText(context, "تم سحب رابط m3u8 بنجاح: ${ch.name}", Toast.LENGTH_SHORT).show()
-    }
 
     val filteredChannels = remember(channels, searchQuery) {
         if (searchQuery.isBlank()) channels
@@ -415,12 +407,11 @@ fun CategoryDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredChannels, key = { it.id }) { channel ->
+                    items(filteredChannels, key = { it.id }, contentType = { "channel_grid" }) { channel ->
                         ChannelCardItem(
                             channel = channel,
                             onClick = onChannelClick,
-                            onFavoriteToggle = onFavoriteToggle,
-                            onCopyStreamUrl = copyM3u8
+                            onFavoriteToggle = onFavoriteToggle
                         )
                     }
                 }
@@ -431,7 +422,7 @@ fun CategoryDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(filteredChannels, key = { it.id }) { channel ->
+                    items(filteredChannels, key = { it.id }, contentType = { "channel_list" }) { channel ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -490,23 +481,6 @@ fun CategoryDetailScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    // Copy M3U8 Stream URL Button
-                                    IconButton(
-                                        onClick = { copyM3u8(channel) },
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                            .clip(CircleShape)
-                                            .background(Color(0xFF0C1929))
-                                            .border(1.dp, SaribCyanAccent.copy(alpha = 0.4f), CircleShape)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Link,
-                                            contentDescription = "سحب رابط m3u8",
-                                            tint = SaribCyanAccent,
-                                            modifier = Modifier.size(17.dp)
-                                        )
-                                    }
-
                                     // Favorite Toggle Button
                                     IconButton(
                                         onClick = { onFavoriteToggle(channel) },

@@ -153,7 +153,7 @@ fun FavoritesScreen(
                 contentPadding = PaddingValues(14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(favorites) { fav ->
+                items(favorites, key = { it.itemId }, contentType = { "favorite_item" }) { fav ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()

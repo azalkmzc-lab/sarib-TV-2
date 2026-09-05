@@ -198,7 +198,7 @@ fun SearchScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                     }
-                    items(channels) { channel ->
+                    items(channels, key = { it.id }, contentType = { "search_channel" }) { channel ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -275,7 +275,7 @@ fun SearchScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                     }
-                    items(media) { item ->
+                    items(media, key = { it.id }, contentType = { "search_media" }) { item ->
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
