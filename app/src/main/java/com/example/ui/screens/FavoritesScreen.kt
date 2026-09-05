@@ -69,32 +69,16 @@ fun FavoritesScreen(
     currentTab: String,
     onTabSelected: (String) -> Unit,
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
+    showBars: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            SaribTopHeader(
-                onMenuClick = onMenuClick,
-                onTelegramClick = onTelegramClick,
-                onFavoritesClick = onFavoritesClick,
-                onSearchClick = onSearchClick
-            )
-        },
-        bottomBar = {
-            SaribBottomNav(
-                currentTab = currentTab,
-                onTabSelected = onTabSelected
-            )
-        }
-    ) { innerPadding ->
+    val content: @Composable (Modifier) -> Unit = { paddingModifier ->
         if (favorites.isEmpty()) {
             // Beautiful Empty State matching requirements
             Box(
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .then(paddingModifier)
                     .background(MaterialTheme.colorScheme.background)
                     .padding(24.dp),
                 contentAlignment = Alignment.Center
@@ -146,11 +130,11 @@ fun FavoritesScreen(
         } else {
             LazyColumn(
                 state = listState,
-                modifier = Modifier
+                modifier = modifier
                     .fillMaxSize()
-                    .padding(innerPadding)
+                    .then(paddingModifier)
                     .background(SaribDarkBackground),
-                contentPadding = PaddingValues(14.dp),
+                contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 14.dp, bottom = if (showBars) 24.dp else 14.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(favorites, key = { it.itemId }, contentType = { "favorite_item" }) { fav ->
@@ -230,5 +214,30 @@ fun FavoritesScreen(
                 }
             }
         }
+    }
+
+    if (showBars) {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                SaribTopHeader(
+                    onMenuClick = onMenuClick,
+                    onTelegramClick = onTelegramClick,
+                    onFavoritesClick = onFavoritesClick,
+                    onSearchClick = onSearchClick
+                )
+            },
+            bottomBar = {
+                SaribBottomNav(
+                    currentTab = currentTab,
+                    onTabSelected = onTabSelected
+                )
+            }
+        ) { innerPadding ->
+            content(Modifier.padding(innerPadding))
+        }
+    } else {
+        content(Modifier)
     }
 }

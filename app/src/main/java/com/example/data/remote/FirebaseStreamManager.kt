@@ -23,6 +23,8 @@ data class RemoteStreamConfig(
     val password: String = "755246419856",
     val matchesApiUrl: String = "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
     val m3uPlaylistUrl: String = "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
+    val m3uMoviesUrl: String = "",
+    val moviesApiUrl: String = "",
     val announcement: String = "",
     val telegramLink: String = "https://t.me/sarib_tv",
     val heroTitle: String = "بلدة الضياع S1-S4",
@@ -73,6 +75,10 @@ class FirebaseStreamManager(private val context: Context) {
                         m3uPlaylistUrl = docSnapshot.getString("m3u_playlist_url") 
                             ?: docSnapshot.getString("m3u_url") 
                             ?: "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
+                        m3uMoviesUrl = docSnapshot.getString("m3u_movies_url")
+                            ?: docSnapshot.getString("movies_m3u_url") ?: "",
+                        moviesApiUrl = docSnapshot.getString("movies_api_url")
+                            ?: docSnapshot.getString("movies_api") ?: "",
                         announcement = docSnapshot.getString("announcement") ?: "",
                         telegramLink = docSnapshot.getString("telegram_link") ?: "https://t.me/sarib_tv",
                         heroTitle = docSnapshot.getString("hero_title") ?: "بلدة الضياع S1-S4",
@@ -111,6 +117,8 @@ class FirebaseStreamManager(private val context: Context) {
                             password = targetObj.optString("password", "755246419856"),
                             matchesApiUrl = targetObj.optString("matches_api_url", "https://bab-elmoshahd.online/api/index.php?path=matches&day="),
                             m3uPlaylistUrl = targetObj.optString("m3u_playlist_url", targetObj.optString("m3u_url", "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U")),
+                            m3uMoviesUrl = targetObj.optString("m3u_movies_url", targetObj.optString("movies_m3u_url", "")),
+                            moviesApiUrl = targetObj.optString("movies_api_url", targetObj.optString("movies_api", "")),
                             announcement = targetObj.optString("announcement", ""),
                             telegramLink = targetObj.optString("telegram_link", "https://t.me/sarib_tv"),
                             heroTitle = targetObj.optString("hero_title", "بلدة الضياع S1-S4"),
@@ -467,13 +475,112 @@ class FirebaseStreamManager(private val context: Context) {
         return M3uPlaylistParser.parseFromUrl(url, defaultName)
     }
 
-    suspend fun fetchCustomMovies(): List<com.example.data.model.MediaItem> = withContext(Dispatchers.IO) {
+    suspend fun fetchCustomMovies(apiUrl: String = ""): List<com.example.data.model.MediaItem> = withContext(Dispatchers.IO) {
         val list = mutableListOf<com.example.data.model.MediaItem>()
         try {
-            val urls = listOf(
+            val urls = mutableListOf(
                 "https://iptvpro-f5172-default-rtdb.firebaseio.com/movies.json",
-                "https://iptvpro-f5172-default-rtdb.firebaseio.com/custom_movies.json"
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/custom_movies.json",
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/vod.json"
             )
+            if (apiUrl.isNotBlank()) {
+                urls.add(0, apiUrl)
+            }
+
+            for (url in urls) {
+                try {
+                    val request = Request.Builder().url(url).build()
+                    val response = httpClient.newCall(request).execute()
+                    val body = response.body?.string().orEmpty().trim()
+                    if (body.isEmpty() || body == "null") continue
+
+                    if (body.startsWith("{")) {
+                        val jsonObj = JSONObject(body)
+                        val keys = jsonObj.keys()
+                        var i = list.size
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val obj = jsonObj.optJSONObject(key) ?: continue
+                            parseMovieItem(obj, key, i)?.let {
+                                list.add(it)
+                                i++
+                            }
+                        }
+                    } else if (body.startsWith("[")) {
+                        val jsonArray = JSONArray(body)
+                        var i = list.size
+                        for (idx in 0 until jsonArray.length()) {
+                            val obj = jsonArray.optJSONObject(idx) ?: continue
+                            parseMovieItem(obj, "api_mov_$idx", i)?.let {
+                                list.add(it)
+                                i++
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed reading movies from $url: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Custom movies fetch error: ${e.message}")
+        }
+        list.distinctBy { it.id }
+    }
+
+    private fun parseMovieItem(obj: JSONObject, key: String, index: Int): com.example.data.model.MediaItem? {
+        val title = obj.optString("title", obj.optString("name", "")).trim()
+        if (title.isEmpty()) return null
+
+        val poster = obj.optString("poster", obj.optString("posterUrl", obj.optString("image", obj.optString("logo", ""))))
+        val backdrop = obj.optString("backdrop", obj.optString("backdropUrl", poster))
+        val rating = obj.optString("rating", obj.optString("movieRating", "8.9"))
+        val year = obj.optString("year", "2024")
+        val story = obj.optString("story", obj.optString("description", "فيلم متاح عبر البث السحابي عالي الدقة"))
+        val genre = obj.optString("genre", obj.optString("category", obj.optString("categoryName", "أفلام سينما")))
+        val duration = obj.optString("duration", "120 دقيقة")
+
+        val s1 = obj.optString("server1", "")
+        val s2 = obj.optString("server2", "")
+        val s3 = obj.optString("server3", "")
+        val s4 = obj.optString("server4", "")
+        val s5 = obj.optString("server5", "")
+        val m3u8Url = obj.optString("m3u8", obj.optString("m3u8Url", ""))
+        val streamUrlCandidate = listOf(s1, s2, m3u8Url, obj.optString("streamUrl", ""), obj.optString("url", "")).firstOrNull { it.isNotBlank() } ?: ""
+
+        if (streamUrlCandidate.isBlank()) return null
+
+        return com.example.data.model.MediaItem(
+            id = "fb_mov_$key",
+            title = title,
+            posterUrl = poster,
+            backdropUrl = backdrop,
+            type = ContentType.MOVIE,
+            year = year,
+            rating = rating,
+            genre = genre,
+            description = story,
+            duration = duration,
+            streamUrl = streamUrlCandidate,
+            isTop = index < 6,
+            topRank = String.format("%02d", index + 1),
+            isFavorite = false,
+            server1 = s1,
+            server2 = s2,
+            server3 = s3,
+            server4 = s4,
+            server5 = s5
+        )
+    }
+
+    suspend fun fetchCustomMovieCategories(): List<com.example.data.model.ChannelCategory> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<com.example.data.model.ChannelCategory>()
+        try {
+            val urls = listOf(
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/movies_categories.json",
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/vod_categories.json"
+            )
+            val colors = listOf("#0088FF", "#00C8FF", "#2563EB", "#7C3AED", "#DC2626", "#059669", "#D97706", "#EC4899")
+
             for (url in urls) {
                 val request = Request.Builder().url(url).build()
                 val response = httpClient.newCall(request).execute()
@@ -481,49 +588,96 @@ class FirebaseStreamManager(private val context: Context) {
                 if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
                     val jsonObj = JSONObject(body)
                     val keys = jsonObj.keys()
-                    var i = 0
+                    var index = list.size
                     while (keys.hasNext()) {
                         val key = keys.next()
                         val obj = jsonObj.optJSONObject(key) ?: continue
-                        val title = obj.optString("title", obj.optString("name", "فيلم"))
-                        val poster = obj.optString("poster", obj.optString("posterUrl", obj.optString("image", "")))
-                        val rating = obj.optString("rating", "8.9")
-                        val year = obj.optString("year", "2024")
-                        val story = obj.optString("story", obj.optString("description", "فيلم مخصص عبر لوحة التحكم"))
-                        val streamUrl = listOf(
-                            obj.optString("server1", ""),
-                            obj.optString("server2", ""),
-                            obj.optString("streamUrl", ""),
-                            obj.optString("url", "")
-                        ).firstOrNull { it.isNotBlank() } ?: ""
-
-                        if (title.isNotBlank() && streamUrl.isNotBlank()) {
-                            list.add(
-                                com.example.data.model.MediaItem(
-                                    id = "fb_mov_$key",
-                                    title = title,
-                                    posterUrl = poster,
-                                    backdropUrl = poster,
-                                    type = ContentType.MOVIE,
-                                    year = year,
-                                    rating = rating,
-                                    genre = "أفلام سينما",
-                                    description = story,
-                                    duration = "120 دقيقة",
-                                    streamUrl = streamUrl,
-                                    isTop = i < 5,
-                                    topRank = String.format("%02d", i + 1),
-                                    isFavorite = false
-                                )
+                        val name = obj.optString("name", "أفلام سينما")
+                        val poster = obj.optString("poster", obj.optString("iconUrl", ""))
+                        list.add(
+                            com.example.data.model.ChannelCategory(
+                                id = "fb_mov_cat_$key",
+                                name = name,
+                                subtitle = "تصنيف أفلام سحابي API",
+                                channelCount = 0,
+                                iconUrl = poster,
+                                categoryType = "movies",
+                                gradientColorHex = colors[index % colors.size]
                             )
-                            i++
-                        }
+                        )
+                        index++
                     }
                 }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Custom movies fetch error: ${e.message}")
+            Log.w(TAG, "Custom movie categories fetch error: ${e.message}")
         }
         list
+    }
+
+    suspend fun fetchM3uMovieSources(): List<RemoteM3uSource> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<RemoteM3uSource>()
+        try {
+            val urls = listOf(
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/m3u_movies_playlists.json",
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/m3u_movies.json",
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/vod_playlists.json"
+            )
+            for (url in urls) {
+                try {
+                    val request = Request.Builder().url(url).build()
+                    val response = httpClient.newCall(request).execute()
+                    val body = response.body?.string().orEmpty().trim()
+                    if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                        val jsonObj = JSONObject(body)
+                        val keys = jsonObj.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val obj = jsonObj.optJSONObject(key) ?: continue
+                            val name = obj.optString("name", obj.optString("title", "باقة أفلام M3U8"))
+                            val playlistUrl = obj.optString("url", obj.optString("playlist_url", obj.optString("streamUrl", "")))
+                            val isEnabled = obj.optBoolean("enabled", obj.optBoolean("isEnabled", true))
+                            if (playlistUrl.isNotBlank() && isEnabled) {
+                                list.add(RemoteM3uSource(id = "mov_$key", name = name, url = playlistUrl, isEnabled = isEnabled))
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Movie M3U source fetch error from $url: ${e.message}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "M3U movies sources error: ${e.message}")
+        }
+        list
+    }
+
+    suspend fun fetchMoviesFromM3uSources(dedicatedUrls: List<String> = emptyList()): ParsedM3uResult = withContext(Dispatchers.IO) {
+        val allSources = fetchM3uMovieSources().toMutableList()
+        for (url in dedicatedUrls) {
+            if (url.isNotBlank()) {
+                allSources.add(RemoteM3uSource(id = "cfg_mov_${url.hashCode()}", name = "أفلام سينما سحابية M3U8", url = url))
+            }
+        }
+
+        val aggregatedCategories = mutableListOf<com.example.data.model.ChannelCategory>()
+        val aggregatedMovies = mutableListOf<com.example.data.model.MediaItem>()
+
+        for (source in allSources.distinctBy { it.url }) {
+            try {
+                val parsed = M3uPlaylistParser.parseMoviesFromUrl(source.url, source.name)
+                aggregatedCategories.addAll(parsed.movieCategories)
+                aggregatedMovies.addAll(parsed.movies)
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed parsing movie M3U from ${source.url}: ${e.message}")
+            }
+        }
+
+        ParsedM3uResult(
+            categories = emptyList(),
+            channels = emptyList(),
+            movieCategories = aggregatedCategories.distinctBy { it.id },
+            movies = aggregatedMovies.distinctBy { it.id }
+        )
     }
 }

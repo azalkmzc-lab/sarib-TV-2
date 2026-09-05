@@ -8,11 +8,16 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,7 +35,9 @@ import com.example.data.model.ContentType
 import com.example.data.model.MatchItem
 import com.example.data.model.getActiveServers
 import com.example.ui.components.MatchDetailsDialog
+import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribDrawerContent
+import com.example.ui.components.SaribTopHeader
 import com.example.ui.components.SettingsDialog
 import com.example.ui.components.VpnBlockedDialog
 import com.example.ui.screens.CategoryDetailScreen
@@ -239,143 +246,173 @@ fun SaribApp(
                 }
 
                 is AppScreen.Main -> {
-                    when (currentTab) {
-                        "home" -> {
-                            HomeScreen(
-                                heroSliders = heroSliders,
-                                popularChannels = mostWatchedChannels,
-                                selectedChip = selectedHomeChip,
-                                onChipSelected = { viewModel.selectHomeChip(it) },
+                    Scaffold(
+                        modifier = Modifier.fillMaxSize(),
+                        containerColor = MaterialTheme.colorScheme.background,
+                        topBar = {
+                            SaribTopHeader(
                                 onMenuClick = { scope.launch { drawerState.open() } },
                                 onTelegramClick = openTelegram,
                                 onFavoritesClick = { viewModel.selectTab("favorites") },
-                                onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
-                                onCategoryClick = { route ->
-                                    when (route) {
-                                        "channels" -> viewModel.selectTab("channels")
-                                        "movies", "series", "anime" -> viewModel.selectTab("entertainment")
-                                        else -> viewModel.selectTab("channels")
-                                    }
-                                },
-                                onChannelClick = { channel ->
-                                    viewModel.playMedia(
-                                        title = channel.name,
-                                        subtitle = "${channel.categoryName} • ${channel.country}",
-                                        streamUrl = channel.streamUrl,
-                                        isLive = true,
-                                        servers = channel.getActiveServers()
-                                    )
-                                },
-                                onHeroWatchClick = { banner ->
-                                    viewModel.playMedia(
-                                        title = banner.title,
-                                        subtitle = banner.subtitle,
-                                        streamUrl = banner.streamUrl,
-                                        isLive = banner.isLive,
-                                        servers = banner.getActiveServers()
-                                    )
-                                },
-                                onViewAllChannelsClick = { viewModel.selectTab("channels") },
+                                onSearchClick = { viewModel.navigateTo(AppScreen.Search) }
+                            )
+                        },
+                        bottomBar = {
+                            SaribBottomNav(
                                 currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) },
-                                onFavoriteToggle = { channel ->
-                                    viewModel.toggleFavorite(
-                                        itemId = channel.id,
-                                        title = channel.name,
-                                        subtitle = channel.categoryName,
-                                        type = "CHANNEL",
-                                        streamUrl = channel.streamUrl,
-                                        isFav = channel.isFavorite
-                                    )
-                                },
-                                listState = homeListState
+                                onTabSelected = { viewModel.selectTab(it) }
                             )
                         }
-
-                        "channels" -> {
-                            ChannelsScreen(
-                                categories = categories,
-                                onCategoryClick = { viewModel.openCategory(it) },
-                                onMenuClick = { scope.launch { drawerState.open() } },
-                                onTelegramClick = openTelegram,
-                                onFavoritesClick = { viewModel.selectTab("favorites") },
-                                onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
-                                viewMode = viewMode,
-                                onToggleViewMode = { viewModel.toggleViewMode() },
-                                currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) },
-                                listState = channelsListState
-                            )
-                        }
-
-                        "matches" -> {
-                            MatchesScreen(
-                                matches = allMatches,
-                                selectedDate = selectedMatchDate,
-                                onDateSelected = { date, offset -> viewModel.selectMatchDate(date, offset) },
-                                onMatchClick = { match ->
-                                    selectedMatchForDetails = match
-                                },
-                                onMenuClick = { scope.launch { drawerState.open() } },
-                                onTelegramClick = openTelegram,
-                                onFavoritesClick = { viewModel.selectTab("favorites") },
-                                onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
-                                currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) },
-                                listState = matchesListState
-                            )
-                        }
-
-                        "entertainment" -> {
-                            EntertainmentScreen(
-                                movies = featuredMovies,
-                                series = featuredSeries,
-                                anime = animePicks,
-                                entertainmentCategories = entertainmentCategories,
-                                vodCategories = vodCategories,
-                                seriesCategories = seriesCategories,
-                                onCategoryClick = { cat -> viewModel.openMediaCategory(cat) },
-                                onMediaClick = handleMediaClick,
-                                onFavoriteToggle = handleMediaFavoriteToggle,
-                                onMenuClick = { scope.launch { drawerState.open() } },
-                                onTelegramClick = openTelegram,
-                                onFavoritesClick = { viewModel.selectTab("favorites") },
-                                onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
-                                currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) },
-                                listState = entertainmentListState
-                            )
-                        }
-
-                        "favorites" -> {
-                            FavoritesScreen(
-                                favorites = favorites,
-                                onItemClick = { fav ->
-                                    viewModel.playMedia(
-                                        title = fav.title,
-                                        subtitle = fav.subtitle,
-                                        streamUrl = fav.streamUrl,
-                                        isLive = fav.itemType == "CHANNEL" || fav.itemType == "MATCH"
+                    ) { innerPadding ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(innerPadding)
+                        ) {
+                            when (currentTab) {
+                                "home" -> {
+                                    HomeScreen(
+                                        heroSliders = heroSliders,
+                                        popularChannels = mostWatchedChannels,
+                                        selectedChip = selectedHomeChip,
+                                        onChipSelected = { viewModel.selectHomeChip(it) },
+                                        onMenuClick = { scope.launch { drawerState.open() } },
+                                        onTelegramClick = openTelegram,
+                                        onFavoritesClick = { viewModel.selectTab("favorites") },
+                                        onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
+                                        onCategoryClick = { route ->
+                                            when (route) {
+                                                "channels" -> viewModel.selectTab("channels")
+                                                "movies", "series", "anime" -> viewModel.selectTab("entertainment")
+                                                else -> viewModel.selectTab("channels")
+                                            }
+                                        },
+                                        onChannelClick = { channel ->
+                                            viewModel.playMedia(
+                                                title = channel.name,
+                                                subtitle = "${channel.categoryName} • ${channel.country}",
+                                                streamUrl = channel.streamUrl,
+                                                isLive = true,
+                                                servers = channel.getActiveServers()
+                                            )
+                                        },
+                                        onHeroWatchClick = { banner ->
+                                            viewModel.playMedia(
+                                                title = banner.title,
+                                                subtitle = banner.subtitle,
+                                                streamUrl = banner.streamUrl,
+                                                isLive = banner.isLive,
+                                                servers = banner.getActiveServers()
+                                            )
+                                        },
+                                        onViewAllChannelsClick = { viewModel.selectTab("channels") },
+                                        currentTab = currentTab,
+                                        onTabSelected = { viewModel.selectTab(it) },
+                                        onFavoriteToggle = { channel ->
+                                            viewModel.toggleFavorite(
+                                                itemId = channel.id,
+                                                title = channel.name,
+                                                subtitle = channel.categoryName,
+                                                type = "CHANNEL",
+                                                streamUrl = channel.streamUrl,
+                                                isFav = channel.isFavorite
+                                            )
+                                        },
+                                        listState = homeListState,
+                                        showBars = false
                                     )
-                                },
-                                onRemoveFavorite = { fav ->
-                                    viewModel.toggleFavorite(
-                                        itemId = fav.itemId,
-                                        title = fav.title,
-                                        subtitle = fav.subtitle,
-                                        type = fav.itemType,
-                                        streamUrl = fav.streamUrl,
-                                        isFav = true
+                                }
+
+                                "channels" -> {
+                                    ChannelsScreen(
+                                        categories = categories,
+                                        onCategoryClick = { viewModel.openCategory(it) },
+                                        onMenuClick = { scope.launch { drawerState.open() } },
+                                        onTelegramClick = openTelegram,
+                                        onFavoritesClick = { viewModel.selectTab("favorites") },
+                                        onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
+                                        viewMode = viewMode,
+                                        onToggleViewMode = { viewModel.toggleViewMode() },
+                                        currentTab = currentTab,
+                                        onTabSelected = { viewModel.selectTab(it) },
+                                        listState = channelsListState,
+                                        showBars = false
                                     )
-                                },
-                                onMenuClick = { scope.launch { drawerState.open() } },
-                                onTelegramClick = openTelegram,
-                                onFavoritesClick = { viewModel.selectTab("favorites") },
-                                onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
-                                currentTab = currentTab,
-                                onTabSelected = { viewModel.selectTab(it) },
-                                listState = favoritesListState
-                            )
+                                }
+
+                                "matches" -> {
+                                    MatchesScreen(
+                                        matches = allMatches,
+                                        selectedDate = selectedMatchDate,
+                                        onDateSelected = { date, offset -> viewModel.selectMatchDate(date, offset) },
+                                        onMatchClick = { match ->
+                                            selectedMatchForDetails = match
+                                        },
+                                        onMenuClick = { scope.launch { drawerState.open() } },
+                                        onTelegramClick = openTelegram,
+                                        onFavoritesClick = { viewModel.selectTab("favorites") },
+                                        onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
+                                        currentTab = currentTab,
+                                        onTabSelected = { viewModel.selectTab(it) },
+                                        listState = matchesListState,
+                                        showBars = false
+                                    )
+                                }
+
+                                "entertainment" -> {
+                                    EntertainmentScreen(
+                                        movies = featuredMovies,
+                                        series = featuredSeries,
+                                        anime = animePicks,
+                                        entertainmentCategories = entertainmentCategories,
+                                        vodCategories = vodCategories,
+                                        seriesCategories = seriesCategories,
+                                        onCategoryClick = { cat -> viewModel.openMediaCategory(cat) },
+                                        onMediaClick = handleMediaClick,
+                                        onFavoriteToggle = handleMediaFavoriteToggle,
+                                        onMenuClick = { scope.launch { drawerState.open() } },
+                                        onTelegramClick = openTelegram,
+                                        onFavoritesClick = { viewModel.selectTab("favorites") },
+                                        onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
+                                        currentTab = currentTab,
+                                        onTabSelected = { viewModel.selectTab(it) },
+                                        listState = entertainmentListState,
+                                        showBars = false
+                                    )
+                                }
+
+                                "favorites" -> {
+                                    FavoritesScreen(
+                                        favorites = favorites,
+                                        onItemClick = { fav ->
+                                            viewModel.playMedia(
+                                                title = fav.title,
+                                                subtitle = fav.subtitle,
+                                                streamUrl = fav.streamUrl,
+                                                isLive = fav.itemType == "CHANNEL" || fav.itemType == "MATCH"
+                                            )
+                                        },
+                                        onRemoveFavorite = { fav ->
+                                            viewModel.toggleFavorite(
+                                                itemId = fav.itemId,
+                                                title = fav.title,
+                                                subtitle = fav.subtitle,
+                                                type = fav.itemType,
+                                                streamUrl = fav.streamUrl,
+                                                isFav = true
+                                            )
+                                        },
+                                        onMenuClick = { scope.launch { drawerState.open() } },
+                                        onTelegramClick = openTelegram,
+                                        onFavoritesClick = { viewModel.selectTab("favorites") },
+                                        onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
+                                        currentTab = currentTab,
+                                        onTabSelected = { viewModel.selectTab(it) },
+                                        listState = favoritesListState,
+                                        showBars = false
+                                    )
+                                }
+                            }
                         }
                     }
                 }

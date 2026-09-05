@@ -71,6 +71,16 @@
             background: linear-gradient(180deg, #0d271a 0%, #0d1527 100%);
         }
 
+        .admin-panel.m3u-movies-panel {
+            border: 1.5px solid #ff4081;
+            background: linear-gradient(180deg, #260c1d 0%, #0d1527 100%);
+        }
+
+        .admin-panel.movies-panel {
+            border: 1.5px solid #e040fb;
+            background: linear-gradient(180deg, #220d2b 0%, #0d1527 100%);
+        }
+
         .admin-panel h3 {
             margin-bottom: 14px;
             color: #00d2ff;
@@ -86,6 +96,14 @@
 
         .admin-panel.m3u-panel h3 {
             color: #00e676;
+        }
+
+        .admin-panel.m3u-movies-panel h3 {
+            color: #ff4081;
+        }
+
+        .admin-panel.movies-panel h3 {
+            color: #e040fb;
         }
 
         .form-group {
@@ -272,6 +290,37 @@
             border-right: 4px solid #00e676;
         }
 
+        .notif-card.m3u-movies-card {
+            border-right: 4px solid #ff4081;
+        }
+
+        .movie-card {
+            border-top: 4px solid #e040fb;
+            position: relative;
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: #060a12;
+        }
+
+        .movie-top-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.85);
+            color: #ffd700;
+            border: 1px solid #ffd700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
         .section-title {
             max-width: 1300px;
             margin: 28px auto 14px auto;
@@ -380,8 +429,20 @@
 
                 <!-- مسار سحب روابط M3U / M3U8 الرئيسي -->
                 <div class="form-group" style="grid-column: 1 / -1;">
-                    <label style="color:#00e676; font-weight:bold;">📺 رابط باقة/ملف M3U أو M3U8 الرئيسي السحابي (Path: stream_config/m3u_playlist_url):</label>
+                    <label style="color:#00e676; font-weight:bold;">📺 رابط باقة/ملف M3U أو M3U8 الرئيسي السحابي للقنوات (Path: stream_config/m3u_playlist_url):</label>
                     <input type="text" id="stream-m3u-url" placeholder="مثال: https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U أو أي رابط .m3u / .m3u8">
+                </div>
+
+                <!-- مسار API سحب وتحديث الأفلام -->
+                <div class="form-group">
+                    <label style="color:#e040fb; font-weight:bold;">🎬 رابط API الأفلام السحابي (Path: stream_config/movies_api_url):</label>
+                    <input type="text" id="stream-movies-api-url" placeholder="مثال: https://bab-elmoshahd.online/api/movies.php أو أي رابط JSON سحابي">
+                </div>
+
+                <!-- مسار سحب روابط M3U للأفلام -->
+                <div class="form-group">
+                    <label style="color:#ff4081; font-weight:bold;">🍿 رابط باقة/ملف M3U للأفلام الرئيسي (Path: stream_config/m3u_movies_url):</label>
+                    <input type="text" id="stream-m3u-movies-url" placeholder="مثال: https://domain.com/movies.m3u أو رابط m3u8 للأفلام">
                 </div>
             </div>
 
@@ -392,7 +453,7 @@
         <!-- 📋 إدارة وسحب باقات M3U و M3U8 السحابية (Path: m3u_playlists) -->
         <!-- ============================================== -->
         <div class="admin-panel full-width m3u-panel">
-            <h3 id="m3u-panel-title">📋 إدارة وسحب باقات وروابط M3U / M3U8 المتعددة (Path: m3u_playlists)</h3>
+            <h3 id="m3u-panel-title">📋 إدارة وسحب باقات وروابط M3U / M3U8 للقنوات (Path: m3u_playlists)</h3>
             <p style="font-size:12px; color:#94a3b8; margin-bottom:14px;">يقوم التطبيق بسحب جميع القنوات والتصنيفات تلقائياً من هذه الروابط وعرضها في باقة البث المباشر مع دعم التحديث التلقائي.</p>
             <input type="hidden" id="m3u-id">
 
@@ -418,6 +479,116 @@
 
             <button class="btn-submit btn-green" id="btn-save-m3u" onclick="saveM3uPlaylist()">حفظ باقة M3U ونشرها للمستخدمين فورياً</button>
             <button class="btn-delete" id="btn-cancel-m3u" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetM3uForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 🍿 إدارة وسحب باقات وقوائم M3U للأفلام (Path: m3u_movies_playlists) -->
+        <!-- ============================================== -->
+        <div class="admin-panel full-width m3u-movies-panel">
+            <h3 id="m3u-movies-panel-title">🍿 إدارة وسحب باقات وروابط M3U / M3U8 للأفلام (Path: m3u_movies_playlists)</h3>
+            <p style="font-size:12px; color:#94a3b8; margin-bottom:14px;">يقوم التطبيق بسحب جميع الأفلام والتصنيفات تلقائياً من هذه الروابط وعرضها في تبويب الترفيه والأفلام.</p>
+            <input type="hidden" id="m3u-movies-id">
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <div class="form-group">
+                    <label>اسم باقة أو قائمة الأفلام *:</label>
+                    <input type="text" id="m3u-movies-title" placeholder="مثال: مكتبة أفلام نتفلكس وسينما 2024">
+                </div>
+
+                <div class="form-group">
+                    <label>رابط ملف M3U أو بث M3U8 للأفلام *:</label>
+                    <input type="text" id="m3u-movies-url" placeholder="https://domain.com/movies_list.m3u">
+                </div>
+
+                <div class="form-group">
+                    <label>حالة الباقة:</label>
+                    <select id="m3u-movies-status">
+                        <option value="true">✅ مفعلة (تسحب الأفلام وتظهر بالتطبيق فوراً)</option>
+                        <option value="false">❌ معطلة مؤقتاً</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-submit" style="background: linear-gradient(135deg, #c2185b, #ff4081); box-shadow: 0 4px 15px rgba(255, 64, 129, 0.35);" id="btn-save-m3u-movies" onclick="saveM3uMoviesPlaylist()">حفظ باقة أفلام M3U ونشرها للمستخدمين فورياً</button>
+            <button class="btn-delete" id="btn-cancel-m3u-movies" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetM3uMoviesForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 🎬 إضافة وإدارة الأفلام السينمائية السحابية (Path: movies) -->
+        <!-- ============================================== -->
+        <div class="admin-panel full-width movies-panel">
+            <h3 id="movie-panel-title">🎬 إضافة وإدارة الأفلام السينمائية المباشرة (Path: movies)</h3>
+            <p style="font-size:12px; color:#94a3b8; margin-bottom:14px;">إضافة أفلام سينمائية مباشرة بتفاصيلها وسيرفرات متعددة (سيرفر 1، سيرفر 2، m3u8) لتظهر فورياً في واجهة التطبيق وتبويب الترفيه والأفلام.</p>
+            <input type="hidden" id="movie-id">
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <div class="form-group">
+                    <label>عنوان أو اسم الفيلم *:</label>
+                    <input type="text" id="movie-title" placeholder="مثال: أوبنهايمر (Oppenheimer)">
+                </div>
+
+                <div class="form-group">
+                    <label>تصنيف الفيلم / النوع *:</label>
+                    <input type="text" id="movie-genre" placeholder="مثال: أكشن • دراما • سيرة ذاتية">
+                </div>
+
+                <div class="form-group">
+                    <label>سنة الإنتاج:</label>
+                    <input type="text" id="movie-year" placeholder="2024">
+                </div>
+
+                <div class="form-group">
+                    <label>تقييم الفيلم:</label>
+                    <input type="text" id="movie-rating" placeholder="8.9">
+                </div>
+
+                <div class="form-group">
+                    <label>رابط بوستر الفيلم (Poster URL) *:</label>
+                    <input type="text" id="movie-poster" placeholder="https://image.tmdb.org/... أو رابط صورة البوستر">
+                </div>
+
+                <div class="form-group">
+                    <label>رابط خلفية الفيلم (Backdrop URL اختياري):</label>
+                    <input type="text" id="movie-backdrop" placeholder="https://... رابط صورة عريضة">
+                </div>
+
+                <div class="form-group">
+                    <label>مدة الفيلم:</label>
+                    <input type="text" id="movie-duration" placeholder="125 دقيقة">
+                </div>
+
+                <div class="form-group">
+                    <label>عرض في قائمة التوب 10 المميزة (Top Rank):</label>
+                    <select id="movie-is-top">
+                        <option value="false">عادي</option>
+                        <option value="true">⭐ مميز (Top Movies)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>قصة الفيلم (Story / Overview):</label>
+                <textarea id="movie-story" rows="2" placeholder="نبذة مختصرة عن قصة الفيلم وأحداثه..."></textarea>
+            </div>
+
+            <label style="font-size:12px; margin-bottom:5px; color:#e040fb; font-weight:bold; display:block;">سيرفرات تشغيل الفيلم (m3u8 أو mp4):</label>
+            <div class="servers-grid">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>سيرفر 1 (الرئيسي m3u8/mp4) *:</label>
+                    <input type="text" id="movie-server1" placeholder="https://domain.com/movie.m3u8">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>سيرفر 2 (احتياطي سريع):</label>
+                    <input type="text" id="movie-server2" placeholder="https://backup.com/movie.mp4">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>سيرفر 3 (جودة متوسطة):</label>
+                    <input type="text" id="movie-server3" placeholder="https://server3.com/movie.m3u8">
+                </div>
+            </div>
+
+            <button class="btn-submit" style="background: linear-gradient(135deg, #7b1fa2, #e040fb); box-shadow: 0 4px 15px rgba(224, 64, 251, 0.35);" id="btn-save-movie" onclick="saveMovie()">حفظ الفيلم ونشره في التطبيق فورياً</button>
+            <button class="btn-delete" id="btn-cancel-movie" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetMovieForm()">إلغاء التعديل</button>
         </div>
 
         <!-- ======================================================= -->
@@ -665,8 +836,14 @@
     <!-- ========================= -->
     <!-- المعاينة المباشرة للعناصر -->
     <!-- ========================= -->
-    <div class="section-title">📋 باقات وروابط M3U و M3U8 المضافة في التطبيق (M3U Playlists)</div>
+    <div class="section-title">📋 باقات وروابط M3U و M3U8 للقنوات (M3U Playlists)</div>
     <div id="m3u-playlists-container" class="news-grid"></div>
+
+    <div class="section-title" style="color: #ff4081; border-color: rgba(255, 64, 129, 0.3);">🍿 باقات وقوائم M3U للأفلام (Path: m3u_movies_playlists)</div>
+    <div id="m3u-movies-playlists-container" class="news-grid"></div>
+
+    <div class="section-title" style="color: #e040fb; border-color: rgba(224, 64, 251, 0.3);">🎬 الأفلام السينمائية السحابية المضافة (Path: movies)</div>
+    <div id="movies-container" class="movies-grid"></div>
 
     <div class="section-title">🔔 سجل إشعارات البث في الخلفية (Broadcast Push Notifications)</div>
     <div id="broadcast-notifications-container" class="notifs-grid"></div>
@@ -701,6 +878,8 @@
         const database = firebase.database();
         const streamConfigRef = database.ref('stream_config');
         const m3uPlaylistsRef = database.ref('m3u_playlists');
+        const m3uMoviesPlaylistsRef = database.ref('m3u_movies_playlists');
+        const moviesRef = database.ref('movies');
         const broadcastNotifsRef = database.ref('broadcast_notifications');
         const channelsRef = database.ref('channels');
         const matchesRef = database.ref('matches');
@@ -725,11 +904,15 @@
                 announcement: document.getElementById('stream-announcement').value.trim(),
                 m3u_playlist_url: document.getElementById('stream-m3u-url').value.trim() || "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
                 m3u_url: document.getElementById('stream-m3u-url').value.trim() || "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
+                movies_api_url: document.getElementById('stream-movies-api-url').value.trim(),
+                movies_api: document.getElementById('stream-movies-api-url').value.trim(),
+                m3u_movies_url: document.getElementById('stream-m3u-movies-url').value.trim(),
+                movies_m3u_url: document.getElementById('stream-m3u-movies-url').value.trim(),
                 updatedAt: Date.now()
             };
 
             streamConfigRef.set(data).then(() => {
-                alert('✅ تم حفظ وتحديث بيانات البث ورابط M3U للمستخدمين بنجاح!');
+                alert('✅ تم حفظ وتحديث بيانات البث وروابط M3U والأفلام للمستخدمين بنجاح!');
             }).catch(err => alert('خطأ: ' + err.message));
         }
 
@@ -743,6 +926,8 @@
                 document.getElementById('stream-telegram-link').value = d.telegram_link || 'https://t.me/sarib_tv';
                 document.getElementById('stream-announcement').value = d.announcement || '';
                 document.getElementById('stream-m3u-url').value = d.m3u_playlist_url || d.m3u_url || 'https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U';
+                document.getElementById('stream-movies-api-url').value = d.movies_api_url || d.movies_api || '';
+                document.getElementById('stream-m3u-movies-url').value = d.m3u_movies_url || d.movies_m3u_url || '';
             }
         });
 
@@ -829,8 +1014,233 @@
         });
 
         /* =========================================
-           3. إرسال إشعار البث بالخلفية (broadcast_notifications)
+           2.1 إدارة وسحب باقات وروابط M3U للأفلام (Path: m3u_movies_playlists)
         ========================================= */
+        function saveM3uMoviesPlaylist() {
+            const id = document.getElementById('m3u-movies-id').value;
+            const title = document.getElementById('m3u-movies-title').value.trim();
+            const url = document.getElementById('m3u-movies-url').value.trim();
+            const enabled = document.getElementById('m3u-movies-status').value === 'true';
+
+            if (!title || !url) {
+                alert('يرجى كتابة اسم باقة الأفلام ورابط M3U أو M3U8 الخاص بها');
+                return;
+            }
+
+            const payload = {
+                name: title,
+                title: title,
+                url: url,
+                playlist_url: url,
+                enabled: enabled,
+                isEnabled: enabled,
+                updatedAt: Date.now()
+            };
+
+            const ref = id ? m3uMoviesPlaylistsRef.child(id).update(payload) : m3uMoviesPlaylistsRef.push(payload);
+            ref.then(() => {
+                alert('✅ تم حفظ باقة أفلام M3U بنجاح! سيتم سحب الأفلام وتصنيفاتها فورياً في التطبيق.');
+                resetM3uMoviesForm();
+            }).catch(err => alert('خطأ: ' + err.message));
+        }
+
+        function editM3uMovies(key, item) {
+            document.getElementById('m3u-movies-id').value = key;
+            document.getElementById('m3u-movies-title').value = item.name || item.title || '';
+            document.getElementById('m3u-movies-url').value = item.url || item.playlist_url || '';
+            document.getElementById('m3u-movies-status').value = (item.enabled !== false && item.isEnabled !== false) ? 'true' : 'false';
+            document.getElementById('m3u-movies-panel-title').innerText = 'تعديل باقة أفلام M3U / M3U8';
+            document.getElementById('btn-save-m3u-movies').innerText = 'تحديث باقة الأفلام';
+            document.getElementById('btn-cancel-m3u-movies').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetM3uMoviesForm() {
+            document.getElementById('m3u-movies-id').value = '';
+            document.getElementById('m3u-movies-title').value = '';
+            document.getElementById('m3u-movies-url').value = '';
+            document.getElementById('m3u-movies-status').value = 'true';
+            document.getElementById('m3u-movies-panel-title').innerText = '🍿 إدارة وسحب باقات وروابط M3U / M3U8 للأفلام (Path: m3u_movies_playlists)';
+            document.getElementById('btn-save-m3u-movies').innerText = 'حفظ باقة أفلام M3U ونشرها للمستخدمين فورياً';
+            document.getElementById('btn-cancel-m3u-movies').style.display = 'none';
+        }
+
+        m3uMoviesPlaylistsRef.on('value', (snap) => {
+            const el = document.getElementById('m3u-movies-playlists-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) {
+                el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد باقات أفلام M3U مضافة حالياً.</div>';
+                return;
+            }
+            Object.keys(data).forEach((key) => {
+                const item = data[key];
+                const isAct = item.enabled !== false && item.isEnabled !== false;
+                const card = document.createElement('div');
+                card.className = 'notif-card m3u-movies-card';
+                card.style.borderRightColor = isAct ? '#ff4081' : '#ff5252';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:11px; color:${isAct ? '#ff4081' : '#ff5252'}; font-weight:bold;">${isAct ? '✅ نشطة وتسحب الأفلام' : '❌ معطلة'}</span>
+                        <span style="font-size:10px; color:#94a3b8;">Path: m3u_movies_playlists/${key}</span>
+                    </div>
+                    <div style="font-size:15px; font-weight:bold; margin-bottom:6px; color:#fff;">🍿 ${escapeHtml(item.name || item.title || 'باقة أفلام')}</div>
+                    <div style="font-size:11px; color:#ff4081; background:#060a12; padding:8px; border-radius:8px; word-break:break-all; margin-bottom:8px; font-family:monospace;">${escapeHtml(item.url || item.playlist_url || '')}</div>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick='editM3uMovies("${key}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>تعديل</button>
+                        <button class="btn-delete" onclick='if(confirm("حذف هذه الباقة؟")) m3uMoviesPlaylistsRef.child("${key}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        /* =========================================
+           2.2 إضافة وإدارة الأفلام المباشرة (Path: movies)
+        ========================================= */
+        function saveMovie() {
+            const id = document.getElementById('movie-id').value;
+            const title = document.getElementById('movie-title').value.trim();
+            const genre = document.getElementById('movie-genre').value.trim() || 'أفلام سينما';
+            const year = document.getElementById('movie-year').value.trim() || '2024';
+            const rating = document.getElementById('movie-rating').value.trim() || '8.8';
+            const poster = document.getElementById('movie-poster').value.trim();
+            const backdrop = document.getElementById('movie-backdrop').value.trim() || poster;
+            const duration = document.getElementById('movie-duration').value.trim() || '120 دقيقة';
+            const isTop = document.getElementById('movie-is-top').value === 'true';
+            const story = document.getElementById('movie-story').value.trim() || 'فيلم متاح عبر البث السحابي عالي الدقة';
+
+            const s1 = document.getElementById('movie-server1').value.trim();
+            const s2 = document.getElementById('movie-server2').value.trim();
+            const s3 = document.getElementById('movie-server3').value.trim();
+
+            if (!title) {
+                alert('يرجى إدخال اسم الفيلم');
+                return;
+            }
+            if (!poster) {
+                alert('يرجى إدخال رابط بوستر الفيلم');
+                return;
+            }
+            if (!s1 && !s2 && !s3) {
+                alert('يرجى إدخال سيرفر تشغيل واحد على الأقل للفيلم (رابط m3u8 أو mp4)');
+                return;
+            }
+
+            const moviePayload = {
+                title: title,
+                name: title,
+                genre: genre,
+                category: genre,
+                categoryName: genre,
+                year: year,
+                rating: rating,
+                movieRating: rating,
+                poster: poster,
+                posterUrl: poster,
+                image: poster,
+                logo: poster,
+                backdrop: backdrop,
+                backdropUrl: backdrop,
+                duration: duration,
+                story: story,
+                description: story,
+                is_top: isTop,
+                isTop: isTop,
+                server1: s1,
+                server2: s2,
+                server3: s3,
+                url: s1 || s2 || s3,
+                streamUrl: s1 || s2 || s3,
+                m3u8: s1 || s2 || s3,
+                updatedAt: Date.now()
+            };
+
+            const ref = id ? moviesRef.child(id).update(moviePayload) : moviesRef.push(moviePayload);
+            ref.then(() => {
+                alert('✅ تم حفظ الفيلم بنجاح ونشره في التطبيق!');
+                resetMovieForm();
+            }).catch(err => alert('خطأ: ' + err.message));
+        }
+
+        function editMovie(key, item) {
+            document.getElementById('movie-id').value = key;
+            document.getElementById('movie-title').value = item.title || item.name || '';
+            document.getElementById('movie-genre').value = item.genre || item.category || item.categoryName || '';
+            document.getElementById('movie-year').value = item.year || '2024';
+            document.getElementById('movie-rating').value = item.rating || item.movieRating || '8.8';
+            document.getElementById('movie-poster').value = item.poster || item.posterUrl || item.image || item.logo || '';
+            document.getElementById('movie-backdrop').value = item.backdrop || item.backdropUrl || '';
+            document.getElementById('movie-duration').value = item.duration || '120 دقيقة';
+            document.getElementById('movie-is-top').value = (item.is_top === true || item.isTop === true) ? 'true' : 'false';
+            document.getElementById('movie-story').value = item.story || item.description || '';
+            document.getElementById('movie-server1').value = item.server1 || item.url || item.streamUrl || '';
+            document.getElementById('movie-server2').value = item.server2 || '';
+            document.getElementById('movie-server3').value = item.server3 || '';
+
+            document.getElementById('movie-panel-title').innerText = 'تعديل بيانات الفيلم';
+            document.getElementById('btn-save-movie').innerText = 'تحديث الفيلم';
+            document.getElementById('btn-cancel-movie').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetMovieForm() {
+            document.getElementById('movie-id').value = '';
+            document.getElementById('movie-title').value = '';
+            document.getElementById('movie-genre').value = '';
+            document.getElementById('movie-year').value = '';
+            document.getElementById('movie-rating').value = '';
+            document.getElementById('movie-poster').value = '';
+            document.getElementById('movie-backdrop').value = '';
+            document.getElementById('movie-duration').value = '';
+            document.getElementById('movie-is-top').value = 'false';
+            document.getElementById('movie-story').value = '';
+            document.getElementById('movie-server1').value = '';
+            document.getElementById('movie-server2').value = '';
+            document.getElementById('movie-server3').value = '';
+
+            document.getElementById('movie-panel-title').innerText = '🎬 إضافة وإدارة الأفلام السينمائية المباشرة (Path: movies)';
+            document.getElementById('btn-save-movie').innerText = 'حفظ الفيلم ونشره في التطبيق فورياً';
+            document.getElementById('btn-cancel-movie').style.display = 'none';
+        }
+
+        function deleteMovie(key) {
+            if (confirm('هل أنت متأكد من حذف هذا الفيلم؟')) {
+                moviesRef.child(key).remove().then(() => {
+                    alert('تم حذف الفيلم بنجاح');
+                }).catch(err => alert('خطأ: ' + err.message));
+            }
+        }
+
+        moviesRef.on('value', (snap) => {
+            const el = document.getElementById('movies-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) {
+                el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد أفلام مباشرة مضافة حالياً. يمكنك إضافة أفلامك لتظهر فوراً في تبويب الترفيه.</div>';
+                return;
+            }
+            Object.keys(data).forEach((key) => {
+                const m = data[key];
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                const poster = m.poster || m.posterUrl || m.image || m.logo || 'https://via.placeholder.com/200x300?text=No+Poster';
+                const isTop = m.is_top === true || m.isTop === true;
+                card.innerHTML = `
+                    ${isTop ? '<span class="movie-top-badge">⭐ مميز TOP</span>' : ''}
+                    <img src="${escapeHtml(poster)}" onerror="this.src='https://via.placeholder.com/200x300?text=Poster+Error'">
+                    <div style="font-size:15px; font-weight:bold; color:#fff; margin-bottom:4px;">${escapeHtml(m.title || m.name || 'فيلم سينمائي')}</div>
+                    <div style="font-size:12px; color:#e040fb; font-weight:600; margin-bottom:6px;">${escapeHtml(m.genre || m.category || 'سينما')} • ${escapeHtml(m.year || '2024')} • ⭐ ${escapeHtml(m.rating || '8.8')}</div>
+                    <div style="font-size:11px; color:#94a3b8; line-height:1.4; margin-bottom:10px; max-height:45px; overflow:hidden;">${escapeHtml(m.story || m.description || '')}</div>
+                    <div style="font-size:10px; color:#00d2ff; background:#060a12; padding:6px; border-radius:6px; margin-bottom:8px; word-break:break-all;">سيرفر: ${escapeHtml(m.server1 || m.url || m.streamUrl || 'غير محدد')}</div>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick='editMovie("${key}", ${JSON.stringify(m).replace(/'/g, "&apos;")})'>تعديل</button>
+                        <button class="btn-delete" onclick='deleteMovie("${key}")'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
         function sendBroadcastPushNotification() {
             const title = document.getElementById('bg-notif-title').value.trim();
             const body = document.getElementById('bg-notif-body').value.trim();

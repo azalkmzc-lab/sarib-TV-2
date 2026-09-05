@@ -66,6 +66,7 @@ fun MatchesScreen(
     currentTab: String,
     onTabSelected: (String) -> Unit,
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
+    showBars: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val dateFilters = listOf(
@@ -75,31 +76,14 @@ fun MatchesScreen(
         MatchDateFilter("بعد غد", "بعد يومين", 2)
     )
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            SaribTopHeader(
-                onMenuClick = onMenuClick,
-                onTelegramClick = onTelegramClick,
-                onFavoritesClick = onFavoritesClick,
-                onSearchClick = onSearchClick
-            )
-        },
-        bottomBar = {
-            SaribBottomNav(
-                currentTab = currentTab,
-                onTabSelected = onTabSelected
-            )
-        }
-    ) { innerPadding ->
+    val content: @Composable (Modifier) -> Unit = { paddingModifier ->
         LazyColumn(
             state = listState,
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .then(paddingModifier)
                 .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(bottom = if (showBars) 24.dp else 12.dp)
         ) {
             // Date Selector Header Row
             item {
@@ -223,5 +207,30 @@ fun MatchesScreen(
                 }
             }
         }
+    }
+
+    if (showBars) {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                SaribTopHeader(
+                    onMenuClick = onMenuClick,
+                    onTelegramClick = onTelegramClick,
+                    onFavoritesClick = onFavoritesClick,
+                    onSearchClick = onSearchClick
+                )
+            },
+            bottomBar = {
+                SaribBottomNav(
+                    currentTab = currentTab,
+                    onTabSelected = onTabSelected
+                )
+            }
+        ) { innerPadding ->
+            content(Modifier.padding(innerPadding))
+        }
+    } else {
+        content(Modifier)
     }
 }

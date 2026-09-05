@@ -99,6 +99,9 @@ interface SaribDao {
     @Query("SELECT * FROM media_items WHERE type = :type")
     fun getMediaByType(type: String): Flow<List<MediaEntity>>
 
+    @Query("SELECT * FROM media_items WHERE type = :type")
+    suspend fun getMediaListByType(type: String): List<MediaEntity>
+
     @Query("SELECT * FROM media_items WHERE isTop = 1")
     fun getTopMedia(): Flow<List<MediaEntity>>
 

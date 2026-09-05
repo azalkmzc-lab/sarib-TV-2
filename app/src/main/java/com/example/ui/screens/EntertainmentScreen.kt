@@ -84,36 +84,20 @@ fun EntertainmentScreen(
     currentTab: String,
     onTabSelected: (String) -> Unit,
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
+    showBars: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     var selectedFilterIndex by rememberSaveable { mutableStateOf(0) }
     val filterTabs = listOf("الكل", "الأفلام", "المسلسلات", "تصنيفات الترفيه")
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            SaribTopHeader(
-                onMenuClick = onMenuClick,
-                onTelegramClick = onTelegramClick,
-                onFavoritesClick = onFavoritesClick,
-                onSearchClick = onSearchClick
-            )
-        },
-        bottomBar = {
-            SaribBottomNav(
-                currentTab = currentTab,
-                onTabSelected = onTabSelected
-            )
-        }
-    ) { innerPadding ->
+    val content: @Composable (Modifier) -> Unit = { paddingModifier ->
         LazyColumn(
             state = listState,
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .then(paddingModifier)
                 .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(bottom = if (showBars) 24.dp else 12.dp)
         ) {
             // Action Navigation Shortcut Cards
             item {
@@ -232,11 +216,11 @@ fun EntertainmentScreen(
                     Spacer(modifier = Modifier.height(18.dp))
                 }
 
-                // Xtream VOD Categories Section
+                // Movie Categories Section (Xtream + M3U + API)
                 if (vodCategories.isNotEmpty()) {
                     item {
                         SectionHeader(
-                            title = "أقسام وتصنيفات الأفلام (اكستريم)",
+                            title = "أقسام وتصنيفات الأفلام (اكستريم وقوائم M3U و API)",
                             onViewAllClick = { selectedFilterIndex = 1 }
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -336,7 +320,7 @@ fun EntertainmentScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "تصنيفات الأفلام المتاحة من حساب اكستريم (${vodCategories.size})",
+                        text = "تصنيفات الأفلام المتاحة (${vodCategories.size}) - اكستريم وقوائم M3U و API",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = SaribTextPrimary
@@ -431,6 +415,31 @@ fun EntertainmentScreen(
                 }
             }
         }
+    }
+
+    if (showBars) {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                SaribTopHeader(
+                    onMenuClick = onMenuClick,
+                    onTelegramClick = onTelegramClick,
+                    onFavoritesClick = onFavoritesClick,
+                    onSearchClick = onSearchClick
+                )
+            },
+            bottomBar = {
+                SaribBottomNav(
+                    currentTab = currentTab,
+                    onTabSelected = onTabSelected
+                )
+            }
+        ) { innerPadding ->
+            content(Modifier.padding(innerPadding))
+        }
+    } else {
+        content(Modifier)
     }
 }
 

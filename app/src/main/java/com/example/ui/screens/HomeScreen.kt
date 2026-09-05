@@ -45,37 +45,21 @@ fun HomeScreen(
     onTabSelected: (String) -> Unit,
     onFavoriteToggle: (ChannelItem) -> Unit = {},
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
+    showBars: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val homeCategoryChips = androidx.compose.runtime.remember {
         listOf("الكل", "مسلسل", "دراما", "رعب", "أكشن", "أجنبية", "أحجية", "وثائقي", "كوميدي")
     }
 
-    Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            SaribTopHeader(
-                onMenuClick = onMenuClick,
-                onTelegramClick = onTelegramClick,
-                onFavoritesClick = onFavoritesClick,
-                onSearchClick = onSearchClick
-            )
-        },
-        bottomBar = {
-            SaribBottomNav(
-                currentTab = currentTab,
-                onTabSelected = onTabSelected
-            )
-        }
-    ) { innerPadding ->
+    val content: @Composable (Modifier) -> Unit = { paddingModifier ->
         LazyColumn(
             state = listState,
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
-                .padding(innerPadding)
+                .then(paddingModifier)
                 .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(bottom = 24.dp)
+            contentPadding = PaddingValues(bottom = if (showBars) 24.dp else 12.dp)
         ) {
             // Category Chips Row
             item {
@@ -128,5 +112,30 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
             }
         }
+    }
+
+    if (showBars) {
+        Scaffold(
+            modifier = modifier.fillMaxSize(),
+            containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                SaribTopHeader(
+                    onMenuClick = onMenuClick,
+                    onTelegramClick = onTelegramClick,
+                    onFavoritesClick = onFavoritesClick,
+                    onSearchClick = onSearchClick
+                )
+            },
+            bottomBar = {
+                SaribBottomNav(
+                    currentTab = currentTab,
+                    onTabSelected = onTabSelected
+                )
+            }
+        ) { innerPadding ->
+            content(Modifier.padding(innerPadding))
+        }
+    } else {
+        content(Modifier)
     }
 }

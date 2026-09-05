@@ -1181,26 +1181,26 @@ fun SaribBottomNav(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 10.dp)
-            .shadow(16.dp, RoundedCornerShape(26.dp))
-            .clip(RoundedCornerShape(26.dp))
+            .padding(horizontal = 14.dp, vertical = 8.dp)
+            .shadow(4.dp, RoundedCornerShape(24.dp))
+            .clip(RoundedCornerShape(24.dp))
             .border(
                 1.dp,
                 Brush.horizontalGradient(listOf(borderColor, SaribBlueGlow, borderColor)),
-                RoundedCornerShape(26.dp)
+                RoundedCornerShape(24.dp)
             ),
         color = navBg
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(62.dp)
+                .height(60.dp)
                 .background(
                     Brush.verticalGradient(
                         listOf(navBg, navSurfaceVariant)
                     )
                 )
-                .padding(horizontal = 6.dp, vertical = 5.dp),
+                .padding(horizontal = 6.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { (labelKey, icon, tabKey) ->
@@ -1211,22 +1211,20 @@ fun SaribBottomNav(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(RoundedCornerShape(18.dp))
                         .background(
                             if (isSelected) SaribElectricBlue.copy(alpha = 0.35f) else Color.Transparent
                         )
                         .border(
                             width = if (isSelected) 1.dp else 0.dp,
                             color = if (isSelected) SaribCyanAccent else Color.Transparent,
-                            shape = RoundedCornerShape(20.dp)
+                            shape = RoundedCornerShape(18.dp)
                         )
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
-                            indication = null
+                            indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
                         ) {
-                            if (!isSelected) {
-                                onTabSelected(tabKey)
-                            }
+                            onTabSelected(tabKey)
                         },
                     contentAlignment = Alignment.Center
                 ) {

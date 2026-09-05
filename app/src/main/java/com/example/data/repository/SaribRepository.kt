@@ -120,10 +120,16 @@ class SaribRepository(private val context: Context) {
                         channels = aggregatedChannels.distinctBy { it.id }
                     )
                 }
-                val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies() }
+                val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies(currentRemoteConfig.moviesApiUrl) }
+                val customMovieCategoriesDeferred = async { firebaseStreamManager.fetchCustomMovieCategories() }
+                val m3uMoviesDeferred = async {
+                    firebaseStreamManager.fetchMoviesFromM3uSources(
+                        if (currentRemoteConfig.m3uMoviesUrl.isNotBlank()) listOf(currentRemoteConfig.m3uMoviesUrl) else emptyList()
+                    )
+                }
                 val matchesDeferred = async { matchesClient.fetchMatches(0) }
 
-                // Xtream: VOD Movies & Series categories and previews only
+                // Xtream: VOD Movies & Series categories and previews (حساب اكستريم الأصلي محفوظ بالكامل)
                 val vodCategoriesDeferred = async { xtreamClient.fetchVodCategories() }
                 val seriesCategoriesDeferred = async { xtreamClient.fetchSeriesCategories() }
                 val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 10) }
@@ -133,6 +139,8 @@ class SaribRepository(private val context: Context) {
                 val customChannels = customChannelsDeferred.await()
                 val m3uResult = m3uResultDeferred.await()
                 val customMovies = customMoviesDeferred.await()
+                val customMovieCategories = customMovieCategoriesDeferred.await()
+                val m3uMoviesResult = m3uMoviesDeferred.await()
                 val remoteMatches = matchesDeferred.await()
                 val vodCategories = vodCategoriesDeferred.await()
                 val seriesCategories = seriesCategoriesDeferred.await()
@@ -140,8 +148,10 @@ class SaribRepository(private val context: Context) {
                 val topSeries = topSeriesDeferred.await()
 
                 val combinedChannels = (customChannels + m3uResult.channels).distinctBy { it.id }
-                val allCats = (customCats + m3uResult.categories + vodCategories + seriesCategories).distinctBy { it.id }
-                val allMovs = (customMovies + topMovies).distinctBy { it.id }
+                val m3uParsedMovies = (m3uResult.movies + m3uMoviesResult.movies).distinctBy { it.id }
+                val m3uParsedMovieCategories = (m3uResult.movieCategories + m3uMoviesResult.movieCategories).distinctBy { it.id }
+                val allCats = (customCats + m3uResult.categories + vodCategories + seriesCategories + customMovieCategories + m3uParsedMovieCategories).distinctBy { it.id }
+                val allMovs = (customMovies + m3uParsedMovies + topMovies).distinctBy { it.id }
 
                 // Update local Room database with fresh items
                 if (allCats.isNotEmpty()) {
@@ -284,14 +294,49 @@ class SaribRepository(private val context: Context) {
 
     suspend fun getMoviesForCategoryOnDemand(categoryId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
-            val remoteMovies = xtreamClient.fetchVodStreams(categoryId = categoryId)
-            if (remoteMovies.isNotEmpty()) {
-                dao.insertMediaItems(remoteMovies.map { it.toEntity() })
+            // Check local Room cache first (handles M3U, API, and previously loaded movies)
+            val localMovies = if (categoryId.isNullOrBlank() || categoryId == "all" || categoryId == "all_movies") {
+                dao.getMediaListByType("MOVIE")
+            } else {
+                val allLocal = dao.getMediaListByType("MOVIE")
+                val matched = allLocal.filter {
+                    it.genre.contains(categoryId, ignoreCase = true) ||
+                    it.id.startsWith(categoryId) ||
+                    it.id.contains(categoryId)
+                }
+                if (matched.isNotEmpty()) matched else emptyList()
             }
-            remoteMovies
+
+            // If category is an Xtream category (numeric or standard Xtream format), query Xtream account
+            val isXtreamCategory = categoryId != null && !categoryId.startsWith("m3u_") && !categoryId.startsWith("fb_")
+            if (isXtreamCategory) {
+                try {
+                    val remoteMovies = xtreamClient.fetchVodStreams(categoryId = categoryId)
+                    if (remoteMovies.isNotEmpty()) {
+                        dao.insertMediaItems(remoteMovies.map { it.toEntity() })
+                        return@withContext remoteMovies
+                    }
+                } catch (e: Exception) {
+                    Log.w("SaribRepository", "Xtream VOD fetch fallback: ${e.message}")
+                }
+            }
+
+            if (localMovies.isNotEmpty()) {
+                return@withContext localMovies.map { it.toModel() }
+            }
+
+            // Fallback: try fetching custom movies from Firebase/API
+            val customMovies = firebaseStreamManager.fetchCustomMovies(currentRemoteConfig.moviesApiUrl)
+            if (customMovies.isNotEmpty()) {
+                dao.insertMediaItems(customMovies.map { it.toEntity() })
+                return@withContext customMovies
+            }
+
+            // General fallback to all cached movies
+            dao.getMediaListByType("MOVIE").map { it.toModel() }
         } catch (e: Exception) {
             Log.e("SaribRepository", "Error fetching movies for category $categoryId: ${e.message}", e)
-            emptyList()
+            dao.getMediaListByType("MOVIE").map { it.toModel() }
         }
     }
 
