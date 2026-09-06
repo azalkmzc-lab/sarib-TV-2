@@ -42,10 +42,34 @@ data class RemoteM3uSource(
 class FirebaseStreamManager(private val context: Context) {
 
     private val TAG = "FirebaseStreamManager"
-    private val httpClient = OkHttpClient.Builder()
-        .connectTimeout(10, TimeUnit.SECONDS)
-        .readTimeout(10, TimeUnit.SECONDS)
-        .build()
+    private val httpClient: OkHttpClient by lazy {
+        try {
+            val trustAllCerts = arrayOf<javax.net.ssl.TrustManager>(object : javax.net.ssl.X509TrustManager {
+                override fun checkClientTrusted(chain: Array<out java.security.cert.X509Certificate>?, authType: String?) {}
+                override fun checkServerTrusted(chain: Array<out java.security.cert.X509Certificate>?, authType: String?) {}
+                override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
+            })
+            val sslContext = javax.net.ssl.SSLContext.getInstance("TLS")
+            sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+            OkHttpClient.Builder()
+                .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as javax.net.ssl.X509TrustManager)
+                .hostnameVerifier { _, _ -> true }
+                .connectTimeout(20, TimeUnit.SECONDS)
+                .readTimeout(25, TimeUnit.SECONDS)
+                .followRedirects(true)
+                .followSslRedirects(true)
+                .retryOnConnectionFailure(true)
+                .build()
+        } catch (e: Exception) {
+            OkHttpClient.Builder()
+                .connectTimeout(20, TimeUnit.SECONDS)
+                .readTimeout(25, TimeUnit.SECONDS)
+                .followRedirects(true)
+                .followSslRedirects(true)
+                .retryOnConnectionFailure(true)
+                .build()
+        }
+    }
 
     private fun isFirebaseAvailable(): Boolean {
         return try {
@@ -446,29 +470,82 @@ class FirebaseStreamManager(private val context: Context) {
 
     suspend fun fetchM3uSources(): List<RemoteM3uSource> = withContext(Dispatchers.IO) {
         val list = mutableListOf<RemoteM3uSource>()
-        try {
-            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/m3u_playlists.json"
-            val request = Request.Builder().url(url).build()
-            val response = httpClient.newCall(request).execute()
-            val body = response.body?.string().orEmpty().trim()
-            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
-                val jsonObj = JSONObject(body)
-                val keys = jsonObj.keys()
-                while (keys.hasNext()) {
-                    val key = keys.next()
-                    val obj = jsonObj.optJSONObject(key) ?: continue
-                    val name = obj.optString("name", obj.optString("title", "باقة قنوات M3U"))
-                    val playlistUrl = obj.optString("url", obj.optString("playlist_url", obj.optString("streamUrl", "")))
-                    val isEnabled = obj.optBoolean("enabled", obj.optBoolean("isEnabled", true))
-                    if (playlistUrl.isNotBlank() && isEnabled) {
-                        list.add(RemoteM3uSource(id = key, name = name, url = playlistUrl, isEnabled = isEnabled))
+
+        // 1. Try Firestore 'm3u_playlists' or 'playlists' collections
+        if (isFirebaseAvailable()) {
+            try {
+                val firestore = FirebaseFirestore.getInstance()
+                val collections = listOf("m3u_playlists", "playlists", "m3u_sources")
+                for (colName in collections) {
+                    val snapshot = firestore.collection(colName).get().await()
+                    if (snapshot != null && !snapshot.isEmpty) {
+                        for (doc in snapshot.documents) {
+                            val name = doc.getString("name") ?: doc.getString("title") ?: "باقة قنوات M3U"
+                            val playlistUrl = doc.getString("url")
+                                ?: doc.getString("playlist_url")
+                                ?: doc.getString("streamUrl")
+                                ?: doc.getString("m3u_url")
+                                ?: ""
+                            val isEnabled = doc.getBoolean("enabled") ?: doc.getBoolean("isEnabled") ?: true
+                            if (playlistUrl.isNotBlank() && isEnabled) {
+                                list.add(RemoteM3uSource(id = "fs_${doc.id}", name = name, url = playlistUrl, isEnabled = isEnabled))
+                            }
+                        }
                     }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Firestore M3U sources fetch: ${e.message}")
+            }
+        }
+
+        // 2. Try Firebase Realtime Database
+        try {
+            val rtdbUrls = listOf(
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/m3u_playlists.json",
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/m3u_sources.json",
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/playlists.json"
+            )
+            for (url in rtdbUrls) {
+                try {
+                    val request = Request.Builder().url(url).build()
+                    val response = httpClient.newCall(request).execute()
+                    val body = response.body?.string().orEmpty().trim()
+                    if (body.isEmpty() || body == "null") continue
+
+                    if (body.startsWith("{")) {
+                        val jsonObj = JSONObject(body)
+                        val keys = jsonObj.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val obj = jsonObj.optJSONObject(key) ?: continue
+                            val name = obj.optString("name", obj.optString("title", "باقة قنوات M3U"))
+                            val playlistUrl = obj.optString("url", obj.optString("playlist_url", obj.optString("streamUrl", obj.optString("m3u_url", ""))))
+                            val isEnabled = obj.optBoolean("enabled", obj.optBoolean("isEnabled", true))
+                            if (playlistUrl.isNotBlank() && isEnabled) {
+                                list.add(RemoteM3uSource(id = "rtdb_$key", name = name, url = playlistUrl, isEnabled = isEnabled))
+                            }
+                        }
+                    } else if (body.startsWith("[")) {
+                        val jsonArray = JSONArray(body)
+                        for (i in 0 until jsonArray.length()) {
+                            val obj = jsonArray.optJSONObject(i) ?: continue
+                            val name = obj.optString("name", obj.optString("title", "باقة قنوات M3U"))
+                            val playlistUrl = obj.optString("url", obj.optString("playlist_url", obj.optString("streamUrl", obj.optString("m3u_url", ""))))
+                            val isEnabled = obj.optBoolean("enabled", obj.optBoolean("isEnabled", true))
+                            if (playlistUrl.isNotBlank() && isEnabled) {
+                                list.add(RemoteM3uSource(id = "rtdb_arr_$i", name = name, url = playlistUrl, isEnabled = isEnabled))
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Error querying $url: ${e.message}")
                 }
             }
         } catch (e: Exception) {
             Log.w(TAG, "M3U sources fetch error: ${e.message}")
         }
-        list
+
+        list.distinctBy { it.url }
     }
 
     suspend fun fetchM3uPlaylist(url: String, defaultName: String = "باقة القنوات المباشرة"): ParsedM3uResult {

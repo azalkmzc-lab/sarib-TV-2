@@ -13,6 +13,7 @@ import androidx.media3.exoplayer.drm.FrameworkMediaDrm
 import androidx.media3.exoplayer.drm.LocalMediaDrmCallback
 import org.json.JSONArray
 import org.json.JSONObject
+import java.net.URLDecoder
 
 data class ParsedStreamConfig(
     val cleanUrl: String,
@@ -21,17 +22,23 @@ data class ParsedStreamConfig(
     val userAgent: String?,
     val drmScheme: String?,
     val clearKeyJson: String?,
-    val widevineLicenseUrl: String?
+    val widevineLicenseUrl: String?,
+    val targetHost: String? = null
 )
 
 object StreamUrlParser {
 
     private const val TAG = "StreamUrlParser"
+    const val DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
     /**
-     * Parses IPTV stream URLs that may contain DRM license parameters or HTTP headers.
-     * Example input:
-     * https://shahid-sports-1-enc.edgenextcdn.net/out/v1/0169cfa282614ebe97ef0201da87bb04/index.mpd?|drmScheme=clearkey&drmLicense=ab081a704aad41829b1123b09b6ecafd:dd51609092fff15e68b91debf5d591f9
+     * Parses IPTV, Cloudflare Worker proxies, and DRM stream URLs.
+     * Supports:
+     * 1. Proxy worker streams like:
+     *    https://ostora.ravynerinnn.workers.dev/proxy?url=https%3A%2F%2Fwww.maziikaaaaaa.shop%2Fx1%2F225587619216738.php&ua=Mozilla...&iv=...
+     * 2. Pipe delimiter streams like:
+     *    https://server.com/live.m3u8|User-Agent=Mozilla&Referer=https://site.com
+     * 3. ClearKey & Widevine DRM parameter strings.
      */
     fun parse(rawUrl: String): ParsedStreamConfig {
         var cleanUrl = rawUrl.trim()
@@ -40,24 +47,123 @@ object StreamUrlParser {
         var drmScheme: String? = null
         var clearKeyJson: String? = null
         var widevineLicenseUrl: String? = null
+        var targetHost: String? = null
+        var embeddedTargetUrl: String? = null
 
         try {
-            // Check for delimiter '|' (pipe delimiter commonly used in IPTV / m3u / Xtream)
-            var queryPart = ""
+            // 1. Handle Pipe Delimiter (|) common in IPTV/M3U formats
+            var pipeQueryPart = ""
             if (cleanUrl.contains("|")) {
                 val parts = cleanUrl.split("|", limit = 2)
                 cleanUrl = parts[0].trim().trimEnd('?').trim()
-                queryPart = parts.getOrNull(1)?.trim().orEmpty()
+                pipeQueryPart = parts.getOrNull(1)?.trim().orEmpty()
             } else if (cleanUrl.contains("drmScheme=") || cleanUrl.contains("drmLicense=")) {
                 val idx = cleanUrl.indexOf("drmScheme=")
                 if (idx > 0) {
-                    queryPart = cleanUrl.substring(idx)
+                    pipeQueryPart = cleanUrl.substring(idx)
                     cleanUrl = cleanUrl.substring(0, idx).trimEnd('?', '&').trim()
                 }
             }
 
-            if (queryPart.isNotEmpty()) {
-                val params = queryPart.split("&")
+            // 2. Parse direct URI query parameters (e.g. for worker proxies with ?url=...&ua=...&iv=...)
+            try {
+                val uri = Uri.parse(cleanUrl)
+                if (uri.isHierarchical) {
+                    // Extract User-Agent from query parameters if present
+                    val uaParam = uri.getQueryParameter("ua")
+                        ?: uri.getQueryParameter("user_agent")
+                        ?: uri.getQueryParameter("user-agent")
+                        ?: uri.getQueryParameter("User-Agent")
+                        ?: uri.getQueryParameter("u-a")
+                    if (!uaParam.isNullOrBlank()) {
+                        val decodedUa = try {
+                            URLDecoder.decode(uaParam, "UTF-8")
+                        } catch (e: Exception) {
+                            uaParam
+                        }
+                        userAgent = decodedUa
+                        headers["User-Agent"] = decodedUa
+                    }
+
+                    // Extract embedded target URL (e.g., ?url=https%3A%2F%2Fwww.maziikaaaaaa.shop...)
+                    val innerUrlParam = uri.getQueryParameter("url")
+                    if (!innerUrlParam.isNullOrBlank()) {
+                        val decodedInnerUrl = try {
+                            URLDecoder.decode(innerUrlParam, "UTF-8")
+                        } catch (e: Exception) {
+                            innerUrlParam
+                        }
+                        embeddedTargetUrl = decodedInnerUrl
+                        val innerUri = Uri.parse(decodedInnerUrl)
+                        val host = innerUri.host
+                        if (!host.isNullOrBlank()) {
+                            targetHost = host
+                            val scheme = innerUri.scheme ?: "https"
+                            val originUrl = "$scheme://$host"
+                            headers.putIfAbsent("Origin", originUrl)
+                            headers.putIfAbsent("Referer", "$originUrl/")
+                        }
+                    }
+
+                    // Extract Referer / Referrer from query
+                    val refParam = uri.getQueryParameter("referer") ?: uri.getQueryParameter("referrer")
+                    if (!refParam.isNullOrBlank()) {
+                        val decodedRef = try { URLDecoder.decode(refParam, "UTF-8") } catch (e: Exception) { refParam }
+                        headers["Referer"] = decodedRef
+                    }
+
+                    // Extract Origin from query
+                    val originParam = uri.getQueryParameter("origin")
+                    if (!originParam.isNullOrBlank()) {
+                        val decodedOrigin = try { URLDecoder.decode(originParam, "UTF-8") } catch (e: Exception) { originParam }
+                        headers["Origin"] = decodedOrigin
+                    }
+
+                    // Extract Cookie from query
+                    val cookieParam = uri.getQueryParameter("cookie")
+                    if (!cookieParam.isNullOrBlank()) {
+                        headers["Cookie"] = cookieParam
+                    }
+
+                    // Extract all other query parameters (e.g., iv, token, auth, key) into headers
+                    try {
+                        for (paramName in uri.queryParameterNames) {
+                            if (!paramName.equals("url", ignoreCase = true) &&
+                                !paramName.equals("ua", ignoreCase = true) &&
+                                !paramName.equals("user-agent", ignoreCase = true) &&
+                                !paramName.equals("u-a", ignoreCase = true)
+                            ) {
+                                val paramVal = uri.getQueryParameter(paramName)
+                                if (!paramVal.isNullOrBlank()) {
+                                    headers[paramName] = paramVal
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Could not enumerate query parameters: ${e.message}")
+                    }
+
+                    // Extract DRM scheme/key from query
+                    val qDrmScheme = uri.getQueryParameter("drmScheme")
+                    if (!qDrmScheme.isNullOrBlank()) drmScheme = qDrmScheme.lowercase()
+                    val qDrmLicense = uri.getQueryParameter("drmLicense") ?: uri.getQueryParameter("license_key")
+                    if (!qDrmLicense.isNullOrBlank()) {
+                        if (qDrmLicense.contains(":")) {
+                            val parts = qDrmLicense.split(":", limit = 2)
+                            clearKeyJson = buildClearKeyJson(parts[0].trim(), parts[1].trim())
+                            drmScheme = "clearkey"
+                        } else if (qDrmLicense.startsWith("http://") || qDrmLicense.startsWith("https://")) {
+                            widevineLicenseUrl = qDrmLicense
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Non-critical error parsing URI query parameters: ${e.message}")
+            }
+
+            // 3. Parse pipe query part if available
+            if (pipeQueryPart.isNotEmpty()) {
+                val params = pipeQueryPart.split("&")
                 var keyIdHex: String? = null
                 var keyHex: String? = null
 
@@ -86,9 +192,10 @@ object StreamUrlParser {
                             key.equals("key", ignoreCase = true) -> {
                                 keyHex = value
                             }
-                            key.equals("User-Agent", ignoreCase = true) || key.equals("user_agent", ignoreCase = true) -> {
-                                userAgent = value
-                                headers["User-Agent"] = value
+                            key.equals("User-Agent", ignoreCase = true) || key.equals("user_agent", ignoreCase = true) || key.equals("ua", ignoreCase = true) -> {
+                                val decoded = try { URLDecoder.decode(value, "UTF-8") } catch (e: Exception) { value }
+                                userAgent = decoded
+                                headers["User-Agent"] = decoded
                             }
                             key.equals("Referer", ignoreCase = true) || key.equals("referrer", ignoreCase = true) -> {
                                 headers["Referer"] = value
@@ -120,28 +227,54 @@ object StreamUrlParser {
             Log.e(TAG, "Error parsing stream URL: ${e.message}")
         }
 
-        // Determine MimeType
+        // Set high-compatibility headers if not already set
+        val finalUserAgent = userAgent ?: DEFAULT_USER_AGENT
+        headers.putIfAbsent("User-Agent", finalUserAgent)
+        headers.putIfAbsent("Accept", "*/*")
+        headers.putIfAbsent("Accept-Language", "ar,en-US;q=0.9,en;q=0.8")
+        headers.putIfAbsent("Connection", "keep-alive")
+
+        // 4. Intelligent MIME Type resolution
+        val lower = cleanUrl.lowercase()
+        val targetLower = embeddedTargetUrl?.lowercase().orEmpty()
+
         val mimeType = when {
-            cleanUrl.contains(".mpd", ignoreCase = true) || cleanUrl.contains("/dash/", ignoreCase = true) -> {
+            // DASH Manifest
+            lower.contains(".mpd") || lower.contains("/dash/") || targetLower.contains(".mpd") -> {
                 MimeTypes.APPLICATION_MPD
             }
-            cleanUrl.contains(".m3u8", ignoreCase = true) || cleanUrl.contains("/hls/", ignoreCase = true) -> {
+            // Explicit HLS M3U8
+            lower.contains(".m3u8") || lower.contains("/hls/") || targetLower.contains(".m3u8") -> {
                 MimeTypes.APPLICATION_M3U8
             }
-            cleanUrl.contains(".mp4", ignoreCase = true) -> {
+            // Cloudflare Worker Proxies, PHP stream scripts, and IPTV tokenized endpoints
+            // (e.g., ostora.workers.dev/proxy, .php endpoints, ostora/yacine proxies)
+            lower.contains("workers.dev") || lower.contains("/proxy") || lower.contains("proxy?url=") ||
+            lower.contains(".php") || targetLower.contains(".php") ||
+            lower.contains(".m3u") || lower.contains("live") || lower.contains("stream") ||
+            lower.contains("playlist") || lower.contains("manifest") || lower.contains(".ts") ||
+            targetLower.contains(".m3u") || targetLower.contains(".ts") -> {
+                MimeTypes.APPLICATION_M3U8
+            }
+            // MP4 Direct Video
+            (lower.endsWith(".mp4") || lower.contains(".mp4?")) && !lower.contains("proxy") -> {
                 MimeTypes.APPLICATION_MP4
             }
-            else -> null
+            // Default: Most live IPTV and proxy streaming links are HLS
+            else -> {
+                MimeTypes.APPLICATION_M3U8
+            }
         }
 
         return ParsedStreamConfig(
             cleanUrl = cleanUrl,
             mimeType = mimeType,
             headers = headers,
-            userAgent = userAgent,
+            userAgent = finalUserAgent,
             drmScheme = drmScheme,
             clearKeyJson = clearKeyJson,
-            widevineLicenseUrl = widevineLicenseUrl
+            widevineLicenseUrl = widevineLicenseUrl,
+            targetHost = targetHost
         )
     }
 
@@ -206,10 +339,14 @@ object StreamUrlParser {
         factory: DefaultHttpDataSource.Factory,
         config: ParsedStreamConfig
     ) {
-        val customUa = config.userAgent ?: "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 SARIB-TV-Player/1.0"
+        val customUa = config.userAgent ?: DEFAULT_USER_AGENT
         factory.setUserAgent(customUa)
+        factory.setAllowCrossProtocolRedirects(true)
+        factory.setConnectTimeoutMs(20000)
+        factory.setReadTimeoutMs(20000)
         if (config.headers.isNotEmpty()) {
             factory.setDefaultRequestProperties(config.headers)
         }
     }
 }
+

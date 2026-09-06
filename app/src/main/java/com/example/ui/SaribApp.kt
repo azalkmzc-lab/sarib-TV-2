@@ -102,6 +102,8 @@ fun SaribApp(
     val searchResults by viewModel.searchResults.collectAsState()
 
     val isVpnDetected by viewModel.isVpnDetected.collectAsState()
+    val isImportingM3u by viewModel.isImportingM3u.collectAsState()
+    val importStatusMessage by viewModel.importStatusMessage.collectAsState()
 
     var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
@@ -336,7 +338,16 @@ fun SaribApp(
                                         currentTab = currentTab,
                                         onTabSelected = { viewModel.selectTab(it) },
                                         listState = channelsListState,
-                                        showBars = false
+                                        showBars = false,
+                                        defaultM3uUrl = viewModel.getDefaultM3uUrl(),
+                                        isImportingM3u = isImportingM3u,
+                                        importStatusMessage = importStatusMessage,
+                                        onImportM3u = { url, name ->
+                                            viewModel.importM3uPlaylist(url, name)
+                                        },
+                                        onClearImportStatus = {
+                                            viewModel.clearImportStatusMessage()
+                                        }
                                     )
                                 }
 

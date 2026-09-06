@@ -102,6 +102,18 @@ class SaribRepository(private val context: Context) {
                         }
                     }
 
+                    // Add user imported playlists from local preferences
+                    try {
+                        val userM3uList = com.example.data.local.AppPreferences(context).getCustomM3uList()
+                        for (userSrc in userM3uList) {
+                            if (userSrc.first.isNotBlank()) {
+                                sourcesToFetch.add(Pair(userSrc.first, userSrc.second))
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.w("SaribRepository", "Error reading custom M3U preferences: ${e.message}")
+                    }
+
                     val aggregatedCategories = mutableListOf<com.example.data.model.ChannelCategory>()
                     val aggregatedChannels = mutableListOf<com.example.data.model.ChannelItem>()
 
@@ -160,7 +172,9 @@ class SaribRepository(private val context: Context) {
                 }
                 if (combinedChannels.isNotEmpty()) {
                     dao.clearAllChannels()
-                    dao.insertChannels(combinedChannels.map { it.toEntity() })
+                    combinedChannels.chunked(250).forEach { chunk ->
+                        dao.insertChannels(chunk.map { it.toEntity() })
+                    }
                 }
                 if (allMovs.isNotEmpty() || topSeries.isNotEmpty()) {
                     dao.clearAllMedia()
@@ -391,12 +405,75 @@ class SaribRepository(private val context: Context) {
         )
     }
 
-    // Filter out categories with empty titles / empty indicators
+    // Filter out categories with empty titles / empty indicators, and prepend All Channels if available
     fun getAllCategories(): Flow<List<ChannelCategory>> {
         return dao.getAllCategories().map { list ->
-            list.filter { it.name.isNotBlank() && it.categoryType !in listOf("movies", "vod", "series") }
+            val filtered = list.filter { it.name.isNotBlank() && it.categoryType !in listOf("movies", "vod", "series") }
                 .map { it.toModel() }
+            val totalCount = dao.getChannelsCount()
+            if (totalCount > 0) {
+                val allChannelsCategory = ChannelCategory(
+                    id = "all",
+                    name = "جميع القنوات المتاحة",
+                    subtitle = "$totalCount قناة متوفرة",
+                    channelCount = totalCount,
+                    iconUrl = "",
+                    categoryType = "live",
+                    gradientColorHex = "#0088FF"
+                )
+                listOf(allChannelsCategory) + filtered
+            } else {
+                filtered
+            }
         }.flowOn(Dispatchers.IO)
+    }
+
+    fun getDefaultM3uUrl(): String {
+        return currentRemoteConfig.m3uPlaylistUrl
+    }
+
+    suspend fun importM3uPlaylist(url: String, name: String = ""): Result<Int> = withContext(Dispatchers.IO) {
+        val cleanUrl = url.trim()
+        if (cleanUrl.isBlank()) {
+            return@withContext Result.failure(Exception("يرجى إدخال رابط باقة M3U / M3U8 صالح"))
+        }
+
+        try {
+            val playlistName = name.trim().ifBlank { "باقة قنوات M3U8" }
+            val parsed = com.example.util.M3uPlaylistParser.parseFromUrl(cleanUrl, playlistName)
+            val channels = parsed.channels
+            val categories = parsed.categories
+
+            if (channels.isEmpty() && parsed.movies.isEmpty()) {
+                return@withContext Result.failure(Exception("لم يتم العثور على أي قنوات صالحة في هذا الرابط. تأكد من صحة الرابط وعمله."))
+            }
+
+            // Save to persistent user preferences
+            val prefs = com.example.data.local.AppPreferences(context)
+            prefs.addCustomM3u(cleanUrl, playlistName)
+
+            // Insert into Room database in safe chunks
+            if (categories.isNotEmpty()) {
+                dao.insertCategories(categories.map { it.toEntity() })
+            }
+            if (channels.isNotEmpty()) {
+                channels.chunked(250).forEach { chunk ->
+                    dao.insertChannels(chunk.map { it.toEntity() })
+                }
+            }
+            if (parsed.movies.isNotEmpty()) {
+                parsed.movies.chunked(250).forEach { chunk ->
+                    dao.insertMediaItems(chunk.map { it.toEntity() })
+                }
+            }
+
+            val totalImported = channels.size + parsed.movies.size
+            Log.i("SaribRepository", "Successfully imported $totalImported items from $cleanUrl")
+            Result.success(totalImported)
+        } catch (e: Exception) {
+            Log.e("SaribRepository", "Error importing M3U playlist: ${e.message}", e)
+            Result.failure(Exception(e.message ?: "فشل في سحب القنوات من الرابط"))
+        }
     }
 
     fun getEntertainmentCategories(): Flow<List<ChannelCategory>> {

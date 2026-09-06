@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -25,17 +26,22 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AddLink
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudDownload
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -58,6 +64,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
@@ -101,8 +108,15 @@ fun ChannelsScreen(
     onTabSelected: (String) -> Unit,
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     showBars: Boolean = true,
+    defaultM3uUrl: String = "",
+    isImportingM3u: Boolean = false,
+    importStatusMessage: String? = null,
+    onImportM3u: (String, String) -> Unit = { _, _ -> },
+    onClearImportStatus: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
+    var showImportDialog by rememberSaveable { mutableStateOf(false) }
+
     val content: @Composable (Modifier) -> Unit = { paddingModifier ->
         LazyColumn(
             state = listState,
@@ -112,7 +126,7 @@ fun ChannelsScreen(
                 .background(MaterialTheme.colorScheme.background),
             contentPadding = PaddingValues(bottom = if (showBars) 24.dp else 12.dp)
         ) {
-            // 3 Large Action Buttons Row matching Screenshot 3
+            // 3 Large Action Buttons Row
             item {
                 Spacer(modifier = Modifier.height(14.dp))
                 Row(
@@ -146,7 +160,108 @@ fun ChannelsScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            // Quick M3U8 Import Banner Card
+            item {
+                Card(
+                    onClick = { showImportDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 14.dp, vertical = 4.dp)
+                        .testTag("import_m3u_card"),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = CardDefaults.cardColors(containerColor = SaribCardBg),
+                    border = BorderStroke(1.dp, SaribCyanAccent.copy(alpha = 0.45f))
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(SaribCyanAccent.copy(alpha = 0.15f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CloudDownload,
+                                contentDescription = "سحب M3U8",
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = tr("pull_m3u"),
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            )
+                            Text(
+                                text = "إضافة رابط باقة M3U / M3U8 وسحب القنوات تلقائياً",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            )
+                        }
+                        Icon(
+                            imageVector = Icons.Default.AddLink,
+                            contentDescription = null,
+                            tint = SaribCyanAccent,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            // Empty state if no categories exist yet
+            if (categories.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 48.dp, horizontal = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LiveTv,
+                            contentDescription = null,
+                            tint = SaribCyanAccent.copy(alpha = 0.7f),
+                            modifier = Modifier.size(64.dp)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "لا توجد قنوات متاحة حالياً",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "يمكنك سحب باقة قنوات M3U8 عبر إدخال رابط الباقة المباشر",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Button(
+                            onClick = { showImportDialog = true },
+                            colors = ButtonDefaults.buttonColors(containerColor = SaribCyanAccent),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(Icons.Default.CloudDownload, contentDescription = null, tint = Color.Black)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("سحب قنوات M3U8 الآن", color = Color.Black, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
             }
 
             // Categories List
@@ -159,6 +274,21 @@ fun ChannelsScreen(
                 }
             }
         }
+    }
+
+    if (showImportDialog) {
+        ImportM3uDialog(
+            defaultUrl = defaultM3uUrl,
+            isLoading = isImportingM3u,
+            statusMessage = importStatusMessage,
+            onDismiss = {
+                showImportDialog = false
+                onClearImportStatus()
+            },
+            onConfirm = { url, name ->
+                onImportM3u(url, name)
+            }
+        )
     }
 
     if (showBars) {
@@ -185,6 +315,174 @@ fun ChannelsScreen(
     } else {
         content(Modifier)
     }
+}
+
+@Composable
+fun ImportM3uDialog(
+    defaultUrl: String,
+    isLoading: Boolean,
+    statusMessage: String?,
+    onDismiss: () -> Unit,
+    onConfirm: (url: String, name: String) -> Unit
+) {
+    var urlText by rememberSaveable { mutableStateOf(defaultUrl) }
+    var nameText by rememberSaveable { mutableStateOf("") }
+    val clipboardManager = LocalClipboardManager.current
+
+    AlertDialog(
+        onDismissRequest = { if (!isLoading) onDismiss() },
+        containerColor = MaterialTheme.colorScheme.surface,
+        title = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.CloudDownload,
+                    contentDescription = null,
+                    tint = SaribCyanAccent,
+                    modifier = Modifier.size(24.dp)
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text(
+                    text = tr("pull_m3u_title"),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = tr("pull_m3u_desc"),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // URL Input Field
+                OutlinedTextField(
+                    value = urlText,
+                    onValueChange = { urlText = it },
+                    label = { Text(tr("enter_m3u_url")) },
+                    placeholder = { Text("https://example.com/playlist.m3u8") },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    trailingIcon = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            if (urlText.isNotBlank()) {
+                                IconButton(onClick = { urlText = "" }, enabled = !isLoading) {
+                                    Icon(Icons.Default.Close, contentDescription = "مسح", tint = SaribTextMuted)
+                                }
+                            }
+                            IconButton(
+                                onClick = {
+                                    val clip = clipboardManager.getText()?.text.orEmpty().trim()
+                                    if (clip.isNotBlank()) {
+                                        urlText = clip
+                                    }
+                                },
+                                enabled = !isLoading
+                            ) {
+                                Icon(Icons.Default.ContentPaste, contentDescription = "لصق", tint = SaribCyanAccent)
+                            }
+                        }
+                    },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SaribCyanAccent,
+                        focusedLabelColor = SaribCyanAccent,
+                        cursorColor = SaribCyanAccent
+                    ),
+                    modifier = Modifier.fillMaxWidth().testTag("m3u_url_input")
+                )
+
+                // Playlist Name Field (Optional)
+                OutlinedTextField(
+                    value = nameText,
+                    onValueChange = { nameText = it },
+                    label = { Text(tr("playlist_name_hint")) },
+                    placeholder = { Text("باقة قنوات رياضية") },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = SaribCyanAccent,
+                        focusedLabelColor = SaribCyanAccent,
+                        cursorColor = SaribCyanAccent
+                    ),
+                    modifier = Modifier.fillMaxWidth().testTag("m3u_name_input")
+                )
+
+                // Default Cloud Preset Button
+                if (defaultUrl.isNotBlank() && urlText != defaultUrl) {
+                    Button(
+                        onClick = { urlText = defaultUrl },
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "استخدام: ${tr("default_remote_m3u")}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SaribCyanAccent
+                        )
+                    }
+                }
+
+                // Status Message Feedback Banner
+                if (!statusMessage.isNullOrBlank()) {
+                    val isSuccess = statusMessage.contains("نجاح") || statusMessage.contains("successfully")
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(if (isSuccess) Color(0xFF10B981).copy(alpha = 0.15f) else Color(0xFFEF4444).copy(alpha = 0.15f))
+                            .border(1.dp, if (isSuccess) Color(0xFF10B981) else Color(0xFFEF4444), RoundedCornerShape(8.dp))
+                            .padding(10.dp)
+                    ) {
+                        Text(
+                            text = statusMessage,
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                            color = if (isSuccess) Color(0xFF10B981) else Color(0xFFEF4444)
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(urlText, nameText) },
+                enabled = !isLoading && urlText.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = SaribCyanAccent),
+                shape = RoundedCornerShape(8.dp),
+                modifier = Modifier.testTag("submit_pull_m3u")
+            ) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(18.dp),
+                        color = Color.Black,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(tr("pulling_channels"), color = Color.Black, fontWeight = FontWeight.Bold)
+                } else {
+                    Icon(Icons.Default.CloudDownload, contentDescription = null, tint = Color.Black, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(tr("pull_now"), color = Color.Black, fontWeight = FontWeight.Bold)
+                }
+            }
+        },
+        dismissButton = {
+            Button(
+                onClick = onDismiss,
+                enabled = !isLoading,
+                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(tr("close"), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    )
 }
 
 @Composable

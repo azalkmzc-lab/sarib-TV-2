@@ -394,4 +394,38 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             startConnectionFlow()
         }
     }
+
+    fun getDefaultM3uUrl(): String {
+        return repository.getDefaultM3uUrl()
+    }
+
+    private val _isImportingM3u = MutableStateFlow(false)
+    val isImportingM3u: StateFlow<Boolean> = _isImportingM3u.asStateFlow()
+
+    private val _importStatusMessage = MutableStateFlow<String?>(null)
+    val importStatusMessage: StateFlow<String?> = _importStatusMessage.asStateFlow()
+
+    fun clearImportStatusMessage() {
+        _importStatusMessage.value = null
+    }
+
+    fun importM3uPlaylist(url: String, name: String = "", onFinished: (Boolean, String) -> Unit = { _, _ -> }) {
+        if (_isImportingM3u.value) return
+        viewModelScope.launch {
+            _isImportingM3u.value = true
+            _importStatusMessage.value = "جاري سحب وفحص القنوات..."
+            val result = repository.importM3uPlaylist(url, name)
+            _isImportingM3u.value = false
+            if (result.isSuccess) {
+                val count = result.getOrNull() ?: 0
+                val msg = "تم سحب $count قناة بنجاح من الرابط وحفظها!"
+                _importStatusMessage.value = msg
+                onFinished(true, msg)
+            } else {
+                val errMsg = result.exceptionOrNull()?.message ?: "فشل سحب القنوات من الرابط"
+                _importStatusMessage.value = errMsg
+                onFinished(false, errMsg)
+            }
+        }
+    }
 }

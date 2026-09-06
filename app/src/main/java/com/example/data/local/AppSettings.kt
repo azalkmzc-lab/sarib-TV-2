@@ -96,7 +96,19 @@ object LocalStrings {
         "telegram_channel" to "قناة التيليجرام الرسمية",
         "grid_view" to "شبكة",
         "list_view" to "قائمة",
-        "all" to "الكل"
+        "all" to "الكل",
+        "pull_m3u" to "سحب باقة M3U8",
+        "pull_m3u_title" to "سحب باقة قنوات M3U / M3U8",
+        "pull_m3u_desc" to "أدخل رابط باقة M3U أو M3U8 لسحب جميع القنوات تلقائياً وحفظها في التطبيق.",
+        "enter_m3u_url" to "رابط باقة M3U8 / M3U",
+        "playlist_name_hint" to "اسم الباقة (اختياري)",
+        "pull_now" to "سحب القنوات الآن",
+        "pulling_channels" to "جاري سحب وفحص القنوات...",
+        "all_channels_category" to "جميع القنوات المتاحة",
+        "all_channels_subtitle" to "كافة القنوات المباشرة والسحابية المسحوبة",
+        "channels_imported_success" to "تم سحب القنوات بنجاح!",
+        "no_channels_found" to "لم يتم العثور على قنوات صالحة في هذا الرابط.",
+        "default_remote_m3u" to "رابط الباقة الافتراضية السحابية"
     )
 
     private val enStrings = mapOf(
@@ -173,7 +185,19 @@ object LocalStrings {
         "telegram_channel" to "Official Telegram Channel",
         "grid_view" to "Grid",
         "list_view" to "List",
-        "all" to "All"
+        "all" to "All",
+        "pull_m3u" to "Import M3U8 Playlist",
+        "pull_m3u_title" to "Import M3U / M3U8 Channels",
+        "pull_m3u_desc" to "Enter an M3U or M3U8 URL to fetch and save all channels automatically.",
+        "enter_m3u_url" to "M3U / M3U8 Playlist URL",
+        "playlist_name_hint" to "Playlist Name (Optional)",
+        "pull_now" to "Pull Channels Now",
+        "pulling_channels" to "Fetching and verifying channels...",
+        "all_channels_category" to "All Channels",
+        "all_channels_subtitle" to "All imported live and cloud streams",
+        "channels_imported_success" to "Channels imported successfully!",
+        "no_channels_found" to "No valid channels found in this playlist URL.",
+        "default_remote_m3u" to "Default Cloud Playlist"
     )
 
     fun getString(key: String, language: AppLanguage): String {
@@ -222,6 +246,53 @@ class AppPreferences(context: Context) {
 
     fun hasMatchNotification(matchId: String): Boolean {
         return prefs.getBoolean("alert_match_$matchId", false)
+    }
+
+    fun getCustomM3uList(): List<Pair<String, String>> {
+        val raw = prefs.getString("custom_m3u_list", "") ?: ""
+        if (raw.isBlank()) return emptyList()
+        return try {
+            val arr = org.json.JSONArray(raw)
+            val list = mutableListOf<Pair<String, String>>()
+            for (i in 0 until arr.length()) {
+                val obj = arr.getJSONObject(i)
+                val url = obj.getString("url")
+                val name = obj.optString("name", "باقة خاصة")
+                list.add(Pair(url, name))
+            }
+            list
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun addCustomM3u(url: String, name: String) {
+        val cleanUrl = url.trim()
+        if (cleanUrl.isBlank()) return
+        val current = getCustomM3uList().toMutableList()
+        current.removeAll { it.first == cleanUrl }
+        current.add(0, Pair(cleanUrl, name.trim().ifBlank { "باقة قنوات خاصة" }))
+        val arr = org.json.JSONArray()
+        for (item in current) {
+            val obj = org.json.JSONObject()
+            obj.put("url", item.first)
+            obj.put("name", item.second)
+            arr.put(obj)
+        }
+        prefs.edit().putString("custom_m3u_list", arr.toString()).apply()
+    }
+
+    fun removeCustomM3u(url: String) {
+        val cleanUrl = url.trim()
+        val current = getCustomM3uList().filterNot { it.first == cleanUrl }
+        val arr = org.json.JSONArray()
+        for (item in current) {
+            val obj = org.json.JSONObject()
+            obj.put("url", item.first)
+            obj.put("name", item.second)
+            arr.put(obj)
+        }
+        prefs.edit().putString("custom_m3u_list", arr.toString()).apply()
     }
 
     fun getString(key: String): String {

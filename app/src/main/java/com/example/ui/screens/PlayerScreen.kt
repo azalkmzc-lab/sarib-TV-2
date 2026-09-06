@@ -57,6 +57,7 @@ import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PictureInPictureAlt
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.ScreenRotation
 import androidx.compose.material.icons.filled.Search
@@ -66,9 +67,14 @@ import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.Warning
+
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
@@ -260,7 +266,7 @@ fun PlayerScreen(
             }
     }
 
-    // Function to play or switch stream cleanly using StreamUrlParser (ClearKey DRM, MPD, HLS, headers)
+    // Function to play or switch stream cleanly using StreamUrlParser (ClearKey DRM, MPD, HLS, headers, proxy workers)
     val playStream: (String) -> Unit = remember(exoPlayer) {
         { url ->
             if (url.isNotBlank()) {
@@ -272,10 +278,10 @@ fun PlayerScreen(
 
                     val parsed = StreamUrlParser.parse(url)
                     val httpDataSourceFactory = DefaultHttpDataSource.Factory()
-                        .setUserAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 SARIB-TV-Player/1.0")
+                        .setUserAgent(parsed.userAgent ?: StreamUrlParser.DEFAULT_USER_AGENT)
                         .setAllowCrossProtocolRedirects(true)
-                        .setConnectTimeoutMs(15000)
-                        .setReadTimeoutMs(15000)
+                        .setConnectTimeoutMs(20000)
+                        .setReadTimeoutMs(20000)
                     StreamUrlParser.configureHttpDataSource(httpDataSourceFactory, parsed)
 
                     val mediaSourceFactory = DefaultMediaSourceFactory(httpDataSourceFactory)
@@ -317,10 +323,10 @@ fun PlayerScreen(
                     player.clearMediaItems()
                     val parsed = StreamUrlParser.parse(url)
                     val httpFactory = DefaultHttpDataSource.Factory()
-                        .setUserAgent("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 SARIB-TV-Player/1.0")
+                        .setUserAgent(parsed.userAgent ?: StreamUrlParser.DEFAULT_USER_AGENT)
                         .setAllowCrossProtocolRedirects(true)
-                        .setConnectTimeoutMs(8000)
-                        .setReadTimeoutMs(8000)
+                        .setConnectTimeoutMs(15000)
+                        .setReadTimeoutMs(15000)
                     StreamUrlParser.configureHttpDataSource(httpFactory, parsed)
                     val msFactory = DefaultMediaSourceFactory(httpFactory)
                     val drm = StreamUrlParser.createDrmSessionManager(parsed)
@@ -1054,15 +1060,15 @@ fun PlayerScreen(
                     .background(
                         Brush.verticalGradient(
                             listOf(
-                                Color(0xDD000000),
-                                Color(0x30000000),
-                                Color(0xEE000000)
+                                Color(0xEE040810),
+                                Color(0x20000000),
+                                Color(0xF5040810)
                             )
                         )
                     )
-                    .padding(16.dp)
+                    .padding(14.dp)
             ) {
-                // Top Bar
+                // ================= TOP BAR (شريط العنوان العلوي الأنيق) =================
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1070,7 +1076,7 @@ fun PlayerScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Left group: Back & Title
+                    // Left group: Back Button & Stream Information
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.weight(1f, fill = false)
@@ -1079,9 +1085,10 @@ fun PlayerScreen(
                             onClick = onBackClick,
                             modifier = Modifier
                                 .testTag("player_back_button")
-                                .size(42.dp)
+                                .size(44.dp)
                                 .clip(CircleShape)
-                                .background(Color(0x66000000))
+                                .background(Color(0x77000000))
+                                .border(1.dp, SaribCyanAccent.copy(alpha = 0.35f), CircleShape)
                         ) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -1091,21 +1098,43 @@ fun PlayerScreen(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleMedium.copy(
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                maxLines = 1
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = title,
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                if (isLive) {
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(SaribLiveRed)
+                                            .padding(horizontal = 7.dp, vertical = 2.dp)
+                                    ) {
+                                        Text(
+                                            text = "مباشر LIVE",
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Black,
+                                                fontSize = 10.sp
+                                            )
+                                        )
+                                    }
+                                }
+                            }
                             if (subtitle.isNotEmpty()) {
                                 Text(
                                     text = subtitle,
                                     style = MaterialTheme.typography.bodySmall.copy(
                                         color = SaribTextSecondary
                                     ),
-                                    maxLines = 1
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -1113,182 +1142,23 @@ fun PlayerScreen(
 
                     Spacer(modifier = Modifier.width(12.dp))
 
-                    // Right group: LIVE tag, Server Switcher, Subtitles CC, Quality, Audio, PiP, Screen Rotate, Lock
+                    // Right group: Top Utility Action (قفل الشاشة السريع)
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        if (isLive) {
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(SaribLiveRed)
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = "مباشر LIVE",
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Black
-                                    )
-                                )
-                            }
-                        }
-
-                        // Server Switcher Button (زر مبدل السيرفرات 5 سيرفرات)
-                        IconButton(
-                            onClick = {
-                                showServerDialog = true
-                                showSubtitleDialog = false
-                                showQualityDialog = false
-                                showAudioDialog = false
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(SaribElectricBlue.copy(alpha = 0.4f))
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Dns,
-                                contentDescription = "مبدل السيرفرات",
-                                tint = SaribCyanAccent,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        // Subtitle / Translation Button (زر الترجمة الحقيقية)
-                        IconButton(
-                            onClick = {
-                                showSubtitleDialog = true
-                                showServerDialog = false
-                                showQualityDialog = false
-                                showAudioDialog = false
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(if (selectedSubtitleIndex != 0) SaribCyanAccent.copy(alpha = 0.3f) else Color(0x66000000))
-                                .testTag("subtitles_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ClosedCaption,
-                                contentDescription = "الترجمة",
-                                tint = if (selectedSubtitleIndex != 0) SaribCyanAccent else Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        // Quality Selector Button
-                        IconButton(
-                            onClick = {
-                                showQualityDialog = true
-                                showSubtitleDialog = false
-                                showServerDialog = false
-                                showAudioDialog = false
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(if (selectedQualityIndex != 0) SaribElectricBlue else Color(0x66000000))
-                                .testTag("quality_selector_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.HighQuality,
-                                contentDescription = "تغيير الجودة",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        // Audio Track Selector Button
-                        IconButton(
-                            onClick = {
-                                showAudioDialog = true
-                                showSubtitleDialog = false
-                                showServerDialog = false
-                                showQualityDialog = false
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(if (selectedAudioTrackIndex != 0) SaribElectricBlue else Color(0x66000000))
-                                .testTag("audio_track_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Audiotrack,
-                                contentDescription = "مسارات الصوت",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        // Multi-View (3 Channels) Button
-                        IconButton(
-                            onClick = {
-                                isMultiViewMode = !isMultiViewMode
-                                if (isMultiViewMode) {
-                                    Toast.makeText(context, "تم تفعيل عرض 3 شاشات متعددة (اضغط على أي شاشة لسماع صوتها)", Toast.LENGTH_SHORT).show()
-                                }
-                            },
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(if (isMultiViewMode) SaribCyanAccent else Color(0x66000000))
-                                .testTag("multiview_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Dashboard,
-                                contentDescription = "عرض 3 شاشات متعددة",
-                                tint = if (isMultiViewMode) Color.Black else Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        // Picture-in-Picture Button
-                        IconButton(
-                            onClick = enterPiPMode,
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x66000000))
-                                .testTag("pip_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PictureInPictureAlt,
-                                contentDescription = "صورة في صورة PiP",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        // Screen Orientation Switcher
-                        IconButton(
-                            onClick = toggleScreenOrientation,
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x66000000))
-                                .testTag("rotate_screen_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ScreenRotation,
-                                contentDescription = if (isLandscape) "الوضع العمودي" else "الوضع الأفقي",
-                                tint = SaribCyanAccent,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        // Screen Lock Button
+                        // Screen Lock Button (قفل الشاشة لمنع اللمس بالخطأ)
                         IconButton(
                             onClick = {
                                 isControlsLocked = true
                                 areControlsVisible = false
-                                Toast.makeText(context, "تم قفل الشاشة لمنع اللمس غير المقصود", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, "تم قفل الشاشة لمنع اللمس العرضي", Toast.LENGTH_SHORT).show()
                             },
                             modifier = Modifier
-                                .size(38.dp)
+                                .size(42.dp)
                                 .clip(CircleShape)
                                 .background(Color(0x66000000))
+                                .border(1.dp, Color(0x33FFFFFF), CircleShape)
                                 .testTag("lock_screen_button")
                         ) {
                             Icon(
@@ -1301,89 +1171,195 @@ fun PlayerScreen(
                     }
                 }
 
-                // Center Controls
-                Row(
+                // ================= CENTER CONTROLS (التحكم الأوسط) =================
+                Box(
                     modifier = Modifier.align(Alignment.Center),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(36.dp)
+                    contentAlignment = Alignment.Center
                 ) {
-                    IconButton(
-                        onClick = {
-                            val target = (exoPlayer.currentPosition - 10000).coerceAtLeast(0L)
-                            exoPlayer.seekTo(target)
-                        },
-                        modifier = Modifier
-                            .size(54.dp)
-                            .clip(CircleShape)
-                            .background(Color(0x66000000))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Replay10,
-                            contentDescription = "تأخير 10 ثوان",
-                            tint = Color.White,
-                            modifier = Modifier.size(34.dp)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(76.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(SaribElectricBlue, Color(0xFF0055D4))
+                    if (hasError) {
+                        // Professional Error Card with Retry Action
+                        Surface(
+                            color = Color(0xDD120406),
+                            shape = RoundedCornerShape(18.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SaribLiveRed.copy(alpha = 0.6f)),
+                            modifier = Modifier.padding(16.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = null,
+                                    tint = SaribLiveRed,
+                                    modifier = Modifier.size(40.dp)
                                 )
-                            )
-                            .clickable {
-                                if (isPlaying) {
-                                    exoPlayer.pause()
-                                } else {
-                                    exoPlayer.play()
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "تعذر تشغيل البث من هذا المصدر",
+                                    style = MaterialTheme.typography.titleSmall.copy(
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                                Text(
+                                    text = "يرجى المحاولة مجدداً أو تجربة سيرفر آخر من الأسفل",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = SaribTextSecondary
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(14.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    Button(
+                                        onClick = {
+                                            hasError = false
+                                            playStream(currentActiveUrl)
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = SaribCyanAccent),
+                                        shape = RoundedCornerShape(10.dp)
+                                    ) {
+                                        Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text("إعادة المحاولة", color = Color.Black, fontWeight = FontWeight.Bold)
+                                    }
+                                    if (serverOptions.size > 1) {
+                                        OutlinedButton(
+                                            onClick = {
+                                                val nextIdx = (selectedServerIndex + 1) % serverOptions.size
+                                                selectedServerIndex = nextIdx
+                                                currentActiveUrl = serverOptions[nextIdx].second
+                                                hasError = false
+                                                playStream(currentActiveUrl)
+                                                Toast.makeText(context, "تم التحويل إلى: ${serverOptions[nextIdx].first}", Toast.LENGTH_SHORT).show()
+                                            },
+                                            shape = RoundedCornerShape(10.dp),
+                                            border = androidx.compose.foundation.BorderStroke(1.dp, SaribCyanAccent)
+                                        ) {
+                                            Text("السيرفر التالي", color = SaribCyanAccent, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
                                 }
-                            },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                            contentDescription = if (isPlaying) "إيقاف مؤقت" else "تشغيل",
-                            tint = Color.White,
-                            modifier = Modifier.size(44.dp)
-                        )
-                    }
+                            }
+                        }
+                    } else if (isBuffering) {
+                        // Sleek Buffering Card
+                        Surface(
+                            color = Color(0xB3000000),
+                            shape = RoundedCornerShape(16.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SaribCyanAccent.copy(alpha = 0.3f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                SaribLoadingIndicator(modifier = Modifier.size(24.dp))
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Text(
+                                    text = "جاري تحضير البث المباشر...",
+                                    style = MaterialTheme.typography.bodyMedium.copy(
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                )
+                            }
+                        }
+                    } else {
+                        // Play / Pause / Seek Controls
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(32.dp)
+                        ) {
+                            // Replay 10 Seconds
+                            IconButton(
+                                onClick = {
+                                    val target = (exoPlayer.currentPosition - 10000).coerceAtLeast(0L)
+                                    exoPlayer.seekTo(target)
+                                },
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0x66000000))
+                                    .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Replay10,
+                                    contentDescription = "تأخير 10 ثوان",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
 
-                    IconButton(
-                        onClick = {
-                            val target = (exoPlayer.currentPosition + 10000).coerceAtMost(duration)
-                            exoPlayer.seekTo(target)
-                        },
-                        modifier = Modifier
-                            .size(54.dp)
-                            .clip(CircleShape)
-                            .background(Color(0x66000000))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Forward10,
-                            contentDescription = "تقديم 10 ثوان",
-                            tint = Color.White,
-                            modifier = Modifier.size(34.dp)
-                        )
+                            // Glowing Main Play/Pause Button
+                            Box(
+                                modifier = Modifier
+                                    .size(76.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        Brush.radialGradient(
+                                            listOf(SaribCyanAccent, SaribElectricBlue)
+                                        )
+                                    )
+                                    .border(2.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+                                    .clickable {
+                                        if (isPlaying) {
+                                            exoPlayer.pause()
+                                        } else {
+                                            exoPlayer.play()
+                                        }
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                    contentDescription = if (isPlaying) "إيقاف مؤقت" else "تشغيل",
+                                    tint = Color.Black,
+                                    modifier = Modifier.size(42.dp)
+                                )
+                            }
+
+                            // Forward 10 Seconds
+                            IconButton(
+                                onClick = {
+                                    val target = (exoPlayer.currentPosition + 10000).coerceAtMost(duration)
+                                    exoPlayer.seekTo(target)
+                                },
+                                modifier = Modifier
+                                    .size(52.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0x66000000))
+                                    .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Forward10,
+                                    contentDescription = "تقديم 10 ثوان",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(30.dp)
+                                )
+                            }
+                        }
                     }
                 }
 
-                // Bottom Controls Bar
+                // ================= BOTTOM CONTROLS & ACTION DOCK (الشريط السفلي الاحترافي الجديد) =================
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.BottomCenter)
                 ) {
+                    // 1. Time Slider (للفيديو المسجل) أو حالة البث المباشر (للقنوات التلفزيونية)
                     if (duration > 0) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = formatDuration(currentPosition),
-                                style = MaterialTheme.typography.labelSmall.copy(color = Color.White)
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = SaribCyanAccent,
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Slider(
@@ -1396,7 +1372,7 @@ fun PlayerScreen(
                                 colors = SliderDefaults.colors(
                                     thumbColor = SaribCyanAccent,
                                     activeTrackColor = SaribCyanAccent,
-                                    inactiveTrackColor = Color(0x66FFFFFF)
+                                    inactiveTrackColor = Color(0x55FFFFFF)
                                 ),
                                 modifier = Modifier.weight(1f)
                             )
@@ -1406,46 +1382,192 @@ fun PlayerScreen(
                                 style = MaterialTheme.typography.labelSmall.copy(color = Color.White)
                             )
                         }
+                    } else {
+                        // Live Stream Status Bar
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 3.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(SaribLiveRed)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(
+                                    text = "بث مباشر • ${serverOptions.getOrNull(selectedServerIndex)?.first ?: "سيرفر 1"}",
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        color = SaribCyanAccent,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                )
+                            }
+                            Text(
+                                text = availableQualityOptions.getOrNull(selectedQualityIndex)?.label ?: "تلقائي",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = SaribTextSecondary
+                                )
+                            )
+                        }
                     }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (isLive) "سيرفر البث: ${serverOptions.getOrNull(selectedServerIndex)?.first ?: ""}" else availableQualityOptions.getOrNull(selectedQualityIndex)?.label ?: "تلقائي",
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                color = SaribCyanAccent,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                        IconButton(
-                            onClick = {
-                                resizeMode = when (resizeMode) {
-                                    AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-                                    else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
-                                }
-                                val modeName = when (resizeMode) {
-                                    AspectRatioFrameLayout.RESIZE_MODE_FIT -> "تناسب أصلي (Fit)"
-                                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "تكبير سينمائي (Zoom)"
-                                    else -> "ملء الشاشة بالكامل (Fill)"
-                                }
-                                Toast.makeText(context, modeName, Toast.LENGTH_SHORT).show()
-                            },
+                    // 2. THE NEW BOTTOM ACTION DOCK (لوحة الأيقونات السفلية الاحترافية)
+                    Surface(
+                        color = Color(0xDD070D18),
+                        shape = RoundedCornerShape(20.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SaribCyanAccent.copy(alpha = 0.25f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        LazyRow(
                             modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x66000000))
+                                .fillMaxWidth()
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.AspectRatio,
-                                contentDescription = "نسبة العرض",
-                                tint = Color.White,
-                                modifier = Modifier.size(18.dp)
-                            )
+                            // 1. زر السيرفرات (Server Switcher)
+                            item {
+                                PlayerBottomActionButton(
+                                    icon = Icons.Default.Dns,
+                                    label = "السيرفرات",
+                                    subLabel = serverOptions.getOrNull(selectedServerIndex)?.first?.take(10) ?: "",
+                                    isActive = selectedServerIndex != 0,
+                                    onClick = {
+                                        showServerDialog = true
+                                        showSubtitleDialog = false
+                                        showQualityDialog = false
+                                        showAudioDialog = false
+                                    },
+                                    testTag = "bottom_server_switcher_button"
+                                )
+                            }
+
+                            // 2. زر الجودة (Quality Selector)
+                            item {
+                                PlayerBottomActionButton(
+                                    icon = Icons.Default.HighQuality,
+                                    label = "الجودة",
+                                    subLabel = if (selectedQualityIndex == 0) "تلقائي" else availableQualityOptions.getOrNull(selectedQualityIndex)?.label?.take(7) ?: "",
+                                    isActive = selectedQualityIndex != 0,
+                                    onClick = {
+                                        showQualityDialog = true
+                                        showSubtitleDialog = false
+                                        showServerDialog = false
+                                        showAudioDialog = false
+                                    },
+                                    testTag = "quality_selector_button"
+                                )
+                            }
+
+                            // 3. زر الصوت (Audio Tracks)
+                            item {
+                                PlayerBottomActionButton(
+                                    icon = Icons.Default.Audiotrack,
+                                    label = "الصوت",
+                                    subLabel = if (selectedAudioTrackIndex == 0) "افتراضي" else "مسار ${selectedAudioTrackIndex + 1}",
+                                    isActive = selectedAudioTrackIndex != 0,
+                                    onClick = {
+                                        showAudioDialog = true
+                                        showSubtitleDialog = false
+                                        showServerDialog = false
+                                        showQualityDialog = false
+                                    },
+                                    testTag = "audio_track_button"
+                                )
+                            }
+
+                            // 4. زر الترجمة (Subtitles / CC)
+                            item {
+                                PlayerBottomActionButton(
+                                    icon = Icons.Default.ClosedCaption,
+                                    label = "الترجمة",
+                                    subLabel = if (selectedSubtitleIndex == 0) "معطلة" else "مفعلة",
+                                    isActive = selectedSubtitleIndex != 0,
+                                    onClick = {
+                                        showSubtitleDialog = true
+                                        showServerDialog = false
+                                        showQualityDialog = false
+                                        showAudioDialog = false
+                                    },
+                                    testTag = "subtitles_button"
+                                )
+                            }
+
+                            // 5. زر أبعاد الشاشة (Aspect Ratio: Fit / Zoom / Fill)
+                            item {
+                                val ratioName = when (resizeMode) {
+                                    AspectRatioFrameLayout.RESIZE_MODE_FIT -> "تناسب Fit"
+                                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "تكبير Zoom"
+                                    else -> "ملء Fill"
+                                }
+                                PlayerBottomActionButton(
+                                    icon = Icons.Default.AspectRatio,
+                                    label = "الأبعاد",
+                                    subLabel = when (resizeMode) {
+                                        AspectRatioFrameLayout.RESIZE_MODE_FIT -> "Fit"
+                                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "Zoom"
+                                        else -> "Fill"
+                                    },
+                                    isActive = resizeMode != AspectRatioFrameLayout.RESIZE_MODE_FIT,
+                                    onClick = {
+                                        resizeMode = when (resizeMode) {
+                                            AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                            AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                                            else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                        }
+                                        Toast.makeText(context, ratioName, Toast.LENGTH_SHORT).show()
+                                    },
+                                    testTag = "aspect_ratio_button"
+                                )
+                            }
+
+                            // 6. زر العرض المتعدد 3 شاشات (Multi-View)
+                            item {
+                                PlayerBottomActionButton(
+                                    icon = Icons.Default.Dashboard,
+                                    label = "3 شاشات",
+                                    subLabel = if (isMultiViewMode) "مفعل" else "متعدد",
+                                    isActive = isMultiViewMode,
+                                    onClick = {
+                                        isMultiViewMode = !isMultiViewMode
+                                        if (isMultiViewMode) {
+                                            Toast.makeText(context, "تم تفعيل عرض 3 شاشات متزامنة", Toast.LENGTH_SHORT).show()
+                                        }
+                                    },
+                                    testTag = "multiview_button"
+                                )
+                            }
+
+                            // 7. زر تدوير الشاشة (Orientation Rotate)
+                            item {
+                                PlayerBottomActionButton(
+                                    icon = Icons.Default.ScreenRotation,
+                                    label = "تدوير",
+                                    subLabel = if (isLandscape) "أفقي" else "عمودي",
+                                    isActive = !isLandscape,
+                                    onClick = toggleScreenOrientation,
+                                    testTag = "rotate_screen_button"
+                                )
+                            }
+
+                            // 8. زر نافذة منبثقة (Picture in Picture)
+                            item {
+                                PlayerBottomActionButton(
+                                    icon = Icons.Default.PictureInPictureAlt,
+                                    label = "نافذة PiP",
+                                    subLabel = "مصغرة",
+                                    isActive = false,
+                                    onClick = enterPiPMode,
+                                    testTag = "pip_button"
+                                )
+                            }
                         }
                     }
                 }
@@ -2147,3 +2269,53 @@ private fun formatDuration(millis: Long): String {
         String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
     }
 }
+
+@Composable
+private fun PlayerBottomActionButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    subLabel: String = "",
+    isActive: Boolean = false,
+    onClick: () -> Unit,
+    testTag: String,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(14.dp),
+        color = if (isActive) SaribElectricBlue.copy(alpha = 0.35f) else Color(0x40000000),
+        border = androidx.compose.foundation.BorderStroke(
+            width = 1.dp,
+            color = if (isActive) SaribCyanAccent else Color(0x22FFFFFF)
+        ),
+        modifier = modifier
+            .testTag(testTag)
+            .height(52.dp)
+            .widthIn(min = 68.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (isActive) SaribCyanAccent else Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = if (subLabel.isNotBlank()) subLabel else label,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 10.sp,
+                    fontWeight = if (isActive) FontWeight.Bold else FontWeight.Medium,
+                    color = if (isActive) SaribCyanAccent else Color(0xCCFFFFFF)
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
