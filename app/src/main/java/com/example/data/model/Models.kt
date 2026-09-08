@@ -49,6 +49,7 @@ data class HeroBannerItem(
     val title: String,
     val subtitle: String,
     val backdropUrl: String = "",
+    val posterUrl: String = "",
     val badge: String = "حصري",
     val genreTags: List<String> = listOf("مسلسل", "دراما"),
     val streamUrl: String = "",
@@ -60,7 +61,23 @@ data class HeroBannerItem(
     val server2: String = "",
     val server3: String = "",
     val server4: String = "",
-    val server5: String = ""
+    val server5: String = "",
+    // Match Slider Specific Fields
+    val isMatchSlider: Boolean = false,
+    val homeTeam: String = "",
+    val homeLogoUrl: String = "",
+    val awayTeam: String = "",
+    val awayLogoUrl: String = "",
+    val leagueName: String = "",
+    val leagueLogoUrl: String = "",
+    val matchTime: String = "",
+    val matchDate: String = "",
+    val homeScore: Int = 0,
+    val awayScore: Int = 0,
+    val matchStatus: String = "", // "لم تبدأ", "مباشر", "انتهت"
+    val commentator: String = "",
+    val channelName: String = "",
+    val matchTimestampMs: Long = 0L
 )
 
 fun ChannelItem.getActiveServers(): List<Pair<String, String>> {

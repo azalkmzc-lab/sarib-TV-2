@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SARIB TV - لوحة التحكم السحابية الشاملة</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #070c14; color: #ffffff; padding: 20px 15px; }
+        header { text-align: center; font-size: 26px; font-weight: 900; color: #00d2ff; margin-bottom: 24px; text-shadow: 0 0 16px rgba(0, 210, 255, 0.45); }
+        header span { color: #ffffff; }
+        .admin-section { display: flex; flex-wrap: wrap; gap: 18px; max-width: 1300px; margin: 0 auto 30px auto; }
+        .admin-panel { background-color: #0d1527; padding: 20px; border-radius: 16px; flex: 1; min-width: 320px; border: 1px solid rgba(0, 210, 255, 0.18); box-shadow: 0 6px 24px rgba(0,0,0,0.55); }
+        .admin-panel.full-width { flex: 100%; min-width: 100%; border: 1.5px solid #00d2ff; background: linear-gradient(180deg, #101a33 0%, #0d1527 100%); }
+        .admin-panel.match-slider-panel { border: 1.5px solid #00e5ff; background: linear-gradient(180deg, #0b1e36 0%, #0d1527 100%); }
+        .admin-panel.series-panel { border: 1.5px solid #7c4dff; background: linear-gradient(180deg, #191238 0%, #0d1527 100%); }
+        .admin-panel.vod-panel { border: 1.5px solid #ff4081; background: linear-gradient(180deg, #2b0d1e 0%, #0d1527 100%); }
+        .admin-panel.m3u-panel { border: 1.5px solid #00e676; background: linear-gradient(180deg, #0d271a 0%, #0d1527 100%); }
+        .admin-panel.movies-panel { border: 1.5px solid #e040fb; background: linear-gradient(180deg, #220d2b 0%, #0d1527 100%); }
+        .admin-panel.highlight-panel { border: 1.5px solid #ff9100; background: linear-gradient(180deg, #1f1a10 0%, #0d1527 100%); }
+        .admin-panel h3 { margin-bottom: 14px; font-size: 17px; display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; margin-bottom: 5px; color: #94a3b8; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 11px; border-radius: 10px; border: 1px solid #1f2e4d; background-color: #060a12; color: #fff; font-size: 13px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #00d2ff; box-shadow: 0 0 10px rgba(0, 210, 255, 0.3); }
+        .sub-box { background: rgba(6, 10, 18, 0.65); border: 1px solid #1f2e4d; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+        .sub-box-title { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
+        .servers-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; background: #060a12; padding: 12px; border-radius: 10px; border: 1px solid #1f2e4d; margin-bottom: 12px; }
+        .btn-submit { width: 100%; padding: 12px; background: linear-gradient(135deg, #0077fe, #00d2ff); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+        .btn-submit.btn-cyan { background: linear-gradient(135deg, #0091ea, #00e5ff); }
+        .btn-submit.btn-purple { background: linear-gradient(135deg, #6200ea, #b388ff); }
+        .btn-submit.btn-pink { background: linear-gradient(135deg, #c2185b, #ff4081); }
+        .btn-submit.btn-orange { background: linear-gradient(135deg, #f57c00, #ffb300); }
+        .btn-submit.btn-green { background: linear-gradient(135deg, #00c853, #00e676); }
+        .btn-edit { background-color: #0288d1; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; flex: 1; font-weight: bold; }
+        .btn-delete { background-color: #d32f2f; color: white; border: none; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; flex: 1; font-weight: bold; }
+        .sliders-container { display: flex; gap: 16px; overflow-x: auto; padding: 10px 5px 18px 5px; max-width: 1300px; margin: 0 auto 24px auto; }
+        .slider-card-view { min-width: 290px; max-width: 320px; background-color: #0d1527; border: 1px solid #1f2e4d; border-radius: 14px; overflow: hidden; flex-shrink: 0; position: relative; }
+        .slider-card-view.match-slider-card { border: 1.5px solid #00e5ff; }
+        .slider-card-view img { width: 100%; height: 140px; object-fit: cover; display: block; background: #000; }
+        .slider-badge-view { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.85); color: #00d2ff; border: 1px solid #00d2ff; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; }
+        .slider-card-info { padding: 12px; text-align: center; }
+        .grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; max-width: 1300px; margin: 0 auto 35px auto; }
+        .card-item { background-color: #0d1527; border-radius: 14px; padding: 14px; border: 1px solid #1f2e4d; display: flex; flex-direction: column; }
+        .section-title { max-width: 1300px; margin: 28px auto 14px auto; font-size: 18px; font-weight: bold; color: #00d2ff; border-bottom: 1px solid #1f2e4d; padding-bottom: 8px; }
+        .card-actions { display: flex; gap: 8px; justify-content: center; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <header>⚡ SARIB <span>TV</span> - لوحة التحكم السحابية الشاملة</header>
+
+    <div class="admin-section">
+        <!-- 📡 إعدادات البث وخوادم Xtream -->
+        <div class="admin-panel full-width">
+            <h3 style="color:#00d2ff;">📡 إعدادات السيرفر الرئيسي وسيرفرات Xtream (Path: stream_config)</h3>
+            <div class="sub-box">
+                <div class="sub-box-title" style="color: #00d2ff;">🌐 حساب Xtream الافتراضي العام (Main Account)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                    <div class="form-group"><label>🌐 خادم Xtream الرئيسي:</label><input type="text" id="stream-server-host" placeholder="http://server.club:2082"></div>
+                    <div class="form-group"><label>👤 اسم المستخدم:</label><input type="text" id="stream-username" placeholder="username"></div>
+                    <div class="form-group"><label>🔑 كلمة المرور:</label><input type="text" id="stream-password" placeholder="password"></div>
+                </div>
+            </div>
+
+            <div class="sub-box" style="border-color: rgba(179, 136, 255, 0.4);">
+                <div class="sub-box-title" style="color: #b388ff;">📺 حساب Xtream المخصص للمسلسلات (Series Server)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                    <div class="form-group"><label>🌐 خادم المسلسلات:</label><input type="text" id="stream-series-host" placeholder="http://series-server.com:2082"></div>
+                    <div class="form-group"><label>👤 يوزر المسلسلات:</label><input type="text" id="stream-series-username" placeholder="series_user"></div>
+                    <div class="form-group"><label>🔑 باسورد المسلسلات:</label><input type="text" id="stream-series-password" placeholder="series_pass"></div>
+                </div>
+            </div>
+
+            <div class="sub-box" style="border-color: rgba(255, 128, 171, 0.4);">
+                <div class="sub-box-title" style="color: #ff80ab;">🎬 حساب Xtream المخصص للأفلام (Movies VOD Server)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                    <div class="form-group"><label>🌐 خادم الأفلام:</label><input type="text" id="stream-vod-host" placeholder="http://vod-server.com:2082"></div>
+                    <div class="form-group"><label>👤 يوزر الأفلام:</label><input type="text" id="stream-vod-username" placeholder="vod_user"></div>
+                    <div class="form-group"><label>🔑 باسورد الأفلام:</label><input type="text" id="stream-vod-password" placeholder="vod_pass"></div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <div class="form-group"><label>⚽ رابط API جدول المباريات:</label><input type="text" id="stream-matches-url" placeholder="https://.../matches&day="></div>
+                <div class="form-group"><label>✈️ رابط قناة التليجرام:</label><input type="text" id="stream-telegram-link" placeholder="https://t.me/sarib_tv"></div>
+                <div class="form-group"><label>📢 شريط التنبيهات أعلى التطبيق:</label><input type="text" id="stream-announcement" placeholder="تنبيه عام للمستخدمين..."></div>
+                <div class="form-group" style="grid-column: 1 / -1;"><label style="color:#00e676;">📺 رابط ملف M3U / M3U8 الرئيسي للقنوات (stream_config/m3u_playlist_url):</label><input type="text" id="stream-m3u-url" placeholder="https://.../channels.m3u"></div>
+                <div class="form-group"><label style="color:#e040fb;">🎬 رابط API الأفلام السحابي (stream_config/movies_api_url):</label><input type="text" id="stream-movies-api-url" placeholder="https://.../movies.php"></div>
+                <div class="form-group"><label style="color:#ff4081;">🍿 رابط ملف M3U للأفلام الرئيسي (stream_config/m3u_movies_url):</label><input type="text" id="stream-m3u-movies-url" placeholder="https://.../movies.m3u"></div>
+            </div>
+            <button class="btn-submit" onclick="saveStreamConfig()">حفظ وتحديث بيانات الخوادم السحابية</button>
+        </div>
+
+        <!-- ⚽ قسم سلايدر المباريات المباشرة -->
+        <div class="admin-panel full-width match-slider-panel">
+            <h3 id="match-slider-panel-title" style="color:#00e5ff;">⚽ إضافة وإدارة سلايدر المباريات المباشر بالواجهة (Path: match_sliders)</h3>
+            <input type="hidden" id="match-slider-id">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                <div class="form-group"><label>الفريق المضيف (Home Team) *:</label><input type="text" id="ms-home-team" placeholder="ريال مدريد"></div>
+                <div class="form-group"><label>شعار الفريق المضيف:</label><input type="text" id="ms-home-logo" placeholder="https://.../team1.png"></div>
+                <div class="form-group"><label>الفريق الضيف (Away Team) *:</label><input type="text" id="ms-away-team" placeholder="برشلونة"></div>
+                <div class="form-group"><label>شعار الفريق الضيف:</label><input type="text" id="ms-away-logo" placeholder="https://.../team2.png"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                <div class="form-group"><label>اسم البطولة / الدوري:</label><input type="text" id="ms-league-name" placeholder="دوري أبطال أوروبا"></div>
+                <div class="form-group"><label>شعار البطولة:</label><input type="text" id="ms-league-logo" placeholder="https://.../league.png"></div>
+                <div class="form-group"><label>توقيت المباراة:</label><input type="text" id="ms-match-time" placeholder="10:00 م"></div>
+                <div class="form-group"><label>تاريخ المباراة:</label><input type="text" id="ms-match-date" placeholder="2026-09-08"></div>
+                <div class="form-group">
+                    <label>حالة المباراة:</label>
+                    <select id="ms-match-status">
+                        <option value="لم تبدأ بعد">لم تبدأ بعد (العد التنازلي)</option>
+                        <option value="مباشر الآن">🔴 مباشر الآن (Live)</option>
+                        <option value="انتهت المباراة">انتهت المباراة</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;">
+                <div class="form-group"><label>أهداف المضيف:</label><input type="number" id="ms-home-score" value="0" min="0"></div>
+                <div class="form-group"><label>أهداف الضيف:</label><input type="number" id="ms-away-score" value="0" min="0"></div>
+                <div class="form-group"><label>القناة الناقلة:</label><input type="text" id="ms-channel-name" placeholder="beIN Sports 1"></div>
+                <div class="form-group"><label>المعلق:</label><input type="text" id="ms-commentator" placeholder="عصام الشوالي"></div>
+                <div class="form-group"><label>شارة السلايدر:</label><input type="text" id="ms-badge" placeholder="قمة الجولة"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px;">
+                <div class="form-group"><label>رابط خلفية الملعب (Backdrop URL):</label><input type="text" id="ms-backdrop-url" placeholder="https://.../stadium.jpg"></div>
+                <div class="form-group"><label>رابط بوستر المباراة (Poster URL):</label><input type="text" id="ms-poster-url" placeholder="https://.../poster.jpg"></div>
+            </div>
+            <label style="font-size:12px; color:#00e5ff; font-weight:bold; margin-bottom:6px; display:block;">📡 خوادم بث المباراة الخمسة:</label>
+            <div class="servers-grid">
+                <input type="text" id="ms-server1" placeholder="🔴 سيرفر 1 (الرئيسي m3u8)">
+                <input type="text" id="ms-server2" placeholder="🟠 سيرفر 2 (FHD)">
+                <input type="text" id="ms-server3" placeholder="🟡 سيرفر 3 (سريع)">
+                <input type="text" id="ms-server4" placeholder="🟢 سيرفر 4 (توفير بيانات)">
+                <input type="text" id="ms-server5" placeholder="🔵 سيرفر 5 (خارجي)">
+            </div>
+            <button class="btn-submit btn-cyan" id="btn-save-match-slider" onclick="saveMatchSlider()">نشر سلايدر المباراة في واجهة التطبيق فورياً</button>
+            <button class="btn-delete" id="btn-cancel-match-slider" style="display:none; width:100%; margin-top:6px;" onclick="resetMatchSliderForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- 📺 حسابات أقسام المسلسلات -->
+        <div class="admin-panel full-width series-panel">
+            <h3 id="series-cat-panel-title" style="color:#b388ff;">📺 تخصيص حساب Xtream لكل قسم مسلسلات (Path: series_categories_accounts)</h3>
+            <input type="hidden" id="series-cat-id-key">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                <div class="form-group"><label>معرّف القسم أو اسمه *:</label><input type="text" id="series-cat-id" placeholder="15 أو مسلسلات تركية"></div>
+                <div class="form-group"><label>اسم الحساب:</label><input type="text" id="series-cat-name" placeholder="سيرفر المسلسلات VIP"></div>
+                <div class="form-group"><label>رابط الخادم *:</label><input type="text" id="series-cat-host" placeholder="http://server.com:2082"></div>
+                <div class="form-group"><label>المستخدم *:</label><input type="text" id="series-cat-user" placeholder="username"></div>
+                <div class="form-group"><label>كلمة المرور *:</label><input type="text" id="series-cat-pass" placeholder="password"></div>
+            </div>
+            <button class="btn-submit btn-purple" id="btn-save-series-cat" onclick="saveSeriesCategoryAccount()">حفظ وربط حساب القسم في المسلسلات</button>
+            <button class="btn-delete" id="btn-cancel-series-cat" style="display:none; width:100%; margin-top:6px;" onclick="resetSeriesCategoryForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- 🎬 حسابات أقسام الأفلام -->
+        <div class="admin-panel full-width vod-panel">
+            <h3 id="vod-cat-panel-title" style="color:#ff80ab;">🎬 تخصيص حساب Xtream لكل قسم أفلام (Path: vod_categories_accounts)</h3>
+            <input type="hidden" id="vod-cat-id-key">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                <div class="form-group"><label>معرّف القسم أو اسمه *:</label><input type="text" id="vod-cat-id" placeholder="22 أو أفلام 4K"></div>
+                <div class="form-group"><label>اسم الحساب:</label><input type="text" id="vod-cat-name" placeholder="سيرفر سينما VIP"></div>
+                <div class="form-group"><label>رابط الخادم *:</label><input type="text" id="vod-cat-host" placeholder="http://vod.com:2082"></div>
+                <div class="form-group"><label>المستخدم *:</label><input type="text" id="vod-cat-user" placeholder="username"></div>
+                <div class="form-group"><label>كلمة المرور *:</label><input type="text" id="vod-cat-pass" placeholder="password"></div>
+            </div>
+            <button class="btn-submit btn-pink" id="btn-save-vod-cat" onclick="saveVodCategoryAccount()">حفظ وربط حساب القسم في الأفلام</button>
+            <button class="btn-delete" id="btn-cancel-vod-cat" style="display:none; width:100%; margin-top:6px;" onclick="resetVodCategoryForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- 📋 باقات M3U للقنوات -->
+        <div class="admin-panel full-width m3u-panel">
+            <h3 id="m3u-panel-title" style="color:#00e676;">📋 إدارة وسحب باقات M3U للقنوات (Path: m3u_playlists)</h3>
+            <input type="hidden" id="m3u-id">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <div class="form-group"><label>اسم باقة القنوات *:</label><input type="text" id="m3u-title" placeholder="باقة beIN & SSC"></div>
+                <div class="form-group"><label>رابط ملف M3U أو بث M3U8 *:</label><input type="text" id="m3u-url" placeholder="https://.../channels.m3u"></div>
+                <div class="form-group">
+                    <label>حالة الباقة:</label>
+                    <select id="m3u-status"><option value="true">✅ مفعلة وتظهر فوراً</option><option value="false">❌ معطلة</option></select>
+                </div>
+            </div>
+            <button class="btn-submit btn-green" id="btn-save-m3u" onclick="saveM3uPlaylist()">حفظ باقة M3U للقنوات</button>
+            <button class="btn-delete" id="btn-cancel-m3u" style="display:none; width:100%; margin-top:6px;" onclick="resetM3uForm()">إلغاء</button>
+        </div>
+
+        <!-- 🍿 باقات M3U للأفلام -->
+        <div class="admin-panel full-width" style="border-color:#ff4081; background:linear-gradient(180deg, #260c1d 0%, #0d1527 100%);">
+            <h3 id="m3u-movies-panel-title" style="color:#ff4081;">🍿 باقات M3U للأفلام (Path: m3u_movies_playlists)</h3>
+            <input type="hidden" id="m3u-movies-id">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <div class="form-group"><label>اسم باقة الأفلام *:</label><input type="text" id="m3u-movies-title" placeholder="أفلام نتفلكس 2024"></div>
+                <div class="form-group"><label>رابط ملف M3U للأفلام *:</label><input type="text" id="m3u-movies-url" placeholder="https://.../movies.m3u"></div>
+                <div class="form-group">
+                    <label>حالة الباقة:</label>
+                    <select id="m3u-movies-status"><option value="true">✅ مفعلة</option><option value="false">❌ معطلة</option></select>
+                </div>
+            </div>
+            <button class="btn-submit btn-pink" id="btn-save-m3u-movies" onclick="saveM3uMoviesPlaylist()">حفظ باقة M3U للأفلام</button>
+            <button class="btn-delete" id="btn-cancel-m3u-movies" style="display:none; width:100%; margin-top:6px;" onclick="resetM3uMoviesForm()">إلغاء</button>
+        </div>
+
+        <!-- 🎬 إضافة الأفلام المباشرة -->
+        <div class="admin-panel full-width movies-panel">
+            <h3 id="movie-panel-title" style="color:#e040fb;">🎬 إضافة الأفلام السينمائية المباشرة (Path: movies)</h3>
+            <input type="hidden" id="movie-id">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px;">
+                <div class="form-group"><label>اسم الفيلم *:</label><input type="text" id="movie-title" placeholder="أوبنهايمر"></div>
+                <div class="form-group"><label>النوع / التصنيف:</label><input type="text" id="movie-genre" placeholder="أكشن • دراما"></div>
+                <div class="form-group"><label>سنة الإنتاج:</label><input type="text" id="movie-year" placeholder="2024"></div>
+                <div class="form-group"><label>التقييم:</label><input type="text" id="movie-rating" placeholder="8.9"></div>
+                <div class="form-group"><label>رابط البوستر *:</label><input type="text" id="movie-poster" placeholder="https://.../poster.jpg"></div>
+                <div class="form-group"><label>الخلفية العريضة:</label><input type="text" id="movie-backdrop" placeholder="https://.../backdrop.jpg"></div>
+                <div class="form-group"><label>المدة:</label><input type="text" id="movie-duration" placeholder="125 دقيقة"></div>
+                <div class="form-group">
+                    <label>قائمة التوب مميز (Top 10):</label>
+                    <select id="movie-is-top"><option value="false">عادي</option><option value="true">⭐ مميز TOP</option></select>
+                </div>
+            </div>
+            <div class="form-group"><label>قصة الفيلم:</label><textarea id="movie-story" rows="2" placeholder="نبذة عن قصة الفيلم..."></textarea></div>
+            <div class="servers-grid">
+                <input type="text" id="movie-server1" placeholder="سيرفر 1 (رئيسي m3u8/mp4)">
+                <input type="text" id="movie-server2" placeholder="سيرفر 2 (احتياطي)">
+                <input type="text" id="movie-server3" placeholder="سيرفر 3 (متوسط)">
+            </div>
+            <button class="btn-submit" style="background: linear-gradient(135deg, #7b1fa2, #e040fb);" id="btn-save-movie" onclick="saveMovie()">حفظ الفيلم ونشره بالتطبيق</button>
+            <button class="btn-delete" id="btn-cancel-movie" style="display:none; width:100%; margin-top:6px;" onclick="resetMovieForm()">إلغاء</button>
+        </div>
+
+        <!-- ⚡ إرسال الإشعارات في الخلفية -->
+        <div class="admin-panel highlight-panel">
+            <h3 style="color:#ffb300;">⚡ إرسال إشعارات فورية بالخلفية (Path: broadcast_notifications)</h3>
+            <div class="form-group">
+                <label>نوع الإشعار:</label>
+                <select id="bg-notif-type">
+                    <option value="MATCH_ALERT">⚽ تنبيه مباراة مباشرة</option>
+                    <option value="GOAL_ALERT">🥅 هدف جديد لمباراة</option>
+                    <option value="CHANNEL_UPDATE">📺 تحديث قنوات</option>
+                    <option value="SYSTEM_ALERT">📢 إشعار عام</option>
+                </select>
+            </div>
+            <div class="form-group"><label>الفريق المعني (اختياري):</label><input type="text" id="bg-notif-team" placeholder="ريال مدريد"></div>
+            <div class="form-group"><label>عنوان الإشعار *:</label><input type="text" id="bg-notif-title" placeholder="انطلاق الكلاسيكو الآن!"></div>
+            <div class="form-group"><label>نص الإشعار *:</label><textarea id="bg-notif-body" rows="2" placeholder="اضغط هنا للمشاهدة فوراً..."></textarea></div>
+            <div class="form-group"><label>رابط البث عند الضغط:</label><input type="text" id="bg-notif-url" placeholder="http://... رابط القناة"></div>
+            <button class="btn-submit btn-orange" onclick="sendBroadcastPushNotification()">🚀 إرسال الإشعار لجميع الأجهزة</button>
+        </div>
+
+        <!-- 🎞️ السلايدرات العامة -->
+        <div class="admin-panel">
+            <h3 id="slider-panel-title" style="color:#00d2ff;">🎞️ إدارة السلايدرات العامة (Path: sliders)</h3>
+            <input type="hidden" id="slider-id">
+            <div class="form-group"><label>عنوان السلايدر *:</label><input type="text" id="slider-title" placeholder="فيلم الملحمة الجديد"></div>
+            <div class="form-group"><label>الوصف:</label><input type="text" id="slider-subtitle" placeholder="أكشن • متوفر الآن"></div>
+            <div class="form-group"><label>الشارة:</label><input type="text" id="slider-badge" placeholder="جديد NEW"></div>
+            <div class="form-group">
+                <label>النوع:</label>
+                <select id="slider-type">
+                    <option value="normal">عادي / مسلسل</option>
+                    <option value="movie">فيلم سينمائي</option>
+                    <option value="live">بث مباشر</option>
+                </select>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>الخلفية العريضة (Backdrop) *:</label><input type="text" id="slider-image" placeholder="https://.../backdrop.jpg"></div>
+                <div class="form-group"><label>البوستر الطولي (Poster):</label><input type="text" id="slider-poster" placeholder="https://.../poster.jpg"></div>
+            </div>
+            <div class="servers-grid">
+                <input type="text" id="slider-server1" placeholder="سيرفر 1">
+                <input type="text" id="slider-server2" placeholder="سيرفر 2">
+                <input type="text" id="slider-server3" placeholder="سيرفر 3">
+                <input type="text" id="slider-server4" placeholder="سيرفر 4">
+                <input type="text" id="slider-server5" placeholder="سيرفر 5">
+            </div>
+            <button class="btn-submit" id="btn-save-slider" onclick="saveSlider()">نشر السلايدر</button>
+            <button class="btn-delete" id="btn-cancel-slider" style="display:none; width:100%; margin-top:6px;" onclick="resetSliderForm()">إلغاء</button>
+        </div>
+
+        <!-- ⚽ جدول المباريات -->
+        <div class="admin-panel">
+            <h3 id="match-panel-title" style="color:#00d2ff;">⚽ جدول المباريات (Path: matches)</h3>
+            <input type="hidden" id="match-id">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>الفريق 1 *:</label><input type="text" id="team1-name" placeholder="ريال مدريد"></div>
+                <div class="form-group"><label>شعار الفريق 1:</label><input type="text" id="team1-logo" placeholder="https://..."></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>الفريق 2 *:</label><input type="text" id="team2-name" placeholder="برشلونة"></div>
+                <div class="form-group"><label>شعار الفريق 2:</label><input type="text" id="team2-logo" placeholder="https://..."></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-group"><label>التوقيت:</label><input type="text" id="match-time" placeholder="22:00 م"></div>
+                <div class="form-group"><label>التاريخ:</label><input type="text" id="match-date" placeholder="2026-09-08"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                <div class="form-group"><label>البطولة:</label><input type="text" id="match-league" placeholder="دوري الأبطال"></div>
+                <div class="form-group"><label>المعلق:</label><input type="text" id="match-commentator" placeholder="عصام الشوالي"></div>
+                <div class="form-group"><label>الملعب:</label><input type="text" id="match-stadium" placeholder="سانتياغو برنابيو"></div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;">
+                <div class="form-group">
+                    <label>الحالة:</label>
+                    <select id="match-status">
+                        <option value="لم تبدأ بعد">لم تبدأ بعد</option>
+                        <option value="جارية الآن">جارية الآن (مباشر)</option>
+                        <option value="انتهت">انتهت</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>أهداف 1:</label><input type="number" id="match-score1" value="0"></div>
+                <div class="form-group"><label>أهداف 2:</label><input type="number" id="match-score2" value="0"></div>
+            </div>
+            <div class="servers-grid">
+                <input type="text" id="match-server1" placeholder="سيرفر 1">
+                <input type="text" id="match-server2" placeholder="سيرفر 2">
+                <input type="text" id="match-server3" placeholder="سيرفر 3">
+                <input type="text" id="match-server4" placeholder="سيرفر 4">
+                <input type="text" id="match-server5" placeholder="سيرفر 5">
+            </div>
+            <button class="btn-submit" id="btn-save-match" onclick="saveMatch()">حفظ المباراة</button>
+            <button class="btn-delete" id="btn-cancel-match" style="display:none; width:100%; margin-top:6px;" onclick="resetMatchForm()">إلغاء</button>
+        </div>
+
+        <!-- 📺 إضافة قناة منفردة -->
+        <div class="admin-panel">
+            <h3 style="color:#00d2ff;">📺 إضافة قناة فردية (Path: channels)</h3>
+            <div class="form-group"><label>اسم القناة *:</label><input type="text" id="channel-name" placeholder="beIN Sports 1 Premium"></div>
+            <div class="form-group"><label>شعار القناة:</label><input type="text" id="channel-logo" placeholder="https://.../bein1.png"></div>
+            <div class="servers-grid">
+                <input type="text" id="channel-server1" placeholder="سيرفر 1">
+                <input type="text" id="channel-server2" placeholder="سيرفر 2">
+                <input type="text" id="channel-server3" placeholder="سيرفر 3">
+                <input type="text" id="channel-server4" placeholder="سيرفر 4">
+                <input type="text" id="channel-server5" placeholder="سيرفر 5">
+            </div>
+            <button class="btn-submit" onclick="saveChannel()">حفظ القناة</button>
+        </div>
+
+        <!-- 💬 الرسالة المنبثقة -->
+        <div class="admin-panel">
+            <h3 style="color:#00d2ff;">💬 الرسالة المنبثقة (Path: popup)</h3>
+            <div class="form-group">
+                <label>الحالة:</label>
+                <select id="popup-enabled"><option value="false">معطلة</option><option value="true">مفعلة وتظهر للمستخدمين</option></select>
+            </div>
+            <div class="form-group"><label>عنوان الرسالة:</label><input type="text" id="popup-title" placeholder="أهلاً بكم في تطبيق SARIB TV"></div>
+            <div class="form-group"><label>نص الرسالة:</label><textarea id="popup-message" rows="2" placeholder="استمتع بأحدث المباريات والقنوات..."></textarea></div>
+            <div class="form-group"><label>رابط الزر:</label><input type="text" id="popup-button-url" placeholder="https://t.me/sarib_tv"></div>
+            <button class="btn-submit" onclick="savePopup()">حفظ الرسالة المنبثقة</button>
+        </div>
+    </div>
+
+    <!-- المعاينات المباشرة -->
+    <div class="section-title">⚽ سلايدرات المباريات الحالية (match_sliders):</div>
+    <div class="sliders-container" id="match-sliders-container"></div>
+
+    <div class="section-title">🎞️ السلايدرات العامة الحالية (sliders):</div>
+    <div class="sliders-container" id="sliders"></div>
+
+    <div class="section-title">📺 حسابات إكستريم لأقسام المسلسلات (series_categories_accounts):</div>
+    <div class="grid-view" id="series-categories-accounts-container"></div>
+
+    <div class="section-title">🎬 حسابات إكستريم لأقسام الأفلام (vod_categories_accounts):</div>
+    <div class="grid-view" id="vod-categories-accounts-container"></div>
+
+    <div class="section-title">📋 باقات M3U للقنوات (m3u_playlists):</div>
+    <div class="grid-view" id="m3u-playlists-container"></div>
+
+    <div class="section-title">🍿 باقات M3U للأفلام (m3u_movies_playlists):</div>
+    <div class="grid-view" id="m3u-movies-playlists-container"></div>
+
+    <div class="section-title">🎬 الأفلام السينمائية المباشرة (movies):</div>
+    <div class="grid-view" id="movies-container"></div>
+
+    <div class="section-title">⚡ سجل الإشعارات الفورية (broadcast_notifications):</div>
+    <div class="grid-view" id="broadcast-notifications-container"></div>
+
+    <div class="section-title">⚽ جدول المباريات الحالي (matches):</div>
+    <div class="grid-view" id="matches"></div>
+
+    <div class="section-title">📺 القنوات الفردية الحالية (channels):</div>
+    <div class="grid-view" id="channels"></div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://sarib-tv-default-rtdb.firebaseio.com" };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        const streamConfigRef = db.ref('stream_config');
+        const matchSlidersRef = db.ref('match_sliders');
+        const slidersRef = db.ref('sliders');
+        const seriesCatAccountsRef = db.ref('series_categories_accounts');
+        const vodCatAccountsRef = db.ref('vod_categories_accounts');
+        const m3uPlaylistsRef = db.ref('m3u_playlists');
+        const m3uMoviesPlaylistsRef = db.ref('m3u_movies_playlists');
+        const moviesRef = db.ref('movies');
+        const broadcastNotifsRef = db.ref('broadcast_notifications');
+        const matchesRef = db.ref('matches');
+        const channelsRef = db.ref('channels');
+        const popupRef = db.ref('popup');
+
+        function escapeHtml(t) {
+            if (!t) return '';
+            return t.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        // 1. إعدادات البث
+        function saveStreamConfig() {
+            const data = {
+                server_host: document.getElementById('stream-server-host').value.trim(),
+                username: document.getElementById('stream-username').value.trim(),
+                password: document.getElementById('stream-password').value.trim(),
+                series_server_host: document.getElementById('stream-series-host').value.trim(),
+                series_username: document.getElementById('stream-series-username').value.trim(),
+                series_password: document.getElementById('stream-series-password').value.trim(),
+                vod_server_host: document.getElementById('stream-vod-host').value.trim(),
+                vod_username: document.getElementById('stream-vod-username').value.trim(),
+                vod_password: document.getElementById('stream-vod-password').value.trim(),
+                matches_url: document.getElementById('stream-matches-url').value.trim(),
+                telegram_link: document.getElementById('stream-telegram-link').value.trim(),
+                announcement: document.getElementById('stream-announcement').value.trim(),
+                m3u_playlist_url: document.getElementById('stream-m3u-url').value.trim(),
+                movies_api_url: document.getElementById('stream-movies-api-url').value.trim(),
+                m3u_movies_url: document.getElementById('stream-m3u-movies-url').value.trim(),
+                updatedAt: Date.now()
+            };
+            streamConfigRef.update(data).then(() => alert('✅ تم حفظ الإعدادات بنجاح!')).catch(e => alert(e.message));
+        }
+
+        streamConfigRef.on('value', snap => {
+            const d = snap.val() || {};
+            document.getElementById('stream-server-host').value = d.server_host || d.serverHost || '';
+            document.getElementById('stream-username').value = d.username || d.user || '';
+            document.getElementById('stream-password').value = d.password || d.pass || '';
+            document.getElementById('stream-series-host').value = d.series_server_host || d.seriesServerHost || '';
+            document.getElementById('stream-series-username').value = d.series_username || d.seriesUsername || '';
+            document.getElementById('stream-series-password').value = d.series_password || d.seriesPassword || '';
+            document.getElementById('stream-vod-host').value = d.vod_server_host || d.vodServerHost || '';
+            document.getElementById('stream-vod-username').value = d.vod_username || d.vodUsername || '';
+            document.getElementById('stream-vod-password').value = d.vod_password || d.vodPassword || '';
+            document.getElementById('stream-matches-url').value = d.matches_url || d.matchesUrl || '';
+            document.getElementById('stream-telegram-link').value = d.telegram_link || d.telegramLink || '';
+            document.getElementById('stream-announcement').value = d.announcement || '';
+            document.getElementById('stream-m3u-url').value = d.m3u_playlist_url || d.m3uPlaylistUrl || '';
+            document.getElementById('stream-movies-api-url').value = d.movies_api_url || d.moviesApiUrl || '';
+            document.getElementById('stream-m3u-movies-url').value = d.m3u_movies_url || d.m3uMoviesUrl || '';
+        });
+
+        // 2. سلايدر المباريات المباشرة
+        function saveMatchSlider() {
+            const id = document.getElementById('match-slider-id').value;
+            const hTeam = document.getElementById('ms-home-team').value.trim();
+            const aTeam = document.getElementById('ms-away-team').value.trim();
+            if (!hTeam || !aTeam) return alert('يرجى كتابة أسماء الفريقين');
+
+            const s1 = document.getElementById('ms-server1').value.trim();
+            const s2 = document.getElementById('ms-server2').value.trim();
+            const s3 = document.getElementById('ms-server3').value.trim();
+            const s4 = document.getElementById('ms-server4').value.trim();
+            const s5 = document.getElementById('ms-server5').value.trim();
+            const status = document.getElementById('ms-match-status').value;
+            const league = document.getElementById('ms-league-name').value.trim() || 'مباراة اليوم';
+            const time = document.getElementById('ms-match-time').value.trim();
+            const bDrop = document.getElementById('ms-backdrop-url').value.trim();
+            const poster = document.getElementById('ms-poster-url').value.trim() || bDrop;
+
+            const payload = {
+                title: `${hTeam} × ${aTeam}`,
+                subtitle: `${league} • ${time}`,
+                badge: document.getElementById('ms-badge').value.trim() || 'مباراة مباشرة',
+                type: 'match',
+                isMatchSlider: true,
+                homeTeam: hTeam,
+                homeLogoUrl: document.getElementById('ms-home-logo').value.trim(),
+                awayTeam: aTeam,
+                awayLogoUrl: document.getElementById('ms-away-logo').value.trim(),
+                leagueName: league,
+                leagueLogoUrl: document.getElementById('ms-league-logo').value.trim(),
+                matchTime: time,
+                matchDate: document.getElementById('ms-match-date').value.trim() || new Date().toISOString().split('T')[0],
+                matchStatus: status,
+                homeScore: parseInt(document.getElementById('ms-home-score').value) || 0,
+                awayScore: parseInt(document.getElementById('ms-away-score').value) || 0,
+                channelName: document.getElementById('ms-channel-name').value.trim(),
+                commentator: document.getElementById('ms-commentator').value.trim(),
+                backdropUrl: bDrop,
+                posterUrl: poster,
+                image: bDrop || poster,
+                server1: s1, server2: s2, server3: s3, server4: s4, server5: s5,
+                streamUrl: s1 || s2 || s3 || s4 || s5,
+                isLive: status === 'مباشر الآن',
+                isActive: true,
+                updatedAt: Date.now()
+            };
+
+            const ref = id ? matchSlidersRef.child(id).update(payload) : matchSlidersRef.push(payload);
+            ref.then(() => { alert('✅ تم نشر سلايدر المباراة بنجاح!'); resetMatchSliderForm(); }).catch(e => alert(e.message));
+        }
+
+        function resetMatchSliderForm() {
+            document.getElementById('match-slider-id').value = '';
+            document.getElementById('ms-home-team').value = '';
+            document.getElementById('ms-home-logo').value = '';
+            document.getElementById('ms-away-team').value = '';
+            document.getElementById('ms-away-logo').value = '';
+            document.getElementById('ms-league-name').value = '';
+            document.getElementById('ms-league-logo').value = '';
+            document.getElementById('ms-match-time').value = '';
+            document.getElementById('ms-match-date').value = '';
+            document.getElementById('ms-home-score').value = '0';
+            document.getElementById('ms-away-score').value = '0';
+            document.getElementById('ms-channel-name').value = '';
+            document.getElementById('ms-commentator').value = '';
+            document.getElementById('ms-badge').value = '';
+            document.getElementById('ms-backdrop-url').value = '';
+            document.getElementById('ms-poster-url').value = '';
+            document.getElementById('ms-server1').value = '';
+            document.getElementById('ms-server2').value = '';
+            document.getElementById('ms-server3').value = '';
+            document.getElementById('ms-server4').value = '';
+            document.getElementById('ms-server5').value = '';
+            document.getElementById('match-slider-panel-title').innerText = '⚽ إضافة وإدارة سلايدر المباريات المباشر بالواجهة (Path: match_sliders)';
+            document.getElementById('btn-save-match-slider').innerText = 'نشر سلايدر المباراة في واجهة التطبيق فورياً';
+            document.getElementById('btn-cancel-match-slider').style.display = 'none';
+        }
+
+        function editMatchSlider(k, s) {
+            document.getElementById('match-slider-id').value = k;
+            document.getElementById('ms-home-team').value = s.homeTeam || '';
+            document.getElementById('ms-home-logo').value = s.homeLogoUrl || '';
+            document.getElementById('ms-away-team').value = s.awayTeam || '';
+            document.getElementById('ms-away-logo').value = s.awayLogoUrl || '';
+            document.getElementById('ms-league-name').value = s.leagueName || '';
+            document.getElementById('ms-league-logo').value = s.leagueLogoUrl || '';
+            document.getElementById('ms-match-time').value = s.matchTime || '';
+            document.getElementById('ms-match-date').value = s.matchDate || '';
+            document.getElementById('ms-match-status').value = s.matchStatus || 'لم تبدأ بعد';
+            document.getElementById('ms-home-score').value = s.homeScore || 0;
+            document.getElementById('ms-away-score').value = s.awayScore || 0;
+            document.getElementById('ms-channel-name').value = s.channelName || '';
+            document.getElementById('ms-commentator').value = s.commentator || '';
+            document.getElementById('ms-badge').value = s.badge || '';
+            document.getElementById('ms-backdrop-url').value = s.backdropUrl || s.image || '';
+            document.getElementById('ms-poster-url').value = s.posterUrl || '';
+            document.getElementById('ms-server1').value = s.server1 || '';
+            document.getElementById('ms-server2').value = s.server2 || '';
+            document.getElementById('ms-server3').value = s.server3 || '';
+            document.getElementById('ms-server4').value = s.server4 || '';
+            document.getElementById('ms-server5').value = s.server5 || '';
+            document.getElementById('match-slider-panel-title').innerText = 'تعديل سلايدر المباراة';
+            document.getElementById('btn-save-match-slider').innerText = 'تحديث سلايدر المباراة';
+            document.getElementById('btn-cancel-match-slider').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        matchSlidersRef.on('value', snap => {
+            const el = document.getElementById('match-sliders-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px;">لا توجد سلايدرات مباريات مضافة حالياً.</div>';
+            Object.keys(data).forEach(k => {
+                const s = data[k];
+                const card = document.createElement('div');
+                card.className = 'slider-card-view match-slider-card';
+                card.innerHTML = `
+                    <span class="slider-badge-view">${escapeHtml(s.badge || s.leagueName || 'مباراة')}</span>
+                    <img src="${escapeHtml(s.backdropUrl || s.image || 'https://via.placeholder.com/320x140?text=Match')}" onerror="this.src='https://via.placeholder.com/320x140?text=Match'">
+                    <div class="slider-card-info">
+                        <div style="display:flex; justify-content:space-around; align-items:center; margin-bottom:6px; font-weight:bold;">
+                            <div>${escapeHtml(s.homeTeam || '')}</div>
+                            <div style="color:#00e5ff; font-size:16px;">${s.homeScore || 0} - ${s.awayScore || 0}</div>
+                            <div>${escapeHtml(s.awayTeam || '')}</div>
+                        </div>
+                        <div style="font-size:11px; color:#94a3b8;">🏆 ${escapeHtml(s.leagueName || '')} • ⏱️ ${escapeHtml(s.matchTime || '')}</div>
+                        <div class="card-actions">
+                            <button class="btn-edit" onclick='editMatchSlider("${k}", ${JSON.stringify(s).replace(/'/g, "&apos;")})'>تعديل</button>
+                            <button class="btn-delete" onclick='matchSlidersRef.child("${k}").remove()'>حذف</button>
+                        </div>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 3. حسابات أقسام المسلسلات
+        function saveSeriesCategoryAccount() {
+            const k = document.getElementById('series-cat-id-key').value;
+            const catId = document.getElementById('series-cat-id').value.trim();
+            const host = document.getElementById('series-cat-host').value.trim();
+            const user = document.getElementById('series-cat-user').value.trim();
+            const pass = document.getElementById('series-cat-pass').value.trim();
+            if (!catId || !host || !user || !pass) return alert('يرجى ملء جميع الحقول الإلزامية');
+
+            const payload = {
+                categoryId: catId,
+                name: document.getElementById('series-cat-name').value.trim() || `قسم ${catId}`,
+                server_host: host,
+                username: user,
+                password: pass,
+                updatedAt: Date.now()
+            };
+            const ref = k ? seriesCatAccountsRef.child(k).update(payload) : seriesCatAccountsRef.push(payload);
+            ref.then(() => { alert('✅ تم حفظ وتخصيص حساب قسم المسلسلات!'); resetSeriesCategoryForm(); }).catch(e => alert(e.message));
+        }
+
+        function resetSeriesCategoryForm() {
+            document.getElementById('series-cat-id-key').value = '';
+            document.getElementById('series-cat-id').value = '';
+            document.getElementById('series-cat-name').value = '';
+            document.getElementById('series-cat-host').value = '';
+            document.getElementById('series-cat-user').value = '';
+            document.getElementById('series-cat-pass').value = '';
+            document.getElementById('series-cat-panel-title').innerText = '📺 تخصيص حساب Xtream لكل قسم مسلسلات (Path: series_categories_accounts)';
+            document.getElementById('btn-save-series-cat').innerText = 'حفظ وربط حساب القسم في المسلسلات';
+            document.getElementById('btn-cancel-series-cat').style.display = 'none';
+        }
+
+        seriesCatAccountsRef.on('value', snap => {
+            const el = document.getElementById('series-categories-accounts-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد حسابات مخصصة لأقسام المسلسلات حالياً.</div>';
+            Object.keys(data).forEach(k => {
+                const item = data[k];
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                card.style.borderRight = '4px solid #b388ff';
+                card.innerHTML = `
+                    <div style="font-size:13px; color:#b388ff; font-weight:bold;">📺 قسم: ${escapeHtml(item.categoryId || '')}</div>
+                    <div style="font-size:14px; font-weight:bold; color:#fff; margin:4px 0;">${escapeHtml(item.name || '')}</div>
+                    <div style="font-size:11px; color:#94a3b8; background:#060a12; padding:8px; border-radius:8px;">
+                        <div>🌐 ${escapeHtml(item.server_host || '')}</div>
+                        <div>👤 ${escapeHtml(item.username || '')}</div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-delete" onclick='seriesCatAccountsRef.child("${k}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 4. حسابات أقسام الأفلام
+        function saveVodCategoryAccount() {
+            const k = document.getElementById('vod-cat-id-key').value;
+            const catId = document.getElementById('vod-cat-id').value.trim();
+            const host = document.getElementById('vod-cat-host').value.trim();
+            const user = document.getElementById('vod-cat-user').value.trim();
+            const pass = document.getElementById('vod-cat-pass').value.trim();
+            if (!catId || !host || !user || !pass) return alert('يرجى ملء جميع الحقول الإلزامية');
+
+            const payload = {
+                categoryId: catId,
+                name: document.getElementById('vod-cat-name').value.trim() || `قسم ${catId}`,
+                server_host: host,
+                username: user,
+                password: pass,
+                updatedAt: Date.now()
+            };
+            const ref = k ? vodCatAccountsRef.child(k).update(payload) : vodCatAccountsRef.push(payload);
+            ref.then(() => { alert('✅ تم حفظ وتخصيص حساب قسم الأفلام!'); resetVodCategoryForm(); }).catch(e => alert(e.message));
+        }
+
+        function resetVodCategoryForm() {
+            document.getElementById('vod-cat-id-key').value = '';
+            document.getElementById('vod-cat-id').value = '';
+            document.getElementById('vod-cat-name').value = '';
+            document.getElementById('vod-cat-host').value = '';
+            document.getElementById('vod-cat-user').value = '';
+            document.getElementById('vod-cat-pass').value = '';
+            document.getElementById('vod-cat-panel-title').innerText = '🎬 تخصيص حساب Xtream لكل قسم أفلام (Path: vod_categories_accounts)';
+            document.getElementById('btn-save-vod-cat').innerText = 'حفظ وربط حساب القسم في الأفلام';
+            document.getElementById('btn-cancel-vod-cat').style.display = 'none';
+        }
+
+        vodCatAccountsRef.on('value', snap => {
+            const el = document.getElementById('vod-categories-accounts-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد حسابات مخصصة لأقسام الأفلام حالياً.</div>';
+            Object.keys(data).forEach(k => {
+                const item = data[k];
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                card.style.borderRight = '4px solid #ff80ab';
+                card.innerHTML = `
+                    <div style="font-size:13px; color:#ff80ab; font-weight:bold;">🎬 قسم: ${escapeHtml(item.categoryId || '')}</div>
+                    <div style="font-size:14px; font-weight:bold; color:#fff; margin:4px 0;">${escapeHtml(item.name || '')}</div>
+                    <div style="font-size:11px; color:#94a3b8; background:#060a12; padding:8px; border-radius:8px;">
+                        <div>🌐 ${escapeHtml(item.server_host || '')}</div>
+                        <div>👤 ${escapeHtml(item.username || '')}</div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-delete" onclick='vodCatAccountsRef.child("${k}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 5. باقات M3U للقنوات
+        function saveM3uPlaylist() {
+            const id = document.getElementById('m3u-id').value;
+            const title = document.getElementById('m3u-title').value.trim();
+            const url = document.getElementById('m3u-url').value.trim();
+            if (!title || !url) return alert('يرجى إدخال اسم ورابط باقة M3U');
+
+            const payload = {
+                title: title,
+                url: url,
+                isEnabled: document.getElementById('m3u-status').value === 'true',
+                updatedAt: Date.now()
+            };
+            const ref = id ? m3uPlaylistsRef.child(id).update(payload) : m3uPlaylistsRef.push(payload);
+            ref.then(() => { alert('✅ تم حفظ باقة M3U بنجاح!'); resetM3uForm(); }).catch(e => alert(e.message));
+        }
+
+        function resetM3uForm() {
+            document.getElementById('m3u-id').value = '';
+            document.getElementById('m3u-title').value = '';
+            document.getElementById('m3u-url').value = '';
+            document.getElementById('btn-cancel-m3u').style.display = 'none';
+        }
+
+        m3uPlaylistsRef.on('value', snap => {
+            const el = document.getElementById('m3u-playlists-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد باقات M3U للقنوات.</div>';
+            Object.keys(data).forEach(k => {
+                const p = data[k];
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                card.style.borderRight = '4px solid #00e676';
+                card.innerHTML = `
+                    <div style="font-size:14px; font-weight:bold; color:#fff;">📺 ${escapeHtml(p.title || '')}</div>
+                    <div style="font-size:11px; color:#94a3b8; word-break:break-all; margin:6px 0;">${escapeHtml(p.url || '')}</div>
+                    <div class="card-actions">
+                        <button class="btn-delete" onclick='m3uPlaylistsRef.child("${k}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 6. باقات M3U للأفلام
+        function saveM3uMoviesPlaylist() {
+            const id = document.getElementById('m3u-movies-id').value;
+            const title = document.getElementById('m3u-movies-title').value.trim();
+            const url = document.getElementById('m3u-movies-url').value.trim();
+            if (!title || !url) return alert('يرجى إدخال اسم ورابط باقة أفلام M3U');
+
+            const payload = {
+                title: title,
+                url: url,
+                isEnabled: document.getElementById('m3u-movies-status').value === 'true',
+                updatedAt: Date.now()
+            };
+            const ref = id ? m3uMoviesPlaylistsRef.child(id).update(payload) : m3uMoviesPlaylistsRef.push(payload);
+            ref.then(() => { alert('✅ تم حفظ باقة M3U للأفلام!'); resetM3uMoviesForm(); }).catch(e => alert(e.message));
+        }
+
+        function resetM3uMoviesForm() {
+            document.getElementById('m3u-movies-id').value = '';
+            document.getElementById('m3u-movies-title').value = '';
+            document.getElementById('m3u-movies-url').value = '';
+            document.getElementById('btn-cancel-m3u-movies').style.display = 'none';
+        }
+
+        m3uMoviesPlaylistsRef.on('value', snap => {
+            const el = document.getElementById('m3u-movies-playlists-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد باقات M3U للأفلام.</div>';
+            Object.keys(data).forEach(k => {
+                const p = data[k];
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                card.style.borderRight = '4px solid #ff4081';
+                card.innerHTML = `
+                    <div style="font-size:14px; font-weight:bold; color:#fff;">🍿 ${escapeHtml(p.title || '')}</div>
+                    <div style="font-size:11px; color:#94a3b8; word-break:break-all; margin:6px 0;">${escapeHtml(p.url || '')}</div>
+                    <div class="card-actions">
+                        <button class="btn-delete" onclick='m3uMoviesPlaylistsRef.child("${k}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 7. الأفلام السينمائية
+        function saveMovie() {
+            const id = document.getElementById('movie-id').value;
+            const title = document.getElementById('movie-title').value.trim();
+            const poster = document.getElementById('movie-poster').value.trim();
+            const s1 = document.getElementById('movie-server1').value.trim();
+            if (!title || !poster) return alert('يرجى كتابة اسم الفيلم ورابط البوستر');
+
+            const payload = {
+                title: title,
+                genre: document.getElementById('movie-genre').value.trim() || 'سينما',
+                year: document.getElementById('movie-year').value.trim() || '2024',
+                rating: document.getElementById('movie-rating').value.trim() || '8.8',
+                poster: poster,
+                backdrop: document.getElementById('movie-backdrop').value.trim() || poster,
+                duration: document.getElementById('movie-duration').value.trim() || '120 دقيقة',
+                story: document.getElementById('movie-story').value.trim(),
+                is_top: document.getElementById('movie-is-top').value === 'true',
+                server1: s1,
+                server2: document.getElementById('movie-server2').value.trim(),
+                server3: document.getElementById('movie-server3').value.trim(),
+                url: s1,
+                updatedAt: Date.now()
+            };
+            const ref = id ? moviesRef.child(id).update(payload) : moviesRef.push(payload);
+            ref.then(() => { alert('✅ تم حفظ الفيلم ونشره!'); resetMovieForm(); }).catch(e => alert(e.message));
+        }
+
+        function resetMovieForm() {
+            document.getElementById('movie-id').value = '';
+            document.getElementById('movie-title').value = '';
+            document.getElementById('movie-poster').value = '';
+            document.getElementById('movie-server1').value = '';
+            document.getElementById('btn-cancel-movie').style.display = 'none';
+        }
+
+        moviesRef.on('value', snap => {
+            const el = document.getElementById('movies-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد أفلام مباشرة مضافة.</div>';
+            Object.keys(data).forEach(k => {
+                const m = data[k];
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                card.style.borderTop = '4px solid #e040fb';
+                card.innerHTML = `
+                    <img src="${escapeHtml(m.poster || '')}" style="width:100%; height:160px; object-fit:cover; border-radius:8px; margin-bottom:8px;">
+                    <div style="font-size:14px; font-weight:bold; color:#fff;">${escapeHtml(m.title || '')}</div>
+                    <div style="font-size:12px; color:#e040fb;">${escapeHtml(m.genre || '')} • ⭐ ${escapeHtml(m.rating || '')}</div>
+                    <div class="card-actions">
+                        <button class="btn-delete" onclick='moviesRef.child("${k}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 8. إرسال الإشعارات
+        function sendBroadcastPushNotification() {
+            const title = document.getElementById('bg-notif-title').value.trim();
+            const body = document.getElementById('bg-notif-body').value.trim();
+            if (!title || !body) return alert('يرجى ملء عنوان ونص الإشعار');
+
+            const payload = {
+                title: title,
+                body: body,
+                type: document.getElementById('bg-notif-type').value,
+                targetTeam: document.getElementById('bg-notif-team').value.trim(),
+                actionUrl: document.getElementById('bg-notif-url').value.trim(),
+                timestamp: Date.now(),
+                createdAt: new Date().toLocaleString('ar-SA')
+            };
+            broadcastNotifsRef.push(payload).then(() => {
+                alert('🚀 تم إرسال الإشعار لجميع المستخدمين!');
+                document.getElementById('bg-notif-title').value = '';
+                document.getElementById('bg-notif-body').value = '';
+            }).catch(e => alert(e.message));
+        }
+
+        broadcastNotifsRef.on('value', snap => {
+            const el = document.getElementById('broadcast-notifications-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد إشعارات سابقة.</div>';
+            Object.keys(data).reverse().forEach(k => {
+                const n = data[k];
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                card.style.borderRight = '4px solid #ff9100';
+                card.innerHTML = `
+                    <div style="font-size:13px; font-weight:bold; color:#fff;">${escapeHtml(n.title || '')}</div>
+                    <div style="font-size:12px; color:#cbd5e1; margin:4px 0;">${escapeHtml(n.body || '')}</div>
+                    <div style="font-size:10px; color:#94a3b8;">${escapeHtml(n.createdAt || '')}</div>
+                    <div class="card-actions">
+                        <button class="btn-delete" onclick='broadcastNotifsRef.child("${k}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 9. السلايدرات العامة
+        function saveSlider() {
+            const id = document.getElementById('slider-id').value;
+            const title = document.getElementById('slider-title').value.trim();
+            const image = document.getElementById('slider-image').value.trim();
+            const s1 = document.getElementById('slider-server1').value.trim();
+            if (!title || !image) return alert('يرجى إدخال العنوان ورابط الصورة');
+
+            const payload = {
+                title: title,
+                subtitle: document.getElementById('slider-subtitle').value.trim(),
+                badge: document.getElementById('slider-badge').value.trim() || 'مميز',
+                type: document.getElementById('slider-type').value,
+                image: image,
+                backdropUrl: image,
+                posterUrl: document.getElementById('slider-poster').value.trim() || image,
+                server1: s1,
+                server2: document.getElementById('slider-server2').value.trim(),
+                server3: document.getElementById('slider-server3').value.trim(),
+                server4: document.getElementById('slider-server4').value.trim(),
+                server5: document.getElementById('slider-server5').value.trim(),
+                streamUrl: s1,
+                updatedAt: Date.now()
+            };
+            const ref = id ? slidersRef.child(id).update(payload) : slidersRef.push(payload);
+            ref.then(() => { alert('✅ تم حفظ السلايدر بنجاح!'); resetSliderForm(); }).catch(e => alert(e.message));
+        }
+
+        function resetSliderForm() {
+            document.getElementById('slider-id').value = '';
+            document.getElementById('slider-title').value = '';
+            document.getElementById('slider-image').value = '';
+            document.getElementById('btn-cancel-slider').style.display = 'none';
+        }
+
+        slidersRef.on('value', snap => {
+            const el = document.getElementById('sliders');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px;">لا توجد سلايدرات عامة.</div>';
+            Object.keys(data).forEach(k => {
+                const s = data[k];
+                if (s.isMatchSlider || s.type === 'match') return;
+                const card = document.createElement('div');
+                card.className = 'slider-card-view';
+                card.innerHTML = `
+                    <span class="slider-badge-view">${escapeHtml(s.badge || 'مميز')}</span>
+                    <img src="${escapeHtml(s.image || s.backdropUrl || '')}" onerror="this.src='https://via.placeholder.com/300x140?text=Slider'">
+                    <div class="slider-card-info">
+                        <div style="font-weight:bold;">${escapeHtml(s.title || '')}</div>
+                        <div class="card-actions">
+                            <button class="btn-delete" onclick='slidersRef.child("${k}").remove()'>حذف</button>
+                        </div>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 10. جدول المباريات
+        function saveMatch() {
+            const id = document.getElementById('match-id').value;
+            const t1 = document.getElementById('team1-name').value.trim();
+            const t2 = document.getElementById('team2-name').value.trim();
+            if (!t1 || !t2) return alert('يرجى إدخال أسماء الفريقين');
+
+            const s1 = document.getElementById('match-server1').value.trim();
+            const payload = {
+                team1Name: t1,
+                homeTeam: t1,
+                team1Logo: document.getElementById('team1-logo').value.trim(),
+                team2Name: t2,
+                awayTeam: t2,
+                team2Logo: document.getElementById('team2-logo').value.trim(),
+                matchTime: document.getElementById('match-time').value.trim(),
+                matchDate: document.getElementById('match-date').value.trim() || new Date().toISOString().split('T')[0],
+                leagueName: document.getElementById('match-league').value.trim() || 'دوري عام',
+                commentator: document.getElementById('match-commentator').value.trim(),
+                stadium: document.getElementById('match-stadium').value.trim(),
+                status: document.getElementById('match-status').value,
+                homeScore: parseInt(document.getElementById('match-score1').value) || 0,
+                awayScore: parseInt(document.getElementById('match-score2').value) || 0,
+                server1: s1,
+                server2: document.getElementById('match-server2').value.trim(),
+                server3: document.getElementById('match-server3').value.trim(),
+                server4: document.getElementById('match-server4').value.trim(),
+                server5: document.getElementById('match-server5').value.trim(),
+                streamUrl: s1,
+                updatedAt: Date.now()
+            };
+            const ref = id ? matchesRef.child(id).update(payload) : matchesRef.push(payload);
+            ref.then(() => { alert('✅ تم حفظ المباراة بنجاح!'); resetMatchForm(); }).catch(e => alert(e.message));
+        }
+
+        function resetMatchForm() {
+            document.getElementById('match-id').value = '';
+            document.getElementById('team1-name').value = '';
+            document.getElementById('team2-name').value = '';
+            document.getElementById('btn-cancel-match').style.display = 'none';
+        }
+
+        matchesRef.on('value', snap => {
+            const el = document.getElementById('matches');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد مباريات في الجدول.</div>';
+            Object.keys(data).forEach(k => {
+                const m = data[k];
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; margin-bottom:6px;">
+                        <div>${escapeHtml(m.team1Name || m.homeTeam || '')}</div>
+                        <div style="color:#00d2ff;">${m.homeScore || 0} - ${m.awayScore || 0}</div>
+                        <div>${escapeHtml(m.team2Name || m.awayTeam || '')}</div>
+                    </div>
+                    <div style="font-size:11px; color:#94a3b8; text-align:center;">🏆 ${escapeHtml(m.leagueName || '')} • ⏱️ ${escapeHtml(m.matchTime || '')}</div>
+                    <div class="card-actions">
+                        <button class="btn-delete" onclick='matchesRef.child("${k}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 11. القنوات الفردية
+        function saveChannel() {
+            const name = document.getElementById('channel-name').value.trim();
+            if (!name) return alert('يرجى كتابة اسم القناة');
+            const s1 = document.getElementById('channel-server1').value.trim();
+            const payload = {
+                name: name,
+                title: name,
+                logo: document.getElementById('channel-logo').value.trim(),
+                server1: s1,
+                server2: document.getElementById('channel-server2').value.trim(),
+                server3: document.getElementById('channel-server3').value.trim(),
+                server4: document.getElementById('channel-server4').value.trim(),
+                server5: document.getElementById('channel-server5').value.trim(),
+                url: s1,
+                streamUrl: s1,
+                updatedAt: Date.now()
+            };
+            channelsRef.push(payload).then(() => {
+                alert('✅ تم حفظ القناة بنجاح!');
+                document.getElementById('channel-name').value = '';
+                document.getElementById('channel-logo').value = '';
+                document.getElementById('channel-server1').value = '';
+            }).catch(e => alert(e.message));
+        }
+
+        channelsRef.on('value', snap => {
+            const el = document.getElementById('channels');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) return el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد قنوات مضافة.</div>';
+            Object.keys(data).forEach(k => {
+                const c = data[k];
+                const card = document.createElement('div');
+                card.className = 'card-item';
+                card.innerHTML = `
+                    <div style="font-size:14px; font-weight:bold; color:#fff;">📺 ${escapeHtml(c.name || c.title || '')}</div>
+                    <div style="font-size:11px; color:#94a3b8; word-break:break-all; margin:4px 0;">${escapeHtml(c.server1 || c.url || '')}</div>
+                    <div class="card-actions">
+                        <button class="btn-delete" onclick='channelsRef.child("${k}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        // 12. الرسالة المنبثقة
+        function savePopup() {
+            const payload = {
+                enabled: document.getElementById('popup-enabled').value === 'true',
+                title: document.getElementById('popup-title').value.trim(),
+                message: document.getElementById('popup-message').value.trim(),
+                button_url: document.getElementById('popup-button-url').value.trim()
+            };
+            popupRef.set(payload).then(() => alert('✅ تم تحديث الرسالة المنبثقة!')).catch(e => alert(e.message));
+        }
+
+        popupRef.on('value', snap => {
+            const d = snap.val() || {};
+            document.getElementById('popup-enabled').value = d.enabled ? 'true' : 'false';
+            document.getElementById('popup-title').value = d.title || '';
+            document.getElementById('popup-message').value = d.message || '';
+            document.getElementById('popup-button-url').value = d.button_url || d.buttonUrl || '';
+        });
+    </script>
+</body>
+</html>

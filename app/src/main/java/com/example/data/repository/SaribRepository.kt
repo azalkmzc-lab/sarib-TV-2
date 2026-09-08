@@ -255,6 +255,45 @@ class SaribRepository(private val context: Context) {
                 // If no custom sliders were defined in Firebase, construct dynamic sliders from top real media/streams
                 if (_heroSliders.value.isEmpty()) {
                     val fallbackSliders = mutableListOf<HeroBannerItem>()
+                    // If matches exist, add top live or upcoming match as a Match Slider
+                    val topMatch = remoteMatches.firstOrNull { it.isLive } ?: remoteMatches.firstOrNull()
+                    if (topMatch != null) {
+                        fallbackSliders.add(
+                            HeroBannerItem(
+                                id = "match_${topMatch.id}",
+                                title = "${topMatch.homeTeam} VS ${topMatch.awayTeam}",
+                                subtitle = "${topMatch.leagueName} • ${topMatch.matchTime}",
+                                backdropUrl = "",
+                                badge = if (topMatch.isLive) "مباشر LIVE" else "مباراة القمة",
+                                genreTags = listOf("مباراة", topMatch.leagueName.ifBlank { "بث مباشر" }, "FHD"),
+                                streamUrl = topMatch.streamUrl,
+                                contentType = ContentType.MATCH,
+                                isLive = topMatch.isLive,
+                                sortOrder = 0,
+                                isActive = true,
+                                server1 = topMatch.server1,
+                                server2 = topMatch.server2,
+                                server3 = topMatch.server3,
+                                server4 = topMatch.server4,
+                                server5 = topMatch.server5,
+                                isMatchSlider = true,
+                                homeTeam = topMatch.homeTeam,
+                                homeLogoUrl = topMatch.homeLogoUrl,
+                                awayTeam = topMatch.awayTeam,
+                                awayLogoUrl = topMatch.awayLogoUrl,
+                                leagueName = topMatch.leagueName,
+                                leagueLogoUrl = topMatch.leagueIconUrl,
+                                matchTime = topMatch.matchTime,
+                                matchDate = topMatch.matchDate,
+                                homeScore = topMatch.homeScore,
+                                awayScore = topMatch.awayScore,
+                                matchStatus = topMatch.status,
+                                commentator = topMatch.commentator,
+                                channelName = topMatch.channelName
+                            )
+                        )
+                    }
+
                     if (currentRemoteConfig.heroTitle.isNotBlank()) {
                         fallbackSliders.add(
                             HeroBannerItem(
@@ -267,7 +306,7 @@ class SaribRepository(private val context: Context) {
                                 streamUrl = currentRemoteConfig.heroStreamUrl,
                                 contentType = ContentType.SERIES,
                                 isLive = false,
-                                sortOrder = 0,
+                                sortOrder = 1,
                                 isActive = true
                             )
                         )

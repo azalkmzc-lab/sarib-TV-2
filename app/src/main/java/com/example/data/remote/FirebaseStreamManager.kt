@@ -337,80 +337,139 @@ class FirebaseStreamManager(private val context: Context) {
     }
 
     /**
-     * Fetches dynamic sliders from Firebase Firestore collection 'sliders' or Realtime Database path '/sliders.json'.
-     * This path is independent from the Xtream account and allows managing multiple custom sliders from the HTML dashboard.
+     * Fetches dynamic sliders and match sliders from Firebase Firestore ('sliders', 'match_sliders')
+     * and Realtime Database paths ('/sliders.json', '/match_sliders.json').
      */
     suspend fun fetchSliders(): List<HeroBannerItem> = withContext(Dispatchers.IO) {
         val resultList = mutableListOf<HeroBannerItem>()
+        val seenIds = mutableSetOf<String>()
 
-        // 1. Try Firebase Firestore ('sliders' collection)
+        // 1. Try Firebase Firestore ('sliders' & 'match_sliders' collections)
         if (isFirebaseAvailable()) {
             try {
                 val firestore = FirebaseFirestore.getInstance()
-                val snapshot = firestore.collection("sliders")
-                    .get()
-                    .await()
+                val collectionsToFetch = listOf("sliders", "match_sliders")
+                
+                for (colName in collectionsToFetch) {
+                    try {
+                        val snapshot = firestore.collection(colName).get().await()
+                        if (snapshot != null && !snapshot.isEmpty) {
+                            for (doc in snapshot.documents) {
+                                val isActive = doc.getBoolean("isActive") ?: doc.getBoolean("is_active") ?: true
+                                if (!isActive) continue
 
-                if (snapshot != null && !snapshot.isEmpty) {
-                    for (doc in snapshot.documents) {
-                        val isActive = doc.getBoolean("isActive") ?: doc.getBoolean("is_active") ?: true
-                        if (!isActive) continue
+                                val id = doc.id
+                                if (seenIds.contains(id)) continue
+                                seenIds.add(id)
 
-                        val id = doc.id
-                        val title = doc.getString("title").orEmpty()
-                        val subtitle = doc.getString("subtitle").orEmpty()
-                        val backdropUrl = doc.getString("backdropUrl") 
-                            ?: doc.getString("backdrop_url") 
-                            ?: doc.getString("imageUrl") 
-                            ?: doc.getString("image_url") 
-                            ?: ""
-                        val badge = doc.getString("badge") ?: "حصري"
-                        val streamUrl = doc.getString("streamUrl") ?: doc.getString("stream_url") ?: ""
-                        val isLive = doc.getBoolean("isLive") ?: doc.getBoolean("is_live") ?: false
-                        val sortOrder = doc.getLong("sortOrder")?.toInt() 
-                            ?: doc.getLong("sort_order")?.toInt() 
-                            ?: 0
-                        val typeStr = doc.getString("contentType") ?: doc.getString("type") ?: "SERIES"
-                        val contentType = when (typeStr.uppercase()) {
-                            "MOVIE" -> ContentType.MOVIE
-                            "CHANNEL", "LIVE" -> ContentType.CHANNEL
-                            "MATCH" -> ContentType.MATCH
-                            else -> ContentType.SERIES
-                        }
-                        
-                        val tagsList = mutableListOf<String>()
-                        val tagsObj = doc.get("genreTags") ?: doc.get("tags")
-                        if (tagsObj is List<*>) {
-                            tagsList.addAll(tagsObj.mapNotNull { it?.toString() })
-                        } else if (tagsObj is String && tagsObj.isNotEmpty()) {
-                            tagsList.addAll(tagsObj.split(",", "•", "-").map { it.trim() })
-                        }
-                        if (tagsList.isEmpty()) {
-                            tagsList.addAll(listOf("مميز", "عالي الدقة"))
-                        }
+                                val homeTeam = doc.getString("home_team") ?: doc.getString("homeTeam") ?: doc.getString("team1").orEmpty()
+                                val homeLogo = doc.getString("home_logo") ?: doc.getString("home_logo_url") ?: doc.getString("homeLogoUrl") ?: doc.getString("homePoster") ?: doc.getString("team1_logo").orEmpty()
+                                val awayTeam = doc.getString("away_team") ?: doc.getString("awayTeam") ?: doc.getString("team2").orEmpty()
+                                val awayLogo = doc.getString("away_logo") ?: doc.getString("away_logo_url") ?: doc.getString("awayLogoUrl") ?: doc.getString("awayPoster") ?: doc.getString("team2_logo").orEmpty()
+                                val leagueName = doc.getString("league_name") ?: doc.getString("leagueName") ?: doc.getString("league") ?: doc.getString("tournament").orEmpty()
+                                val leagueLogo = doc.getString("league_logo") ?: doc.getString("league_logo_url") ?: doc.getString("leagueLogoUrl") ?: doc.getString("leagueIconUrl").orEmpty()
+                                val matchTime = doc.getString("match_time") ?: doc.getString("matchTime") ?: doc.getString("time") ?: doc.getString("kickoff").orEmpty()
+                                val matchDate = doc.getString("match_date") ?: doc.getString("matchDate") ?: doc.getString("date").orEmpty()
+                                val matchStatus = doc.getString("match_status") ?: doc.getString("status") ?: if (colName == "match_sliders") "لم تبدأ" else ""
+                                val commentator = doc.getString("commentator") ?: doc.getString("commentary").orEmpty()
+                                val channelName = doc.getString("channel_name") ?: doc.getString("channelName") ?: doc.getString("channel").orEmpty()
+                                val homeScore = doc.getLong("home_score")?.toInt() ?: doc.getLong("homeScore")?.toInt() ?: 0
+                                val awayScore = doc.getLong("away_score")?.toInt() ?: doc.getLong("awayScore")?.toInt() ?: 0
 
-                        if (title.isNotEmpty()) {
-                            resultList.add(
-                                HeroBannerItem(
-                                    id = id,
-                                    title = title,
-                                    subtitle = subtitle,
-                                    backdropUrl = backdropUrl,
-                                    badge = badge,
-                                    genreTags = tagsList,
-                                    streamUrl = streamUrl,
-                                    contentType = contentType,
-                                    isLive = isLive,
-                                    sortOrder = sortOrder,
-                                    isActive = true
+                                val typeStr = doc.getString("contentType") ?: doc.getString("type") ?: doc.getString("slider_type") ?: if (colName == "match_sliders" || homeTeam.isNotBlank()) "MATCH" else "SERIES"
+                                val isMatch = colName == "match_sliders" || typeStr.uppercase() == "MATCH" || homeTeam.isNotBlank()
+
+                                var title = doc.getString("title").orEmpty()
+                                if (title.isEmpty() && isMatch && homeTeam.isNotBlank()) {
+                                    title = "$homeTeam VS $awayTeam"
+                                }
+                                if (title.isEmpty()) continue
+
+                                var subtitle = doc.getString("subtitle").orEmpty()
+                                if (subtitle.isEmpty() && isMatch) {
+                                    subtitle = if (leagueName.isNotBlank()) "$leagueName • $matchTime" else "مباراة قمة اليوم"
+                                }
+
+                                val posterUrl = doc.getString("poster_url") ?: doc.getString("posterUrl") ?: doc.getString("poster") ?: doc.getString("cover").orEmpty()
+                                val backdropUrl = doc.getString("backdropUrl")
+                                    ?: doc.getString("backdrop_url")
+                                    ?: doc.getString("imageUrl")
+                                    ?: doc.getString("image_url")
+                                    ?: doc.getString("stadium_image")
+                                    ?: doc.getString("image")
+                                    ?: posterUrl
+
+                                val badge = doc.getString("badge") ?: if (isMatch) "مباراة اليوم" else "حصري"
+                                val streamUrl = doc.getString("streamUrl") ?: doc.getString("stream_url") ?: doc.getString("server1").orEmpty()
+                                val isLive = doc.getBoolean("isLive") ?: doc.getBoolean("is_live") ?: (matchStatus == "مباشر" || matchStatus == "شوط أول" || matchStatus == "شوط ثاني")
+                                val sortOrder = doc.getLong("sortOrder")?.toInt() ?: doc.getLong("sort_order")?.toInt() ?: 0
+
+                                val server1 = doc.getString("server1").orEmpty()
+                                val server2 = doc.getString("server2").orEmpty()
+                                val server3 = doc.getString("server3").orEmpty()
+                                val server4 = doc.getString("server4").orEmpty()
+                                val server5 = doc.getString("server5").orEmpty()
+
+                                val contentType = if (isMatch) ContentType.MATCH else when (typeStr.uppercase()) {
+                                    "MOVIE" -> ContentType.MOVIE
+                                    "CHANNEL", "LIVE" -> ContentType.CHANNEL
+                                    else -> ContentType.SERIES
+                                }
+
+                                val tagsList = mutableListOf<String>()
+                                val tagsObj = doc.get("genreTags") ?: doc.get("tags")
+                                if (tagsObj is List<*>) {
+                                    tagsList.addAll(tagsObj.mapNotNull { it?.toString() })
+                                } else if (tagsObj is String && tagsObj.isNotEmpty()) {
+                                    tagsList.addAll(tagsObj.split(",", "•", "-").map { it.trim() })
+                                }
+                                if (tagsList.isEmpty()) {
+                                    if (isMatch) {
+                                        tagsList.addAll(listOf("مباراة", leagueName.ifBlank { "بث مباشر" }, "FHD"))
+                                    } else {
+                                        tagsList.addAll(listOf("مميز", "عالي الدقة"))
+                                    }
+                                }
+
+                                resultList.add(
+                                    HeroBannerItem(
+                                        id = id,
+                                        title = title,
+                                        subtitle = subtitle,
+                                        backdropUrl = backdropUrl,
+                                        posterUrl = posterUrl,
+                                        badge = badge,
+                                        genreTags = tagsList,
+                                        streamUrl = streamUrl,
+                                        contentType = contentType,
+                                        isLive = isLive,
+                                        sortOrder = sortOrder,
+                                        isActive = true,
+                                        server1 = server1,
+                                        server2 = server2,
+                                        server3 = server3,
+                                        server4 = server4,
+                                        server5 = server5,
+                                        isMatchSlider = isMatch,
+                                        homeTeam = homeTeam,
+                                        homeLogoUrl = homeLogo,
+                                        awayTeam = awayTeam,
+                                        awayLogoUrl = awayLogo,
+                                        leagueName = leagueName,
+                                        leagueLogoUrl = leagueLogo,
+                                        matchTime = matchTime,
+                                        matchDate = matchDate,
+                                        homeScore = homeScore,
+                                        awayScore = awayScore,
+                                        matchStatus = matchStatus,
+                                        commentator = commentator,
+                                        channelName = channelName
+                                    )
                                 )
-                            )
+                            }
                         }
-                    }
-
-                    if (resultList.isNotEmpty()) {
-                        Log.i(TAG, "Loaded ${resultList.size} sliders from Firestore.")
-                        return@withContext resultList.sortedBy { it.sortOrder }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Failed reading Firestore collection $colName: ${e.message}")
                     }
                 }
             } catch (e: Exception) {
@@ -418,48 +477,83 @@ class FirebaseStreamManager(private val context: Context) {
             }
         }
 
-        // 2. Try Firebase Realtime Database path '/sliders.json'
-        try {
-            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/sliders.json"
-            val request = Request.Builder().url(url).build()
-            val response = httpClient.newCall(request).execute()
-            val body = response.body?.string().orEmpty().trim()
-            
-            if (body.isNotEmpty() && body != "null") {
-                if (body.startsWith("[")) {
-                    val jsonArray = JSONArray(body)
-                    for (i in 0 until jsonArray.length()) {
-                        val itemObj = jsonArray.optJSONObject(i) ?: continue
-                        parseSliderJson(itemObj, "slider_$i")?.let { resultList.add(it) }
-                    }
-                } else if (body.startsWith("{")) {
-                    val jsonObj = JSONObject(body)
-                    val keys = jsonObj.keys()
-                    while (keys.hasNext()) {
-                        val key = keys.next()
-                        val itemObj = jsonObj.optJSONObject(key) ?: continue
-                        parseSliderJson(itemObj, key)?.let { resultList.add(it) }
-                    }
-                }
+        // 2. Try Firebase Realtime Database paths ('/sliders.json' & '/match_sliders.json')
+        val rtdbPaths = listOf(
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/sliders.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/match_sliders.json"
+        )
+        for (url in rtdbPaths) {
+            try {
+                val request = Request.Builder().url(url).build()
+                val response = httpClient.newCall(request).execute()
+                val body = response.body?.string().orEmpty().trim()
 
-                if (resultList.isNotEmpty()) {
-                    Log.i(TAG, "Loaded ${resultList.size} sliders from RTDB.")
-                    return@withContext resultList.sortedBy { it.sortOrder }
+                if (body.isNotEmpty() && body != "null") {
+                    val isMatchPath = url.contains("match_sliders")
+                    if (body.startsWith("[")) {
+                        val jsonArray = JSONArray(body)
+                        for (i in 0 until jsonArray.length()) {
+                            val itemObj = jsonArray.optJSONObject(i) ?: continue
+                            val parsed = parseSliderJson(itemObj, "slider_${isMatchPath}_$i", isMatchPath)
+                            if (parsed != null && !seenIds.contains(parsed.id)) {
+                                seenIds.add(parsed.id)
+                                resultList.add(parsed)
+                            }
+                        }
+                    } else if (body.startsWith("{")) {
+                        val jsonObj = JSONObject(body)
+                        val keys = jsonObj.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val itemObj = jsonObj.optJSONObject(key) ?: continue
+                            val parsed = parseSliderJson(itemObj, key, isMatchPath)
+                            if (parsed != null && !seenIds.contains(parsed.id)) {
+                                seenIds.add(parsed.id)
+                                resultList.add(parsed)
+                            }
+                        }
+                    }
                 }
+            } catch (e: Exception) {
+                Log.w(TAG, "RTDB sliders fetch error for $url: ${e.message}")
             }
-        } catch (e: Exception) {
-            Log.w(TAG, "RTDB sliders fetch error: ${e.message}")
+        }
+
+        if (resultList.isNotEmpty()) {
+            Log.i(TAG, "Total loaded sliders from Firebase: ${resultList.size}")
+            return@withContext resultList.sortedBy { it.sortOrder }
         }
 
         resultList
     }
 
-    private fun parseSliderJson(obj: JSONObject, defaultId: String): HeroBannerItem? {
+    private fun parseSliderJson(obj: JSONObject, defaultId: String, forceMatch: Boolean = false): HeroBannerItem? {
         val isActive = obj.optBoolean("isActive", obj.optBoolean("is_active", true))
         if (!isActive) return null
 
         val id = obj.optString("id", defaultId)
-        val title = obj.optString("title", "")
+
+        val homeTeam = obj.optString("home_team", obj.optString("homeTeam", obj.optString("team1", "")))
+        val homeLogo = obj.optString("home_logo", obj.optString("home_logo_url", obj.optString("homeLogoUrl", obj.optString("homePoster", obj.optString("team1_logo", "")))))
+        val awayTeam = obj.optString("away_team", obj.optString("awayTeam", obj.optString("team2", "")))
+        val awayLogo = obj.optString("away_logo", obj.optString("away_logo_url", obj.optString("awayLogoUrl", obj.optString("awayPoster", obj.optString("team2_logo", "")))))
+        val leagueName = obj.optString("league_name", obj.optString("leagueName", obj.optString("league", obj.optString("tournament", ""))))
+        val leagueLogo = obj.optString("league_logo", obj.optString("league_logo_url", obj.optString("leagueLogoUrl", obj.optString("leagueIconUrl", ""))))
+        val matchTime = obj.optString("match_time", obj.optString("matchTime", obj.optString("time", obj.optString("kickoff", ""))))
+        val matchDate = obj.optString("match_date", obj.optString("matchDate", obj.optString("date", "")))
+        val matchStatus = obj.optString("match_status", obj.optString("status", if (forceMatch) "لم تبدأ" else ""))
+        val commentator = obj.optString("commentator", obj.optString("commentary", ""))
+        val channelName = obj.optString("channel_name", obj.optString("channelName", obj.optString("channel", "")))
+        val homeScore = obj.optInt("home_score", obj.optInt("homeScore", 0))
+        val awayScore = obj.optInt("away_score", obj.optInt("awayScore", 0))
+
+        val typeRaw = obj.optString("type", obj.optString("contentType", obj.optString("slider_type", ""))).lowercase()
+        val isMatch = forceMatch || typeRaw == "match" || homeTeam.isNotEmpty()
+
+        var title = obj.optString("title", "")
+        if (title.isEmpty() && isMatch && homeTeam.isNotEmpty()) {
+            title = "$homeTeam VS $awayTeam"
+        }
         if (title.isEmpty()) return null
 
         // Check if slider has expired based on duration and createdAt
@@ -472,12 +566,11 @@ class FirebaseStreamManager(private val context: Context) {
             }
         }
 
-        val typeRaw = obj.optString("type", obj.optString("contentType", "normal")).lowercase()
-        val isLive = typeRaw == "match" || obj.optBoolean("isLive", obj.optBoolean("is_live", false))
+        val isLive = typeRaw == "live" || matchStatus == "مباشر" || matchStatus == "شوط أول" || matchStatus == "شوط ثاني" || obj.optBoolean("isLive", obj.optBoolean("is_live", false))
 
         val contentType = when {
+            isMatch -> ContentType.MATCH
             typeRaw == "movie" -> ContentType.MOVIE
-            typeRaw == "match" -> ContentType.MATCH
             typeRaw == "channel" || typeRaw == "live" -> ContentType.CHANNEL
             else -> ContentType.SERIES
         }
@@ -485,9 +578,10 @@ class FirebaseStreamManager(private val context: Context) {
         // Subtitle logic based on type and fields
         val subtitle = when {
             obj.has("subtitle") && obj.optString("subtitle").isNotEmpty() -> obj.optString("subtitle")
-            typeRaw == "match" -> {
-                val matchTime = obj.optLong("matchTime", 0L)
-                if (matchTime > 0) "بث مباشر • انطلاق المباراة" else "بث مباشر للمباراة"
+            isMatch -> {
+                if (leagueName.isNotEmpty() && matchTime.isNotEmpty()) "$leagueName • $matchTime"
+                else if (leagueName.isNotEmpty()) leagueName
+                else "مباراة اليوم • بث مباشر"
             }
             typeRaw == "movie" -> {
                 val rating = obj.optString("movieRating", "")
@@ -496,30 +590,42 @@ class FirebaseStreamManager(private val context: Context) {
             else -> "عرض مميز بدقة عالية"
         }
 
-        // Image / Backdrop URL
+        // Poster / Backdrop URL
+        val posterUrl = obj.optString("poster", obj.optString("posterUrl", obj.optString("poster_url", obj.optString("cover", ""))))
         val backdropUrl = obj.optString(
             "image",
             obj.optString(
                 "backdropUrl",
-                obj.optString("backdrop_url", obj.optString("imageUrl", obj.optString("image_url", "")))
+                obj.optString(
+                    "backdrop_url",
+                    obj.optString(
+                        "imageUrl",
+                        obj.optString("image_url", obj.optString("stadium_image", posterUrl))
+                    )
+                )
             )
         )
 
         // Badge
         val badge = when {
             obj.has("badge") && obj.optString("badge").isNotEmpty() -> obj.optString("badge")
-            typeRaw == "match" -> "مباشر LIVE"
+            isMatch -> if (isLive) "مباشر LIVE" else "مباراة قمة"
             typeRaw == "movie" -> "فيلم"
-            else -> "مميز"
+            else -> "حصري"
         }
 
-        // Stream URL resolution: server1..server5, url, movieUrl, streamUrl
+        val server1 = obj.optString("server1", "")
+        val server2 = obj.optString("server2", "")
+        val server3 = obj.optString("server3", "")
+        val server4 = obj.optString("server4", "")
+        val server5 = obj.optString("server5", "")
+
         val streamUrl = listOf(
-            obj.optString("server1", ""),
-            obj.optString("server2", ""),
-            obj.optString("server3", ""),
-            obj.optString("server4", ""),
-            obj.optString("server5", ""),
+            server1,
+            server2,
+            server3,
+            server4,
+            server5,
             obj.optString("movieUrl", ""),
             obj.optString("streamUrl", ""),
             obj.optString("stream_url", ""),
@@ -534,9 +640,9 @@ class FirebaseStreamManager(private val context: Context) {
             tagsList.addAll(tagsStr.split(",", "•", "-").map { it.trim() }.filter { it.isNotEmpty() })
         }
         if (tagsList.isEmpty()) {
-            when (typeRaw) {
-                "match" -> tagsList.addAll(listOf("مباراة", "بث مباشر", "HD"))
-                "movie" -> tagsList.addAll(listOf("فيلم", "سينما", "Full HD"))
+            when {
+                isMatch -> tagsList.addAll(listOf("مباراة", leagueName.ifBlank { "بث مباشر" }, "FHD"))
+                typeRaw == "movie" -> tagsList.addAll(listOf("فيلم", "سينما", "Full HD"))
                 else -> tagsList.addAll(listOf("مميز", "HD"))
             }
         }
@@ -546,13 +652,33 @@ class FirebaseStreamManager(private val context: Context) {
             title = title,
             subtitle = subtitle,
             backdropUrl = backdropUrl,
+            posterUrl = posterUrl,
             badge = badge,
             genreTags = tagsList,
             streamUrl = streamUrl,
             contentType = contentType,
             isLive = isLive,
             sortOrder = sortOrder,
-            isActive = true
+            isActive = true,
+            server1 = server1,
+            server2 = server2,
+            server3 = server3,
+            server4 = server4,
+            server5 = server5,
+            isMatchSlider = isMatch,
+            homeTeam = homeTeam,
+            homeLogoUrl = homeLogo,
+            awayTeam = awayTeam,
+            awayLogoUrl = awayLogo,
+            leagueName = leagueName,
+            leagueLogoUrl = leagueLogo,
+            matchTime = matchTime,
+            matchDate = matchDate,
+            homeScore = homeScore,
+            awayScore = awayScore,
+            matchStatus = matchStatus,
+            commentator = commentator,
+            channelName = channelName
         )
     }
 

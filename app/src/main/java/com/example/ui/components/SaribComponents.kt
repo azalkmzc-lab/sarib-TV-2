@@ -74,7 +74,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.Player
@@ -358,7 +361,7 @@ fun HeroSlider(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(235.dp)
+                .height(240.dp)
                 .shadow(16.dp, RoundedCornerShape(22.dp))
                 .clip(RoundedCornerShape(22.dp))
                 .border(1.dp, SaribCardBorder, RoundedCornerShape(22.dp)),
@@ -370,169 +373,23 @@ fun HeroSlider(
             ) { page ->
                 val currentItem = sliders.getOrNull(page) ?: sliders.first()
                 val isCurrentActivePage = pagerState.currentPage == page
-                val videoUrl = currentItem.streamUrl.ifBlank { currentItem.server1 }
 
-                Box(modifier = Modifier.fillMaxSize()) {
-                    // 1. Base Backdrop Poster Image (Fallback & Loading preview)
-                    if (currentItem.backdropUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = currentItem.backdropUrl,
-                            contentDescription = currentItem.title,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        Image(
-                            painter = painterResource(id = R.drawable.hero_lost_town),
-                            contentDescription = currentItem.title,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                    // 2. Auto-Playing Video in Slider (Active page video stream)
-                    if (videoUrl.isNotBlank() && isCurrentActivePage) {
-                        HeroSliderVideoBackground(
-                            streamUrl = videoUrl,
-                            isActive = isCurrentActivePage,
-                            isMuted = isMuted,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                    // 3. Dark Gradient Vignette for clear typography
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                Brush.verticalGradient(
-                                    listOf(
-                                        Color(0x44070C14),
-                                        Color(0x66070C14),
-                                        Color(0xF5070C14)
-                                    )
-                                )
-                            )
+                if (currentItem.isMatchSlider || currentItem.contentType == com.example.data.model.ContentType.MATCH || currentItem.homeTeam.isNotBlank()) {
+                    HeroMatchSliderContent(
+                        item = currentItem,
+                        isActive = isCurrentActivePage,
+                        isMuted = isMuted,
+                        onMuteToggle = { isMuted = !isMuted },
+                        onWatchClick = { onWatchClick(currentItem) }
                     )
-
-                    // 4. Top Header Badges & Mute/Unmute Control
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .align(Alignment.TopCenter)
-                            .padding(top = 12.dp, start = 12.dp, end = 12.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Top info badge (LIVE / Category)
-                        Row(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color(0xCC000000))
-                                .border(0.5.dp, SaribCyanAccent.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
-                                .padding(horizontal = 10.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (currentItem.isLive) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .clip(CircleShape)
-                                        .background(SaribLiveRed)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Default.Tv,
-                                    contentDescription = null,
-                                    tint = SaribCyanAccent,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                            }
-                            Text(
-                                text = if (currentItem.badge.isNotBlank()) "${currentItem.badge} • ${currentItem.subtitle}" else currentItem.subtitle,
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = Color.White,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            )
-                        }
-
-                        // Mute / Unmute Button for Video Preview
-                        if (videoUrl.isNotBlank()) {
-                            IconButton(
-                                onClick = { isMuted = !isMuted },
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xAA000000))
-                                    .border(1.dp, Color(0x44FFFFFF), CircleShape)
-                            ) {
-                                Icon(
-                                    imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
-                                    contentDescription = if (isMuted) "تشغيل الصوت" else "كتم الصوت",
-                                    tint = if (isMuted) Color.White else SaribCyanAccent,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
-                        }
-                    }
-
-                    // 5. Bottom Title & Watch Button
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = currentItem.title,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Black,
-                                color = Color.White
-                            ),
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        // Watch Button (Direct navigation to full player)
-                        Box(
-                            modifier = Modifier
-                                .testTag("hero_watch_button")
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(
-                                    Brush.horizontalGradient(
-                                        listOf(SaribElectricBlue, SaribCyanAccent)
-                                    )
-                                )
-                                .clickable { onWatchClick(currentItem) }
-                                .padding(horizontal = 22.dp, vertical = 7.dp)
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    text = if (currentItem.isLive) "مشاهدة البث المباشر" else stringResource(id = R.string.watch_now),
-                                    style = MaterialTheme.typography.labelLarge.copy(
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                            }
-                        }
-                    }
+                } else {
+                    HeroStandardSliderContent(
+                        item = currentItem,
+                        isActive = isCurrentActivePage,
+                        isMuted = isMuted,
+                        onMuteToggle = { isMuted = !isMuted },
+                        onWatchClick = { onWatchClick(currentItem) }
+                    )
                 }
             }
         }
@@ -556,6 +413,575 @@ fun HeroSlider(
                             .clip(RoundedCornerShape(3.dp))
                             .background(color)
                     )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Standard Hero Slider Content (Movies, Series, Live Channels) with enhanced poster fit.
+ */
+@Composable
+private fun HeroStandardSliderContent(
+    item: HeroBannerItem,
+    isActive: Boolean,
+    isMuted: Boolean,
+    onMuteToggle: () -> Unit,
+    onWatchClick: () -> Unit
+) {
+    val videoUrl = item.streamUrl.ifBlank { item.server1 }
+    val posterImage = item.posterUrl.ifBlank { item.backdropUrl }
+    val backdropImage = item.backdropUrl.ifBlank { item.posterUrl }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 1. Dual-Layer Poster: Ambient background crop + crisp complete poster
+        if (backdropImage.isNotBlank()) {
+            AsyncImage(
+                model = backdropImage,
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            Image(
+                painter = painterResource(id = R.drawable.hero_lost_town),
+                contentDescription = item.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // 2. Centered fit layer if distinct vertical poster exists
+        if (posterImage.isNotBlank() && posterImage != backdropImage) {
+            AsyncImage(
+                model = posterImage,
+                contentDescription = item.title,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp)
+            )
+        }
+
+        // 3. Auto-Playing Video in Slider (Appears smoothly after 3s when ready)
+        if (videoUrl.isNotBlank() && isActive) {
+            HeroSliderVideoBackground(
+                streamUrl = videoUrl,
+                isActive = isActive,
+                isMuted = isMuted,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // 4. Dark Gradient Vignette for pristine contrast & readability
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0x66070C14),
+                            Color(0x33070C14),
+                            Color(0xF8070C14)
+                        )
+                    )
+                )
+        )
+
+        // 5. Top Header Badges & Mute/Unmute Control
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.TopCenter)
+                .padding(top = 10.dp, start = 12.dp, end = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Top info badge (LIVE / Category)
+            Row(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color(0xDD0A0F1A))
+                    .border(0.5.dp, SaribCyanAccent.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (item.isLive) {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(SaribLiveRed)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Tv,
+                        contentDescription = null,
+                        tint = SaribCyanAccent,
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                }
+                Text(
+                    text = if (item.badge.isNotBlank()) "${item.badge} • ${item.subtitle}" else item.subtitle,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // Mute / Unmute Button for Video Preview
+            if (videoUrl.isNotBlank()) {
+                IconButton(
+                    onClick = onMuteToggle,
+                    modifier = Modifier
+                        .size(34.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xCC000000))
+                        .border(1.dp, Color(0x44FFFFFF), CircleShape)
+                ) {
+                    Icon(
+                        imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                        contentDescription = if (isMuted) "تشغيل الصوت" else "كتم الصوت",
+                        tint = if (isMuted) Color.White else SaribCyanAccent,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
+        }
+
+        // 6. Bottom Title & Action Button
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = item.title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Black,
+                    color = Color.White
+                ),
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Watch Button (Direct navigation to full player)
+            Box(
+                modifier = Modifier
+                    .testTag("hero_watch_button")
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(SaribElectricBlue, SaribCyanAccent)
+                        )
+                    )
+                    .clickable { onWatchClick() }
+                    .padding(horizontal = 22.dp, vertical = 7.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (item.isLive) "مشاهدة البث المباشر" else stringResource(id = R.string.watch_now),
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Specialized Match Hero Slider (سلايدر المباراة):
+ * Displays Host Team (Logo/Name), Guest Team (Logo/Name), League Badge & Name,
+ * Kickoff Time, Live Score or Countdown Timer, and Match details.
+ */
+@Composable
+private fun HeroMatchSliderContent(
+    item: HeroBannerItem,
+    isActive: Boolean,
+    isMuted: Boolean,
+    onMuteToggle: () -> Unit,
+    onWatchClick: () -> Unit
+) {
+    val videoUrl = item.streamUrl.ifBlank { item.server1 }
+    val backdropImage = item.backdropUrl.ifBlank { item.posterUrl }
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        // 1. Full Stadium / Match Backdrop Poster
+        if (backdropImage.isNotBlank()) {
+            AsyncImage(
+                model = backdropImage,
+                contentDescription = "${item.homeTeam} vs ${item.awayTeam}",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            // Default stadium gradient
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF0F172A), Color(0xFF064E3B), Color(0xFF022C22))
+                        )
+                    )
+            )
+        }
+
+        // 2. Video Stream Background if live
+        if (videoUrl.isNotBlank() && isActive) {
+            HeroSliderVideoBackground(
+                streamUrl = videoUrl,
+                isActive = isActive,
+                isMuted = isMuted,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+
+        // 3. Dark Gradient Overlay for Match clarity
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        listOf(
+                            Color(0x88050912),
+                            Color(0x66050912),
+                            Color(0xFA050912)
+                        )
+                    )
+                )
+        )
+
+        // 4. Content Layout
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.SpaceBetween
+        ) {
+            // Top Header: League Pill & Match Status / Countdown
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // League Pill (Logo + Name)
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(Color(0xDD0A0F1A))
+                        .border(0.5.dp, SaribCyanAccent.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (item.leagueLogoUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = item.leagueLogoUrl,
+                            contentDescription = item.leagueName,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.EmojiEvents,
+                            contentDescription = null,
+                            tint = SaribCyanAccent,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                    }
+                    Text(
+                        text = item.leagueName.ifBlank { "مباراة اليوم" },
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Match Status & Countdown Pill
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(if (item.isLive) Color(0xDDDC2626) else Color(0xDD0B132B))
+                        .border(0.5.dp, if (item.isLive) SaribLiveRed else SaribCyanAccent.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
+                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (item.isLive) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .clip(CircleShape)
+                                .background(Color.White)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "مباشر LIVE",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = SaribCyanAccent,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        val timeDisplay = when {
+                            item.matchTime.isNotBlank() -> "تبدأ ${item.matchTime}"
+                            item.matchDate.isNotBlank() -> item.matchDate
+                            else -> "قريباً"
+                        }
+                        Text(
+                            text = timeDisplay,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Center Match Face-Off: Host Team vs Away Team
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Host Team (الفريق المضيف)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .shadow(8.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(Color(0xCC0D1B2A))
+                            .border(1.5.dp, SaribCyanAccent, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (item.homeLogoUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = item.homeLogoUrl,
+                                contentDescription = item.homeTeam,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.SportsSoccer,
+                                contentDescription = null,
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = item.homeTeam.ifBlank { "الفريق المضيف" },
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        ),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Center Score or VS
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(horizontal = 6.dp)
+                ) {
+                    if (item.isLive) {
+                        Text(
+                            text = "${item.homeScore} - ${item.awayScore}",
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                fontWeight = FontWeight.Black,
+                                color = SaribCyanAccent
+                            )
+                        )
+                        Text(
+                            text = item.matchStatus.ifBlank { "مباشر الآن" },
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = SaribLiveRed,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xAA0A1128))
+                                .border(1.dp, SaribElectricBlue.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 10.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "VS",
+                                style = MaterialTheme.typography.labelLarge.copy(
+                                    fontWeight = FontWeight.Black,
+                                    color = SaribCyanAccent
+                                )
+                            )
+                        }
+                        if (item.matchTime.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = item.matchTime,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = Color(0xFF94A3B8),
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                        }
+                    }
+                }
+
+                // Away Team (الفريق الضيف)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(52.dp)
+                            .shadow(8.dp, CircleShape)
+                            .clip(CircleShape)
+                            .background(Color(0xCC0D1B2A))
+                            .border(1.5.dp, SaribElectricBlue, CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (item.awayLogoUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = item.awayLogoUrl,
+                                contentDescription = item.awayTeam,
+                                contentScale = ContentScale.Fit,
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.SportsSoccer,
+                                contentDescription = null,
+                                tint = SaribElectricBlue,
+                                modifier = Modifier.size(26.dp)
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = item.awayTeam.ifBlank { "الفريق الضيف" },
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        ),
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // Bottom Bar: Commentator / Channel & Watch Button
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Channel & Commentator info
+                val detailsText = listOfNotNull(
+                    item.channelName.takeIf { it.isNotBlank() }?.let { "📺 $it" },
+                    item.commentator.takeIf { it.isNotBlank() }?.let { "🎤 $it" }
+                ).joinToString(" • ")
+
+                if (detailsText.isNotBlank()) {
+                    Text(
+                        text = detailsText,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color(0xFFCBD5E1),
+                            fontWeight = FontWeight.Medium
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+
+                // Watch Button
+                Box(
+                    modifier = Modifier
+                        .testTag("match_watch_button")
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(SaribElectricBlue, SaribCyanAccent)
+                            )
+                        )
+                        .clickable { onWatchClick() }
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = if (item.isLive) "مشاهدة البث" else "تفاصيل المباراة",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
                 }
             }
         }
@@ -644,7 +1070,7 @@ fun HeroSliderVideoBackground(
         }
     }
 
-    Box(modifier = modifier) {
+    Box(modifier = modifier.alpha(if (isPlayerReady) 1f else 0f)) {
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
