@@ -43,12 +43,55 @@ class SaribRepository(private val context: Context) {
         username = currentRemoteConfig.username,
         password = currentRemoteConfig.password
     )
+    private val seriesXtreamClient = XtreamApiClient(
+        serverHost = currentRemoteConfig.seriesAccount.serverHost,
+        username = currentRemoteConfig.seriesAccount.username,
+        password = currentRemoteConfig.seriesAccount.password
+    )
+    private val vodXtreamClient = XtreamApiClient(
+        serverHost = currentRemoteConfig.vodAccount.serverHost,
+        username = currentRemoteConfig.vodAccount.username,
+        password = currentRemoteConfig.vodAccount.password
+    )
+    private val categorySeriesClients = mutableMapOf<String, XtreamApiClient>()
+    private val categoryVodClients = mutableMapOf<String, XtreamApiClient>()
+
     private val matchesClient = MatchesApiClient(
         apiUrlBase = currentRemoteConfig.matchesApiUrl
     )
 
     private val _heroSliders = MutableStateFlow<List<HeroBannerItem>>(emptyList())
     val heroSliders: StateFlow<List<HeroBannerItem>> = _heroSliders.asStateFlow()
+
+    fun getSeriesClientForCategory(categoryId: String?): XtreamApiClient {
+        if (!categoryId.isNullOrBlank()) {
+            val cleanCatId = categoryId.removePrefix("xt_ser_cat_").removePrefix("series_")
+            categorySeriesClients[cleanCatId]?.let { return it }
+            categorySeriesClients[categoryId]?.let { return it }
+            val account = currentRemoteConfig.seriesCategoriesAccounts[cleanCatId] ?: currentRemoteConfig.seriesCategoriesAccounts[categoryId]
+            if (account != null) {
+                val client = XtreamApiClient(account.serverHost, account.username, account.password)
+                categorySeriesClients[cleanCatId] = client
+                return client
+            }
+        }
+        return seriesXtreamClient
+    }
+
+    fun getVodClientForCategory(categoryId: String?): XtreamApiClient {
+        if (!categoryId.isNullOrBlank()) {
+            val cleanCatId = categoryId.removePrefix("xt_vod_cat_").removePrefix("vod_").removePrefix("movies_")
+            categoryVodClients[cleanCatId]?.let { return it }
+            categoryVodClients[categoryId]?.let { return it }
+            val account = currentRemoteConfig.vodCategoriesAccounts[cleanCatId] ?: currentRemoteConfig.vodCategoriesAccounts[categoryId]
+            if (account != null) {
+                val client = XtreamApiClient(account.serverHost, account.username, account.password)
+                categoryVodClients[cleanCatId] = client
+                return client
+            }
+        }
+        return vodXtreamClient
+    }
 
     suspend fun initializeBackendConnection(): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
@@ -68,8 +111,27 @@ class SaribRepository(private val context: Context) {
                     user = firebaseConfig.username,
                     pass = firebaseConfig.password
                 )
+                seriesXtreamClient.updateCredentials(
+                    host = firebaseConfig.seriesAccount.serverHost,
+                    user = firebaseConfig.seriesAccount.username,
+                    pass = firebaseConfig.seriesAccount.password
+                )
+                vodXtreamClient.updateCredentials(
+                    host = firebaseConfig.vodAccount.serverHost,
+                    user = firebaseConfig.vodAccount.username,
+                    pass = firebaseConfig.vodAccount.password
+                )
+                categorySeriesClients.clear()
+                firebaseConfig.seriesCategoriesAccounts.forEach { (catId, acc) ->
+                    categorySeriesClients[catId] = XtreamApiClient(acc.serverHost, acc.username, acc.password)
+                }
+                categoryVodClients.clear()
+                firebaseConfig.vodCategoriesAccounts.forEach { (catId, acc) ->
+                    categoryVodClients[catId] = XtreamApiClient(acc.serverHost, acc.username, acc.password)
+                }
+
                 matchesClient.apiUrlBase = firebaseConfig.matchesApiUrl
-                Log.d("SaribRepository", "Applied remote config from Firebase: ${firebaseConfig.serverHost}")
+                Log.d("SaribRepository", "Applied remote config from Firebase: host=${firebaseConfig.serverHost}, seriesHost=${firebaseConfig.seriesAccount.serverHost}, seriesCats=${firebaseConfig.seriesCategoriesAccounts.size}")
             } catch (e: Exception) {
                 Log.w("SaribRepository", "Could not load Firebase config: ${e.message}")
             }
@@ -141,11 +203,11 @@ class SaribRepository(private val context: Context) {
                 }
                 val matchesDeferred = async { matchesClient.fetchMatches(0) }
 
-                // Xtream: VOD Movies & Series categories and previews (حساب اكستريم الأصلي محفوظ بالكامل)
-                val vodCategoriesDeferred = async { xtreamClient.fetchVodCategories() }
-                val seriesCategoriesDeferred = async { xtreamClient.fetchSeriesCategories() }
-                val topMoviesDeferred = async { xtreamClient.fetchVodStreams(limit = 10) }
-                val topSeriesDeferred = async { xtreamClient.fetchSeries(limit = 10) }
+                // Xtream: VOD Movies & Series categories and previews using dedicated accounts
+                val vodCategoriesDeferred = async { vodXtreamClient.fetchVodCategories() }
+                val seriesCategoriesDeferred = async { seriesXtreamClient.fetchSeriesCategories() }
+                val topMoviesDeferred = async { vodXtreamClient.fetchVodStreams(limit = 10) }
+                val topSeriesDeferred = async { seriesXtreamClient.fetchSeries(limit = 10) }
 
                 val customCats = customCatsDeferred.await()
                 val customChannels = customChannelsDeferred.await()
@@ -321,11 +383,12 @@ class SaribRepository(private val context: Context) {
                 if (matched.isNotEmpty()) matched else emptyList()
             }
 
-            // If category is an Xtream category (numeric or standard Xtream format), query Xtream account
+            // If category is an Xtream category (numeric or standard Xtream format), query dedicated/per-category Xtream account
             val isXtreamCategory = categoryId != null && !categoryId.startsWith("m3u_") && !categoryId.startsWith("fb_")
             if (isXtreamCategory) {
                 try {
-                    val remoteMovies = xtreamClient.fetchVodStreams(categoryId = categoryId)
+                    val client = getVodClientForCategory(categoryId)
+                    val remoteMovies = client.fetchVodStreams(categoryId = categoryId)
                     if (remoteMovies.isNotEmpty()) {
                         dao.insertMediaItems(remoteMovies.map { it.toEntity() })
                         return@withContext remoteMovies
@@ -356,7 +419,14 @@ class SaribRepository(private val context: Context) {
 
     suspend fun getSeriesForCategoryOnDemand(categoryId: String?): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
-            val remoteSeries = xtreamClient.fetchSeries(categoryId = categoryId)
+            val client = getSeriesClientForCategory(categoryId)
+            var remoteSeries = client.fetchSeries(categoryId = categoryId)
+            if (remoteSeries.isEmpty() && client != seriesXtreamClient) {
+                remoteSeries = seriesXtreamClient.fetchSeries(categoryId = categoryId)
+            }
+            if (remoteSeries.isEmpty() && client != xtreamClient) {
+                remoteSeries = xtreamClient.fetchSeries(categoryId = categoryId)
+            }
             if (remoteSeries.isNotEmpty()) {
                 dao.insertMediaItems(remoteSeries.map { it.toEntity() })
             }
@@ -576,7 +646,21 @@ class SaribRepository(private val context: Context) {
     }
 
     suspend fun getSeriesDetails(seriesId: String): com.example.data.model.SeriesDetail? = withContext(Dispatchers.IO) {
-        xtreamClient.fetchSeriesDetails(seriesId)
+        // 1. Try with dedicated seriesXtreamClient
+        val detail = seriesXtreamClient.fetchSeriesDetails(seriesId)
+        if (detail != null && detail.seasons.isNotEmpty()) return@withContext detail
+
+        // 2. Try with main xtreamClient
+        val mainDetail = xtreamClient.fetchSeriesDetails(seriesId)
+        if (mainDetail != null && mainDetail.seasons.isNotEmpty()) return@withContext mainDetail
+
+        // 3. Try with category-specific clients if available
+        for ((_, catClient) in categorySeriesClients) {
+            val catDetail = catClient.fetchSeriesDetails(seriesId)
+            if (catDetail != null && catDetail.seasons.isNotEmpty()) return@withContext catDetail
+        }
+
+        detail ?: mainDetail
     }
 
     suspend fun clearAllCache() = withContext(Dispatchers.IO) {

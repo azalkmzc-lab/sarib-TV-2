@@ -298,7 +298,7 @@ object M3uPlaylistParser {
                                 movieCategoriesMap[categoryId] = ChannelCategory(
                                     id = categoryId,
                                     name = currentGroup,
-                                    subtitle = "أفلام وسينما M3U8 سحابية",
+                                    subtitle = "أفلام وسينما سحابية",
                                     channelCount = newCount,
                                     iconUrl = currentLogo,
                                     categoryType = "movies",
@@ -325,7 +325,7 @@ object M3uPlaylistParser {
                                         year = year,
                                         rating = "8.8",
                                         genre = currentGroup,
-                                        description = "فيلم سينمائي عالي الجودة متوفر عبر البث المباشر السحابي M3U8.",
+                                        description = "فيلم سينمائي عالي الجودة متوفر عبر البث السحابي.",
                                         duration = "120 دقيقة",
                                         streamUrl = streamUrl,
                                         isTop = movieIndex < 6,
@@ -454,7 +454,7 @@ object M3uPlaylistParser {
                 year = year,
                 rating = "8.9",
                 genre = ch.categoryName.ifBlank { defaultGroupName },
-                description = "فيلم سينمائي بجودة عالية متوفر عبر رابط M3U8 مباشر.",
+                description = "فيلم سينمائي بجودة عالية متوفر عبر البث المباشر.",
                 duration = "ساعتان",
                 streamUrl = ch.streamUrl,
                 isTop = index < 5,
@@ -464,7 +464,7 @@ object M3uPlaylistParser {
         }
 
         val convertedCategories = result.categories.map { cat ->
-            cat.copy(categoryType = "movies", subtitle = "أفلام M3U8 سحابية")
+            cat.copy(categoryType = "movies", subtitle = "أفلام سحابية")
         }
 
         ParsedM3uResult(
@@ -474,7 +474,7 @@ object M3uPlaylistParser {
                 ChannelCategory(
                     id = "m3u_mov_cat_default",
                     name = defaultGroupName,
-                    subtitle = "أفلام M3U8 سحابية",
+                    subtitle = "أفلام سحابية",
                     categoryType = "movies"
                 )
             ),

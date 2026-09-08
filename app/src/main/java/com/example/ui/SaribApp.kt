@@ -478,21 +478,45 @@ fun SaribApp(
                         isLoading = isSeriesLoading,
                         onBackClick = { viewModel.popBack() },
                         onPlayEpisode = { ep, epTitle ->
+                            val epServers = mutableListOf<Pair<String, String>>()
+                            if (ep.streamUrl.isNotBlank()) {
+                                epServers.add("السيرفر الأساسي (الحلقة ${ep.episodeNum})" to ep.streamUrl)
+                                val baseWithoutExt = ep.streamUrl.substringBeforeLast('.')
+                                if (ep.streamUrl.endsWith(".mp4", ignoreCase = true)) {
+                                    epServers.add("سيرفر بديل (TS)" to "$baseWithoutExt.ts")
+                                    epServers.add("سيرفر بديل (M3U8)" to "$baseWithoutExt.m3u8")
+                                    epServers.add("سيرفر بديل (MKV)" to "$baseWithoutExt.mkv")
+                                } else if (ep.streamUrl.endsWith(".ts", ignoreCase = true)) {
+                                    epServers.add("سيرفر بديل (MP4)" to "$baseWithoutExt.mp4")
+                                    epServers.add("سيرفر بديل (M3U8)" to "$baseWithoutExt.m3u8")
+                                    epServers.add("سيرفر بديل (MKV)" to "$baseWithoutExt.mkv")
+                                } else if (ep.streamUrl.endsWith(".mkv", ignoreCase = true)) {
+                                    epServers.add("سيرفر بديل (MP4)" to "$baseWithoutExt.mp4")
+                                    epServers.add("سيرفر بديل (TS)" to "$baseWithoutExt.ts")
+                                }
+                            }
                             viewModel.playMedia(
                                 title = epTitle,
                                 subtitle = "${screen.mediaItem.title} • الحلقة ${ep.episodeNum}",
                                 streamUrl = ep.streamUrl,
                                 isLive = false,
-                                servers = screen.mediaItem.getActiveServers()
+                                servers = epServers
                             )
                         },
                         onPlayDirect = {
+                            val firstEp = currentSeriesDetail?.seasons?.firstOrNull()?.episodes?.firstOrNull()
+                            val streamToPlay = firstEp?.streamUrl ?: screen.mediaItem.streamUrl
+                            val directServers = mutableListOf<Pair<String, String>>()
+                            if (streamToPlay.isNotBlank()) {
+                                directServers.add("السيرفر الأساسي" to streamToPlay)
+                            }
+                            directServers.addAll(screen.mediaItem.getActiveServers().filter { it.second != streamToPlay })
                             viewModel.playMedia(
                                 title = screen.mediaItem.title,
                                 subtitle = "${screen.mediaItem.year} • ${screen.mediaItem.genre}",
-                                streamUrl = screen.mediaItem.streamUrl,
+                                streamUrl = streamToPlay,
                                 isLive = false,
-                                servers = screen.mediaItem.getActiveServers()
+                                servers = directServers
                             )
                         }
                     )

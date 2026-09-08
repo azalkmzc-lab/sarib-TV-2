@@ -216,11 +216,11 @@ fun EntertainmentScreen(
                     Spacer(modifier = Modifier.height(18.dp))
                 }
 
-                // Movie Categories Section (Xtream + M3U + API)
+                // Movie Categories Section
                 if (vodCategories.isNotEmpty()) {
                     item {
                         SectionHeader(
-                            title = "أقسام وتصنيفات الأفلام (اكستريم وقوائم M3U و API)",
+                            title = "أقسام وتصنيفات الأفلام",
                             onViewAllClick = { selectedFilterIndex = 1 }
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -236,11 +236,11 @@ fun EntertainmentScreen(
                     item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
 
-                // Xtream Series Categories Section
+                // Series Categories Section
                 if (seriesCategories.isNotEmpty()) {
                     item {
                         SectionHeader(
-                            title = "أقسام وتصنيفات المسلسلات (اكستريم)",
+                            title = "أقسام وتصنيفات المسلسلات",
                             onViewAllClick = { selectedFilterIndex = 2 }
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -320,7 +320,7 @@ fun EntertainmentScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "تصنيفات الأفلام المتاحة (${vodCategories.size}) - اكستريم وقوائم M3U و API",
+                        text = "تصنيفات الأفلام المتاحة (${vodCategories.size})",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = SaribTextPrimary
@@ -371,7 +371,7 @@ fun EntertainmentScreen(
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "تصنيفات المسلسلات المتاحة من حساب اكستريم (${seriesCategories.size})",
+                        text = "تصنيفات المسلسلات المتاحة (${seriesCategories.size})",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = SaribTextPrimary
@@ -395,7 +395,7 @@ fun EntertainmentScreen(
             if (selectedFilterIndex == 3) {
                 item {
                     Text(
-                        text = "جميع تصنيفات الأفلام والمسلسلات في حساب اكستريم (${entertainmentCategories.size})",
+                        text = "جميع التصنيفات الترفيهية (${entertainmentCategories.size})",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = SaribTextPrimary

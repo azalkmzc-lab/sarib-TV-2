@@ -17,10 +17,31 @@ import java.util.concurrent.TimeUnit
 import com.example.util.M3uPlaylistParser
 import com.example.util.ParsedM3uResult
 
+data class XtreamAccount(
+    val serverHost: String = "http://cliccck52258.club:2082",
+    val username: String = "khaledsliman",
+    val password: String = "755246419856",
+    val name: String = "الافتراضي"
+)
+
 data class RemoteStreamConfig(
     val serverHost: String = "http://cliccck52258.club:2082",
     val username: String = "khaledsliman",
     val password: String = "755246419856",
+    val seriesAccount: XtreamAccount = XtreamAccount(
+        serverHost = "http://cliccck52258.club:2082",
+        username = "khaledsliman",
+        password = "755246419856",
+        name = "حساب المسلسلات"
+    ),
+    val vodAccount: XtreamAccount = XtreamAccount(
+        serverHost = "http://cliccck52258.club:2082",
+        username = "khaledsliman",
+        password = "755246419856",
+        name = "حساب الأفلام"
+    ),
+    val seriesCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
+    val vodCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
     val matchesApiUrl: String = "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
     val m3uPlaylistUrl: String = "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
     val m3uMoviesUrl: String = "",
@@ -80,6 +101,8 @@ class FirebaseStreamManager(private val context: Context) {
     }
 
     suspend fun fetchRemoteConfig(): RemoteStreamConfig = withContext(Dispatchers.IO) {
+        var baseConfig = RemoteStreamConfig()
+
         // Strategy 1: Try Firebase Firestore (stream_config/main_config)
         if (isFirebaseAvailable()) {
             try {
@@ -91,10 +114,24 @@ class FirebaseStreamManager(private val context: Context) {
 
                 if (docSnapshot != null && docSnapshot.exists()) {
                     Log.i(TAG, "Loaded stream configuration from Firebase Firestore.")
-                    return@withContext RemoteStreamConfig(
-                        serverHost = docSnapshot.getString("server_host") ?: "http://cliccck52258.club:2082",
-                        username = docSnapshot.getString("username") ?: "khaledsliman",
-                        password = docSnapshot.getString("password") ?: "755246419856",
+                    val serverHost = docSnapshot.getString("server_host") ?: "http://cliccck52258.club:2082"
+                    val username = docSnapshot.getString("username") ?: "khaledsliman"
+                    val password = docSnapshot.getString("password") ?: "755246419856"
+
+                    val seriesHost = docSnapshot.getString("series_server_host") ?: docSnapshot.getString("series_host") ?: serverHost
+                    val seriesUser = docSnapshot.getString("series_username") ?: docSnapshot.getString("series_user") ?: username
+                    val seriesPass = docSnapshot.getString("series_password") ?: docSnapshot.getString("series_pass") ?: password
+
+                    val vodHost = docSnapshot.getString("vod_server_host") ?: docSnapshot.getString("movies_server_host") ?: serverHost
+                    val vodUser = docSnapshot.getString("vod_username") ?: docSnapshot.getString("movies_username") ?: username
+                    val vodPass = docSnapshot.getString("vod_password") ?: docSnapshot.getString("movies_password") ?: password
+
+                    baseConfig = RemoteStreamConfig(
+                        serverHost = serverHost,
+                        username = username,
+                        password = password,
+                        seriesAccount = XtreamAccount(serverHost = seriesHost, username = seriesUser, password = seriesPass, name = "سيرفر المسلسلات"),
+                        vodAccount = XtreamAccount(serverHost = vodHost, username = vodUser, password = vodPass, name = "سيرفر الأفلام"),
                         matchesApiUrl = docSnapshot.getString("matches_api_url") ?: "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
                         m3uPlaylistUrl = docSnapshot.getString("m3u_playlist_url") 
                             ?: docSnapshot.getString("m3u_url") 
@@ -135,20 +172,35 @@ class FirebaseStreamManager(private val context: Context) {
 
                     if (targetObj.has("server_host") || targetObj.has("username")) {
                         Log.i(TAG, "Loaded stream configuration from Firebase Realtime Database.")
-                        return@withContext RemoteStreamConfig(
-                            serverHost = targetObj.optString("server_host", "http://cliccck52258.club:2082"),
-                            username = targetObj.optString("username", "khaledsliman"),
-                            password = targetObj.optString("password", "755246419856"),
-                            matchesApiUrl = targetObj.optString("matches_api_url", "https://bab-elmoshahd.online/api/index.php?path=matches&day="),
-                            m3uPlaylistUrl = targetObj.optString("m3u_playlist_url", targetObj.optString("m3u_url", "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U")),
-                            m3uMoviesUrl = targetObj.optString("m3u_movies_url", targetObj.optString("movies_m3u_url", "")),
-                            moviesApiUrl = targetObj.optString("movies_api_url", targetObj.optString("movies_api", "")),
-                            announcement = targetObj.optString("announcement", ""),
-                            telegramLink = targetObj.optString("telegram_link", "https://t.me/sarib_tv"),
-                            heroTitle = targetObj.optString("hero_title", "بلدة الضياع S1-S4"),
-                            heroSubtitle = targetObj.optString("hero_subtitle", "مسلسل • دراما • رعب • أحجية"),
-                            heroStreamUrl = targetObj.optString("hero_stream_url", "http://cliccck52258.club:2082/series/khaledsliman/755246419856/1.mp4")
+                        val serverHost = targetObj.optString("server_host", baseConfig.serverHost)
+                        val username = targetObj.optString("username", baseConfig.username)
+                        val password = targetObj.optString("password", baseConfig.password)
+
+                        val seriesHost = targetObj.optString("series_server_host", targetObj.optString("series_host", serverHost))
+                        val seriesUser = targetObj.optString("series_username", targetObj.optString("series_user", username))
+                        val seriesPass = targetObj.optString("series_password", targetObj.optString("series_pass", password))
+
+                        val vodHost = targetObj.optString("vod_server_host", targetObj.optString("movies_server_host", serverHost))
+                        val vodUser = targetObj.optString("vod_username", targetObj.optString("movies_username", username))
+                        val vodPass = targetObj.optString("vod_password", targetObj.optString("movies_password", password))
+
+                        baseConfig = RemoteStreamConfig(
+                            serverHost = serverHost,
+                            username = username,
+                            password = password,
+                            seriesAccount = XtreamAccount(serverHost = seriesHost, username = seriesUser, password = seriesPass, name = "سيرفر المسلسلات"),
+                            vodAccount = XtreamAccount(serverHost = vodHost, username = vodUser, password = vodPass, name = "سيرفر الأفلام"),
+                            matchesApiUrl = targetObj.optString("matches_api_url", baseConfig.matchesApiUrl),
+                            m3uPlaylistUrl = targetObj.optString("m3u_playlist_url", targetObj.optString("m3u_url", baseConfig.m3uPlaylistUrl)),
+                            m3uMoviesUrl = targetObj.optString("m3u_movies_url", targetObj.optString("movies_m3u_url", baseConfig.m3uMoviesUrl)),
+                            moviesApiUrl = targetObj.optString("movies_api_url", targetObj.optString("movies_api", baseConfig.moviesApiUrl)),
+                            announcement = targetObj.optString("announcement", baseConfig.announcement),
+                            telegramLink = targetObj.optString("telegram_link", baseConfig.telegramLink),
+                            heroTitle = targetObj.optString("hero_title", baseConfig.heroTitle),
+                            heroSubtitle = targetObj.optString("hero_subtitle", baseConfig.heroSubtitle),
+                            heroStreamUrl = targetObj.optString("hero_stream_url", baseConfig.heroStreamUrl)
                         )
+                        break
                     }
                 }
             }
@@ -156,8 +208,132 @@ class FirebaseStreamManager(private val context: Context) {
             Log.w(TAG, "RTDB fetch fallback error: ${e.message}")
         }
 
-        // Strategy 3: Default fallback
-        RemoteStreamConfig()
+        // Also fetch per-category accounts from RTDB & Firestore paths
+        val seriesCatAccounts = fetchSeriesCategoriesAccounts()
+        val vodCatAccounts = fetchVodCategoriesAccounts()
+
+        baseConfig.copy(
+            seriesCategoriesAccounts = seriesCatAccounts,
+            vodCategoriesAccounts = vodCatAccounts
+        )
+    }
+
+    /**
+     * Fetches custom Xtream accounts assigned to specific series categories.
+     * Path in Firebase: Firestore collection 'series_categories_accounts' or RTDB '/series_categories_accounts.json'.
+     */
+    suspend fun fetchSeriesCategoriesAccounts(): Map<String, XtreamAccount> = withContext(Dispatchers.IO) {
+        val map = mutableMapOf<String, XtreamAccount>()
+
+        // 1. Try Firestore
+        if (isFirebaseAvailable()) {
+            try {
+                val firestore = FirebaseFirestore.getInstance()
+                val snapshot = firestore.collection("series_categories_accounts").get().await()
+                if (snapshot != null && !snapshot.isEmpty) {
+                    for (doc in snapshot.documents) {
+                        val catId = doc.id
+                        val host = doc.getString("server_host") ?: doc.getString("host") ?: ""
+                        val user = doc.getString("username") ?: doc.getString("user") ?: ""
+                        val pass = doc.getString("password") ?: doc.getString("pass") ?: ""
+                        val name = doc.getString("name") ?: "حساب $catId"
+                        if (host.isNotBlank() && user.isNotBlank()) {
+                            map[catId] = XtreamAccount(host, user, pass, name)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Firestore series_categories_accounts error: ${e.message}")
+            }
+        }
+
+        // 2. Try RTDB
+        try {
+            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/series_categories_accounts.json"
+            val request = Request.Builder().url(url).build()
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                val json = JSONObject(body)
+                val keys = json.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    val obj = json.optJSONObject(key)
+                    if (obj != null) {
+                        val host = obj.optString("server_host", obj.optString("host", ""))
+                        val user = obj.optString("username", obj.optString("user", ""))
+                        val pass = obj.optString("password", obj.optString("pass", ""))
+                        val name = obj.optString("name", "حساب $key")
+                        if (host.isNotBlank() && user.isNotBlank()) {
+                            map[key] = XtreamAccount(host, user, pass, name)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "RTDB series_categories_accounts error: ${e.message}")
+        }
+
+        map
+    }
+
+    /**
+     * Fetches custom Xtream accounts assigned to specific movie categories or dedicated movie server.
+     * Path in Firebase: Firestore collection 'vod_categories_accounts' or RTDB '/vod_categories_accounts.json'.
+     */
+    suspend fun fetchVodCategoriesAccounts(): Map<String, XtreamAccount> = withContext(Dispatchers.IO) {
+        val map = mutableMapOf<String, XtreamAccount>()
+
+        // 1. Try Firestore
+        if (isFirebaseAvailable()) {
+            try {
+                val firestore = FirebaseFirestore.getInstance()
+                val snapshot = firestore.collection("vod_categories_accounts").get().await()
+                if (snapshot != null && !snapshot.isEmpty) {
+                    for (doc in snapshot.documents) {
+                        val catId = doc.id
+                        val host = doc.getString("server_host") ?: doc.getString("host") ?: ""
+                        val user = doc.getString("username") ?: doc.getString("user") ?: ""
+                        val pass = doc.getString("password") ?: doc.getString("pass") ?: ""
+                        val name = doc.getString("name") ?: "حساب $catId"
+                        if (host.isNotBlank() && user.isNotBlank()) {
+                            map[catId] = XtreamAccount(host, user, pass, name)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Firestore vod_categories_accounts error: ${e.message}")
+            }
+        }
+
+        // 2. Try RTDB
+        try {
+            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/vod_categories_accounts.json"
+            val request = Request.Builder().url(url).build()
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                val json = JSONObject(body)
+                val keys = json.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    val obj = json.optJSONObject(key)
+                    if (obj != null) {
+                        val host = obj.optString("server_host", obj.optString("host", ""))
+                        val user = obj.optString("username", obj.optString("user", ""))
+                        val pass = obj.optString("password", obj.optString("pass", ""))
+                        val name = obj.optString("name", "حساب $key")
+                        if (host.isNotBlank() && user.isNotBlank()) {
+                            map[key] = XtreamAccount(host, user, pass, name)
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "RTDB vod_categories_accounts error: ${e.message}")
+        }
+
+        map
     }
 
     /**

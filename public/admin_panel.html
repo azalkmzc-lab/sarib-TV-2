@@ -61,6 +61,16 @@
             background: linear-gradient(180deg, #101a33 0%, #0d1527 100%);
         }
 
+        .admin-panel.series-panel {
+            border: 1.5px solid #7c4dff;
+            background: linear-gradient(180deg, #191238 0%, #0d1527 100%);
+        }
+
+        .admin-panel.vod-panel {
+            border: 1.5px solid #ff4081;
+            background: linear-gradient(180deg, #2b0d1e 0%, #0d1527 100%);
+        }
+
         .admin-panel.highlight-panel {
             border: 1.5px solid #ff9100;
             background: linear-gradient(180deg, #1f1a10 0%, #0d1527 100%);
@@ -69,6 +79,16 @@
         .admin-panel.m3u-panel {
             border: 1.5px solid #00e676;
             background: linear-gradient(180deg, #0d271a 0%, #0d1527 100%);
+        }
+
+        .admin-panel.m3u-movies-panel {
+            border: 1.5px solid #ff4081;
+            background: linear-gradient(180deg, #260c1d 0%, #0d1527 100%);
+        }
+
+        .admin-panel.movies-panel {
+            border: 1.5px solid #e040fb;
+            background: linear-gradient(180deg, #220d2b 0%, #0d1527 100%);
         }
 
         .admin-panel h3 {
@@ -80,12 +100,28 @@
             gap: 10px;
         }
 
+        .admin-panel.series-panel h3 {
+            color: #b388ff;
+        }
+
+        .admin-panel.vod-panel h3 {
+            color: #ff80ab;
+        }
+
         .admin-panel.highlight-panel h3 {
             color: #ffb300;
         }
 
         .admin-panel.m3u-panel h3 {
             color: #00e676;
+        }
+
+        .admin-panel.m3u-movies-panel h3 {
+            color: #ff4081;
+        }
+
+        .admin-panel.movies-panel h3 {
+            color: #e040fb;
         }
 
         .form-group {
@@ -121,6 +157,23 @@
             box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
         }
 
+        .sub-box {
+            background: rgba(6, 10, 18, 0.65);
+            border: 1px solid #1f2e4d;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+
+        .sub-box-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
         .servers-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -145,6 +198,16 @@
             margin-top: 8px;
             transition: 0.2s;
             box-shadow: 0 4px 15px rgba(0, 210, 255, 0.35);
+        }
+
+        .btn-submit.btn-purple {
+            background: linear-gradient(135deg, #6200ea, #b388ff);
+            box-shadow: 0 4px 15px rgba(124, 77, 255, 0.35);
+        }
+
+        .btn-submit.btn-pink {
+            background: linear-gradient(135deg, #c2185b, #ff4081);
+            box-shadow: 0 4px 15px rgba(255, 64, 129, 0.35);
         }
 
         .btn-submit.btn-orange {
@@ -242,7 +305,7 @@
             margin-bottom: 6px;
         }
 
-        .news-grid, .channels-grid, .matches-grid, .movies-grid, .notifs-grid {
+        .news-grid, .channels-grid, .matches-grid, .movies-grid, .notifs-grid, .accounts-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 16px;
@@ -250,7 +313,7 @@
             margin: 0 auto 35px auto;
         }
 
-        .news-card, .channel-card, .match-card, .movie-card, .notif-card {
+        .news-card, .channel-card, .match-card, .movie-card, .notif-card, .account-card {
             background-color: #0d1527;
             border-radius: 14px;
             overflow: hidden;
@@ -258,6 +321,14 @@
             display: flex;
             flex-direction: column;
             padding: 14px;
+        }
+
+        .account-card.series-acc {
+            border-right: 4px solid #b388ff;
+        }
+
+        .account-card.vod-acc {
+            border-right: 4px solid #ff80ab;
         }
 
         .notif-card {
@@ -270,6 +341,37 @@
 
         .notif-card.m3u-card {
             border-right: 4px solid #00e676;
+        }
+
+        .notif-card.m3u-movies-card {
+            border-right: 4px solid #ff4081;
+        }
+
+        .movie-card {
+            border-top: 4px solid #e040fb;
+            position: relative;
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            background: #060a12;
+        }
+
+        .movie-top-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.85);
+            color: #ffd700;
+            border: 1px solid #ffd700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
         }
 
         .section-title {
@@ -344,25 +446,73 @@
         <!-- 📡 إعدادات وخوادم البث المباشر (stream_config) -->
         <!-- ============================================== -->
         <div class="admin-panel full-width">
-            <h3>📡 إعدادات السيرفر الرئيسي وسيرفر Xtream (Path: stream_config)</h3>
+            <h3>📡 إعدادات السيرفر الرئيسي وسيرفرات Xtream المخصصة (Path: stream_config)</h3>
             <p style="font-size:12px; color:#94a3b8; margin-bottom:14px;">يتم تطبيق هذه البيانات فورياً على جميع مستخدمي التطبيق دون الحاجة لتحديث التطبيق.</p>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
-                <div class="form-group">
-                    <label>🌐 خادم Xtream (Server Host):</label>
-                    <input type="text" id="stream-server-host" placeholder="مثال: http://cliccck52258.club:2082">
-                </div>
+            <!-- 1. سيرفر Xtream الافتراضي العام -->
+            <div class="sub-box">
+                <div class="sub-box-title" style="color: #00d2ff;">🌐 حساب Xtream الافتراضي العام (Main Account)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+                    <div class="form-group">
+                        <label>🌐 خادم Xtream الرئيسي (Server Host):</label>
+                        <input type="text" id="stream-server-host" placeholder="مثال: http://cliccck52258.club:2082">
+                    </div>
 
-                <div class="form-group">
-                    <label>👤 اسم المستخدم (Username):</label>
-                    <input type="text" id="stream-username" placeholder="مثال: khaledsliman">
-                </div>
+                    <div class="form-group">
+                        <label>👤 اسم المستخدم (Username):</label>
+                        <input type="text" id="stream-username" placeholder="مثال: khaledsliman">
+                    </div>
 
-                <div class="form-group">
-                    <label>🔑 كلمة المرور (Password):</label>
-                    <input type="text" id="stream-password" placeholder="مثال: 755246419856">
+                    <div class="form-group">
+                        <label>🔑 كلمة المرور (Password):</label>
+                        <input type="text" id="stream-password" placeholder="مثال: 755246419856">
+                    </div>
                 </div>
+            </div>
 
+            <!-- 2. حساب وسيرفر المسلسلات المخصص -->
+            <div class="sub-box" style="border-color: rgba(179, 136, 255, 0.4);">
+                <div class="sub-box-title" style="color: #b388ff;">📺 حساب وسيرفر Xtream المخصص للمسلسلات (Series Dedicated Server)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+                    <div class="form-group">
+                        <label>🌐 خادم المسلسلات (series_server_host):</label>
+                        <input type="text" id="stream-series-host" placeholder="http://series-server.club:2082">
+                    </div>
+
+                    <div class="form-group">
+                        <label>👤 يوزر المسلسلات (series_username):</label>
+                        <input type="text" id="stream-series-username" placeholder="series_user">
+                    </div>
+
+                    <div class="form-group">
+                        <label>🔑 باسورد المسلسلات (series_password):</label>
+                        <input type="text" id="stream-series-password" placeholder="series_pass">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. حساب وسيرفر الأفلام المخصص -->
+            <div class="sub-box" style="border-color: rgba(255, 128, 171, 0.4);">
+                <div class="sub-box-title" style="color: #ff80ab;">🎬 حساب وسيرفر Xtream المخصص للأفلام (Movies VOD Dedicated Server)</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px;">
+                    <div class="form-group">
+                        <label>🌐 خادم الأفلام (vod_server_host):</label>
+                        <input type="text" id="stream-vod-host" placeholder="http://vod-server.club:2082">
+                    </div>
+
+                    <div class="form-group">
+                        <label>👤 يوزر الأفلام (vod_username):</label>
+                        <input type="text" id="stream-vod-username" placeholder="vod_user">
+                    </div>
+
+                    <div class="form-group">
+                        <label>🔑 باسورد الأفلام (vod_password):</label>
+                        <input type="text" id="stream-vod-password" placeholder="vod_pass">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 10px;">
                 <div class="form-group">
                     <label>⚽ رابط API جدول المباريات (Matches API Base URL):</label>
                     <input type="text" id="stream-matches-url" placeholder="https://bab-elmoshahd.online/api/index.php?path=matches&day=">
@@ -378,21 +528,111 @@
                     <input type="text" id="stream-announcement" placeholder="مثال: تم تحديث باقات قنوات بين سبورت بجودة فائقة 4K">
                 </div>
 
-                <!-- مسار سحب روابط M3U / M3U8 الرئيسي -->
+                <!-- مسار سحب روابط M3U / M3U8 الرئيسي للقنوات -->
                 <div class="form-group" style="grid-column: 1 / -1;">
-                    <label style="color:#00e676; font-weight:bold;">📺 رابط باقة/ملف M3U أو M3U8 الرئيسي السحابي (Path: stream_config/m3u_playlist_url):</label>
+                    <label style="color:#00e676; font-weight:bold;">📺 رابط باقة/ملف M3U أو M3U8 الرئيسي السحابي للقنوات (Path: stream_config/m3u_playlist_url):</label>
                     <input type="text" id="stream-m3u-url" placeholder="مثال: https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U أو أي رابط .m3u / .m3u8">
+                </div>
+
+                <!-- مسار API سحب وتحديث الأفلام -->
+                <div class="form-group">
+                    <label style="color:#e040fb; font-weight:bold;">🎬 رابط API الأفلام السحابي (Path: stream_config/movies_api_url):</label>
+                    <input type="text" id="stream-movies-api-url" placeholder="مثال: https://bab-elmoshahd.online/api/movies.php أو أي رابط JSON سحابي">
+                </div>
+
+                <!-- مسار سحب روابط M3U للأفلام -->
+                <div class="form-group">
+                    <label style="color:#ff4081; font-weight:bold;">🍿 رابط باقة/ملف M3U للأفلام الرئيسي (Path: stream_config/m3u_movies_url):</label>
+                    <input type="text" id="stream-m3u-movies-url" placeholder="مثال: https://domain.com/movies.m3u أو رابط m3u8 للأفلام">
                 </div>
             </div>
 
-            <button class="btn-submit" onclick="saveStreamConfig()">حفظ وتحديث بيانات البث السحابية</button>
+            <button class="btn-submit" onclick="saveStreamConfig()">حفظ وتحديث بيانات البث والخوادم السحابية</button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 📺 تخصيص حساب إكستريم لكل قسم من أقسام المسلسلات (Path: series_categories_accounts) -->
+        <!-- ============================================== -->
+        <div class="admin-panel full-width series-panel">
+            <h3 id="series-cat-panel-title">📺 تخصيص حساب Xtream مخصص لكل قسم مسلسلات (Path: series_categories_accounts)</h3>
+            <p style="font-size:12px; color:#cbd5e1; margin-bottom:14px;">يتيح لك ربط تصنيف/قسم معين في المسلسلات (مثلاً مسلسلات تركية، أجنبية، عربية، أو برقم الـ Category ID) بحساب وخادم إكستريم خاص به يتم التوجيه إليه فوراً.</p>
+            <input type="hidden" id="series-cat-id-key">
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px;">
+                <div class="form-group">
+                    <label>معرّف القسم أو اسم التصنيف (Category ID / Name) *:</label>
+                    <input type="text" id="series-cat-id" placeholder="مثال: 15 أو turkish_series أو مسلسلات رمضان">
+                </div>
+
+                <div class="form-group">
+                    <label>اسم الحساب أو الوصف:</label>
+                    <input type="text" id="series-cat-name" placeholder="مثال: سيرفر مسلسلات VIP 1">
+                </div>
+
+                <div class="form-group">
+                    <label>رابط الخادم (Server Host) *:</label>
+                    <input type="text" id="series-cat-host" placeholder="http://server-domain.com:2082">
+                </div>
+
+                <div class="form-group">
+                    <label>اسم المستخدم (Username) *:</label>
+                    <input type="text" id="series-cat-user" placeholder="username">
+                </div>
+
+                <div class="form-group">
+                    <label>كلمة المرور (Password) *:</label>
+                    <input type="text" id="series-cat-pass" placeholder="password">
+                </div>
+            </div>
+
+            <button class="btn-submit btn-purple" id="btn-save-series-cat" onclick="saveSeriesCategoryAccount()">حفظ وربط حساب القسم في المسلسلات</button>
+            <button class="btn-delete" id="btn-cancel-series-cat" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetSeriesCategoryForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 🎬 تخصيص حساب إكستريم لكل قسم من أقسام الأفلام (Path: vod_categories_accounts) -->
+        <!-- ============================================== -->
+        <div class="admin-panel full-width vod-panel">
+            <h3 id="vod-cat-panel-title">🎬 تخصيص حساب Xtream مخصص لكل قسم أفلام (Path: vod_categories_accounts)</h3>
+            <p style="font-size:12px; color:#cbd5e1; margin-bottom:14px;">يتيح لك ربط تصنيف/قسم معين في الأفلام (مثلاً سينما 4K، أفلام كرتون، وثائقي، أو رقم Category ID) بحساب وخادم إكستريم خاص به.</p>
+            <input type="hidden" id="vod-cat-id-key">
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px;">
+                <div class="form-group">
+                    <label>معرّف القسم أو اسم التصنيف (Category ID / Name) *:</label>
+                    <input type="text" id="vod-cat-id" placeholder="مثال: 22 أو action_movies أو سينما 2024">
+                </div>
+
+                <div class="form-group">
+                    <label>اسم الحساب أو الوصف:</label>
+                    <input type="text" id="vod-cat-name" placeholder="مثال: سيرفر أفلام 4K VIP">
+                </div>
+
+                <div class="form-group">
+                    <label>رابط الخادم (Server Host) *:</label>
+                    <input type="text" id="vod-cat-host" placeholder="http://vod-server.com:2082">
+                </div>
+
+                <div class="form-group">
+                    <label>اسم المستخدم (Username) *:</label>
+                    <input type="text" id="vod-cat-user" placeholder="username">
+                </div>
+
+                <div class="form-group">
+                    <label>كلمة المرور (Password) *:</label>
+                    <input type="text" id="vod-cat-pass" placeholder="password">
+                </div>
+            </div>
+
+            <button class="btn-submit btn-pink" id="btn-save-vod-cat" onclick="saveVodCategoryAccount()">حفظ وربط حساب القسم في الأفلام</button>
+            <button class="btn-delete" id="btn-cancel-vod-cat" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetVodCategoryForm()">إلغاء التعديل</button>
         </div>
 
         <!-- ============================================== -->
         <!-- 📋 إدارة وسحب باقات M3U و M3U8 السحابية (Path: m3u_playlists) -->
         <!-- ============================================== -->
         <div class="admin-panel full-width m3u-panel">
-            <h3 id="m3u-panel-title">📋 إدارة وسحب باقات وروابط M3U / M3U8 المتعددة (Path: m3u_playlists)</h3>
+            <h3 id="m3u-panel-title">📋 إدارة وسحب باقات وروابط M3U / M3U8 للقنوات (Path: m3u_playlists)</h3>
             <p style="font-size:12px; color:#94a3b8; margin-bottom:14px;">يقوم التطبيق بسحب جميع القنوات والتصنيفات تلقائياً من هذه الروابط وعرضها في باقة البث المباشر مع دعم التحديث التلقائي.</p>
             <input type="hidden" id="m3u-id">
 
@@ -418,6 +658,116 @@
 
             <button class="btn-submit btn-green" id="btn-save-m3u" onclick="saveM3uPlaylist()">حفظ باقة M3U ونشرها للمستخدمين فورياً</button>
             <button class="btn-delete" id="btn-cancel-m3u" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetM3uForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 🍿 إدارة وسحب باقات وقوائم M3U للأفلام (Path: m3u_movies_playlists) -->
+        <!-- ============================================== -->
+        <div class="admin-panel full-width m3u-movies-panel">
+            <h3 id="m3u-movies-panel-title">🍿 إدارة وسحب باقات وروابط M3U / M3U8 للأفلام (Path: m3u_movies_playlists)</h3>
+            <p style="font-size:12px; color:#94a3b8; margin-bottom:14px;">يقوم التطبيق بسحب جميع الأفلام والتصنيفات تلقائياً من هذه الروابط وعرضها في تبويب الترفيه والأفلام.</p>
+            <input type="hidden" id="m3u-movies-id">
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <div class="form-group">
+                    <label>اسم باقة أو قائمة الأفلام *:</label>
+                    <input type="text" id="m3u-movies-title" placeholder="مثال: مكتبة أفلام نتفلكس وسينما 2024">
+                </div>
+
+                <div class="form-group">
+                    <label>رابط ملف M3U أو بث M3U8 للأفلام *:</label>
+                    <input type="text" id="m3u-movies-url" placeholder="https://domain.com/movies_list.m3u">
+                </div>
+
+                <div class="form-group">
+                    <label>حالة الباقة:</label>
+                    <select id="m3u-movies-status">
+                        <option value="true">✅ مفعلة (تسحب الأفلام وتظهر بالتطبيق فوراً)</option>
+                        <option value="false">❌ معطلة مؤقتاً</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-submit" style="background: linear-gradient(135deg, #c2185b, #ff4081); box-shadow: 0 4px 15px rgba(255, 64, 129, 0.35);" id="btn-save-m3u-movies" onclick="saveM3uMoviesPlaylist()">حفظ باقة أفلام M3U ونشرها للمستخدمين فورياً</button>
+            <button class="btn-delete" id="btn-cancel-m3u-movies" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetM3uMoviesForm()">إلغاء التعديل</button>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- 🎬 إضافة وإدارة الأفلام السينمائية السحابية (Path: movies) -->
+        <!-- ============================================== -->
+        <div class="admin-panel full-width movies-panel">
+            <h3 id="movie-panel-title">🎬 إضافة وإدارة الأفلام السينمائية المباشرة (Path: movies)</h3>
+            <p style="font-size:12px; color:#94a3b8; margin-bottom:14px;">إضافة أفلام سينمائية مباشرة بتفاصيلها وسيرفرات متعددة (سيرفر 1، سيرفر 2، m3u8) لتظهر فورياً في واجهة التطبيق وتبويب الترفيه والأفلام.</p>
+            <input type="hidden" id="movie-id">
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <div class="form-group">
+                    <label>عنوان أو اسم الفيلم *:</label>
+                    <input type="text" id="movie-title" placeholder="مثال: أوبنهايمر (Oppenheimer)">
+                </div>
+
+                <div class="form-group">
+                    <label>تصنيف الفيلم / النوع *:</label>
+                    <input type="text" id="movie-genre" placeholder="مثال: أكشن • دراما • سيرة ذاتية">
+                </div>
+
+                <div class="form-group">
+                    <label>سنة الإنتاج:</label>
+                    <input type="text" id="movie-year" placeholder="2024">
+                </div>
+
+                <div class="form-group">
+                    <label>تقييم الفيلم:</label>
+                    <input type="text" id="movie-rating" placeholder="8.9">
+                </div>
+
+                <div class="form-group">
+                    <label>رابط بوستر الفيلم (Poster URL) *:</label>
+                    <input type="text" id="movie-poster" placeholder="https://image.tmdb.org/... أو رابط صورة البوستر">
+                </div>
+
+                <div class="form-group">
+                    <label>رابط خلفية الفيلم (Backdrop URL اختياري):</label>
+                    <input type="text" id="movie-backdrop" placeholder="https://... رابط صورة عريضة">
+                </div>
+
+                <div class="form-group">
+                    <label>مدة الفيلم:</label>
+                    <input type="text" id="movie-duration" placeholder="125 دقيقة">
+                </div>
+
+                <div class="form-group">
+                    <label>عرض في قائمة التوب 10 المميزة (Top Rank):</label>
+                    <select id="movie-is-top">
+                        <option value="false">عادي</option>
+                        <option value="true">⭐ مميز (Top Movies)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>قصة الفيلم (Story / Overview):</label>
+                <textarea id="movie-story" rows="2" placeholder="نبذة مختصرة عن قصة الفيلم وأحداثه..."></textarea>
+            </div>
+
+            <label style="font-size:12px; margin-bottom:5px; color:#e040fb; font-weight:bold; display:block;">سيرفرات تشغيل الفيلم (m3u8 أو mp4):</label>
+            <div class="servers-grid">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>سيرفر 1 (الرئيسي m3u8/mp4) *:</label>
+                    <input type="text" id="movie-server1" placeholder="https://domain.com/movie.m3u8">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>سيرفر 2 (احتياطي سريع):</label>
+                    <input type="text" id="movie-server2" placeholder="https://backup.com/movie.mp4">
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label>سيرفر 3 (جودة متوسطة):</label>
+                    <input type="text" id="movie-server3" placeholder="https://server3.com/movie.m3u8">
+                </div>
+            </div>
+
+            <button class="btn-submit" style="background: linear-gradient(135deg, #7b1fa2, #e040fb); box-shadow: 0 4px 15px rgba(224, 64, 251, 0.35);" id="btn-save-movie" onclick="saveMovie()">حفظ الفيلم ونشره في التطبيق فورياً</button>
+            <button class="btn-delete" id="btn-cancel-movie" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetMovieForm()">إلغاء التعديل</button>
         </div>
 
         <!-- ======================================================= -->
@@ -665,8 +1015,20 @@
     <!-- ========================= -->
     <!-- المعاينة المباشرة للعناصر -->
     <!-- ========================= -->
-    <div class="section-title">📋 باقات وروابط M3U و M3U8 المضافة في التطبيق (M3U Playlists)</div>
+    <div class="section-title" style="color: #b388ff; border-color: rgba(179, 136, 255, 0.3);">📺 حسابات Xtream المخصصة لأقسام المسلسلات (Path: series_categories_accounts)</div>
+    <div id="series-categories-accounts-container" class="accounts-grid"></div>
+
+    <div class="section-title" style="color: #ff80ab; border-color: rgba(255, 128, 171, 0.3);">🎬 حسابات Xtream المخصصة لأقسام الأفلام (Path: vod_categories_accounts)</div>
+    <div id="vod-categories-accounts-container" class="accounts-grid"></div>
+
+    <div class="section-title">📋 باقات وروابط M3U و M3U8 للقنوات (M3U Playlists)</div>
     <div id="m3u-playlists-container" class="news-grid"></div>
+
+    <div class="section-title" style="color: #ff4081; border-color: rgba(255, 64, 129, 0.3);">🍿 باقات وقوائم M3U للأفلام (Path: m3u_movies_playlists)</div>
+    <div id="m3u-movies-playlists-container" class="news-grid"></div>
+
+    <div class="section-title" style="color: #e040fb; border-color: rgba(224, 64, 251, 0.3);">🎬 الأفلام السينمائية السحابية المضافة (Path: movies)</div>
+    <div id="movies-container" class="movies-grid"></div>
 
     <div class="section-title">🔔 سجل إشعارات البث في الخلفية (Broadcast Push Notifications)</div>
     <div id="broadcast-notifications-container" class="notifs-grid"></div>
@@ -700,7 +1062,11 @@
 
         const database = firebase.database();
         const streamConfigRef = database.ref('stream_config');
+        const seriesCatAccountsRef = database.ref('series_categories_accounts');
+        const vodCatAccountsRef = database.ref('vod_categories_accounts');
         const m3uPlaylistsRef = database.ref('m3u_playlists');
+        const m3uMoviesPlaylistsRef = database.ref('m3u_movies_playlists');
+        const moviesRef = database.ref('movies');
         const broadcastNotifsRef = database.ref('broadcast_notifications');
         const channelsRef = database.ref('channels');
         const matchesRef = database.ref('matches');
@@ -713,23 +1079,42 @@
         }
 
         /* =========================================
-           1. حفظ بيانات سيرفر البث ورابط M3U الرئيسي (stream_config)
+           1. حفظ بيانات سيرفر البث ورابط M3U والسيرفرات المخصصة (stream_config)
         ========================================= */
         function saveStreamConfig() {
             const data = {
-                server_host: document.getElementById('stream-server-host').value.trim(),
-                username: document.getElementById('stream-username').value.trim(),
-                password: document.getElementById('stream-password').value.trim(),
+                // الحساب الرئيسي العام
+                server_host: document.getElementById('stream-server-host').value.trim() || 'http://cliccck52258.club:2082',
+                username: document.getElementById('stream-username').value.trim() || 'khaledsliman',
+                password: document.getElementById('stream-password').value.trim() || '755246419856',
+
+                // حساب وسيرفر المسلسلات المخصص
+                series_server_host: document.getElementById('stream-series-host').value.trim() || document.getElementById('stream-server-host').value.trim(),
+                series_username: document.getElementById('stream-series-username').value.trim() || document.getElementById('stream-username').value.trim(),
+                series_password: document.getElementById('stream-series-password').value.trim() || document.getElementById('stream-password').value.trim(),
+
+                // حساب وسيرفر الأفلام المخصص
+                vod_server_host: document.getElementById('stream-vod-host').value.trim() || document.getElementById('stream-server-host').value.trim(),
+                movies_server_host: document.getElementById('stream-vod-host').value.trim() || document.getElementById('stream-server-host').value.trim(),
+                vod_username: document.getElementById('stream-vod-username').value.trim() || document.getElementById('stream-username').value.trim(),
+                movies_username: document.getElementById('stream-vod-username').value.trim() || document.getElementById('stream-username').value.trim(),
+                vod_password: document.getElementById('stream-vod-password').value.trim() || document.getElementById('stream-password').value.trim(),
+                movies_password: document.getElementById('stream-vod-password').value.trim() || document.getElementById('stream-password').value.trim(),
+
                 matches_api_url: document.getElementById('stream-matches-url').value.trim() || "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
                 telegram_link: document.getElementById('stream-telegram-link').value.trim() || "https://t.me/sarib_tv",
                 announcement: document.getElementById('stream-announcement').value.trim(),
                 m3u_playlist_url: document.getElementById('stream-m3u-url').value.trim() || "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
                 m3u_url: document.getElementById('stream-m3u-url').value.trim() || "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
+                movies_api_url: document.getElementById('stream-movies-api-url').value.trim(),
+                movies_api: document.getElementById('stream-movies-api-url').value.trim(),
+                m3u_movies_url: document.getElementById('stream-m3u-movies-url').value.trim(),
+                movies_m3u_url: document.getElementById('stream-m3u-movies-url').value.trim(),
                 updatedAt: Date.now()
             };
 
             streamConfigRef.set(data).then(() => {
-                alert('✅ تم حفظ وتحديث بيانات البث ورابط M3U للمستخدمين بنجاح!');
+                alert('✅ تم حفظ وتحديث بيانات البث والخوادم المخصصة وروابط M3U بنجاح!');
             }).catch(err => alert('خطأ: ' + err.message));
         }
 
@@ -739,11 +1124,216 @@
                 document.getElementById('stream-server-host').value = d.server_host || 'http://cliccck52258.club:2082';
                 document.getElementById('stream-username').value = d.username || 'khaledsliman';
                 document.getElementById('stream-password').value = d.password || '755246419856';
+
+                document.getElementById('stream-series-host').value = d.series_server_host || d.server_host || 'http://cliccck52258.club:2082';
+                document.getElementById('stream-series-username').value = d.series_username || d.username || 'khaledsliman';
+                document.getElementById('stream-series-password').value = d.series_password || d.password || '755246419856';
+
+                document.getElementById('stream-vod-host').value = d.vod_server_host || d.movies_server_host || d.server_host || 'http://cliccck52258.club:2082';
+                document.getElementById('stream-vod-username').value = d.vod_username || d.movies_username || d.username || 'khaledsliman';
+                document.getElementById('stream-vod-password').value = d.vod_password || d.movies_password || d.password || '755246419856';
+
                 document.getElementById('stream-matches-url').value = d.matches_api_url || 'https://bab-elmoshahd.online/api/index.php?path=matches&day=';
                 document.getElementById('stream-telegram-link').value = d.telegram_link || 'https://t.me/sarib_tv';
                 document.getElementById('stream-announcement').value = d.announcement || '';
                 document.getElementById('stream-m3u-url').value = d.m3u_playlist_url || d.m3u_url || 'https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U';
+                document.getElementById('stream-movies-api-url').value = d.movies_api_url || d.movies_api || '';
+                document.getElementById('stream-m3u-movies-url').value = d.m3u_movies_url || d.movies_m3u_url || '';
             }
+        });
+
+        /* =========================================
+           1.1 إدارة وتخصيص حسابات أقسام المسلسلات (Path: series_categories_accounts)
+        ========================================= */
+        function saveSeriesCategoryAccount() {
+            const catIdInput = document.getElementById('series-cat-id').value.trim();
+            const host = document.getElementById('series-cat-host').value.trim();
+            const user = document.getElementById('series-cat-user').value.trim();
+            const pass = document.getElementById('series-cat-pass').value.trim();
+            const name = document.getElementById('series-cat-name').value.trim() || ('حساب مسلسلات ' + catIdInput);
+
+            if (!catIdInput) {
+                alert('يرجى كتابة معرّف أو اسم قسم المسلسلات (Category ID)');
+                return;
+            }
+            if (!host || !user || !pass) {
+                alert('يرجى إدخال بيانات السيرفر، اليوزر والباسورد');
+                return;
+            }
+
+            const safeKey = catIdInput.replace(/[\.\#\$\/\[\]]/g, '_');
+
+            const payload = {
+                categoryId: catIdInput,
+                name: name,
+                server_host: host,
+                host: host,
+                username: user,
+                user: user,
+                password: pass,
+                pass: pass,
+                updatedAt: Date.now()
+            };
+
+            seriesCatAccountsRef.child(safeKey).set(payload).then(() => {
+                alert('✅ تم حفظ وتخصيص حساب Xtream لقسم المسلسلات [' + catIdInput + '] بنجاح!');
+                resetSeriesCategoryForm();
+            }).catch(err => alert('خطأ: ' + err.message));
+        }
+
+        function editSeriesCategoryAccount(key, item) {
+            document.getElementById('series-cat-id-key').value = key;
+            document.getElementById('series-cat-id').value = item.categoryId || key;
+            document.getElementById('series-cat-name').value = item.name || '';
+            document.getElementById('series-cat-host').value = item.server_host || item.host || '';
+            document.getElementById('series-cat-user').value = item.username || item.user || '';
+            document.getElementById('series-cat-pass').value = item.password || item.pass || '';
+
+            document.getElementById('series-cat-panel-title').innerText = 'تعديل حساب قسم المسلسلات: ' + (item.categoryId || key);
+            document.getElementById('btn-save-series-cat').innerText = 'تحديث حساب القسم';
+            document.getElementById('btn-cancel-series-cat').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetSeriesCategoryForm() {
+            document.getElementById('series-cat-id-key').value = '';
+            document.getElementById('series-cat-id').value = '';
+            document.getElementById('series-cat-name').value = '';
+            document.getElementById('series-cat-host').value = '';
+            document.getElementById('series-cat-user').value = '';
+            document.getElementById('series-cat-pass').value = '';
+
+            document.getElementById('series-cat-panel-title').innerText = '📺 تخصيص حساب Xtream مخصص لكل قسم مسلسلات (Path: series_categories_accounts)';
+            document.getElementById('btn-save-series-cat').innerText = 'حفظ وربط حساب القسم في المسلسلات';
+            document.getElementById('btn-cancel-series-cat').style.display = 'none';
+        }
+
+        seriesCatAccountsRef.on('value', (snap) => {
+            const el = document.getElementById('series-categories-accounts-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) {
+                el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد حسابات مخصصة لأقسام المسلسلات حالياً. الحساب الافتراضي يعمل لجميع الأقسام.</div>';
+                return;
+            }
+            Object.keys(data).forEach((key) => {
+                const item = data[key];
+                const card = document.createElement('div');
+                card.className = 'account-card series-acc';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:12px; color:#b388ff; font-weight:bold;">📺 قسم: ${escapeHtml(item.categoryId || key)}</span>
+                        <span style="font-size:10px; color:#94a3b8;">Path: series_categories_accounts/${key}</span>
+                    </div>
+                    <div style="font-size:15px; font-weight:bold; margin-bottom:6px; color:#fff;">${escapeHtml(item.name || 'حساب مخصص')}</div>
+                    <div style="font-size:11px; color:#b388ff; background:#060a12; padding:8px; border-radius:8px; margin-bottom:6px; word-break:break-all;">🌐 الخادم: ${escapeHtml(item.server_host || item.host || '')}</div>
+                    <div style="font-size:11px; color:#cbd5e1; background:#060a12; padding:8px; border-radius:8px; margin-bottom:8px;">
+                        👤 يوزر: <b>${escapeHtml(item.username || item.user || '')}</b> | 🔑 باسورد: <b>${escapeHtml(item.password || item.pass || '')}</b>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick='editSeriesCategoryAccount("${key}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>تعديل</button>
+                        <button class="btn-delete" onclick='if(confirm("حذف حساب هذا القسم؟ سيعود القسم لاستخدام السيرفر الرئيسي")) seriesCatAccountsRef.child("${key}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        /* =========================================
+           1.2 إدارة وتخصيص حسابات أقسام الأفلام (Path: vod_categories_accounts)
+        ========================================= */
+        function saveVodCategoryAccount() {
+            const catIdInput = document.getElementById('vod-cat-id').value.trim();
+            const host = document.getElementById('vod-cat-host').value.trim();
+            const user = document.getElementById('vod-cat-user').value.trim();
+            const pass = document.getElementById('vod-cat-pass').value.trim();
+            const name = document.getElementById('vod-cat-name').value.trim() || ('حساب أفلام ' + catIdInput);
+
+            if (!catIdInput) {
+                alert('يرجى كتابة معرّف أو اسم قسم الأفلام (Category ID)');
+                return;
+            }
+            if (!host || !user || !pass) {
+                alert('يرجى إدخال بيانات السيرفر، اليوزر والباسورد');
+                return;
+            }
+
+            const safeKey = catIdInput.replace(/[\.\#\$\/\[\]]/g, '_');
+
+            const payload = {
+                categoryId: catIdInput,
+                name: name,
+                server_host: host,
+                host: host,
+                username: user,
+                user: user,
+                password: pass,
+                pass: pass,
+                updatedAt: Date.now()
+            };
+
+            vodCatAccountsRef.child(safeKey).set(payload).then(() => {
+                alert('✅ تم حفظ وتخصيص حساب Xtream لقسم الأفلام [' + catIdInput + '] بنجاح!');
+                resetVodCategoryForm();
+            }).catch(err => alert('خطأ: ' + err.message));
+        }
+
+        function editVodCategoryAccount(key, item) {
+            document.getElementById('vod-cat-id-key').value = key;
+            document.getElementById('vod-cat-id').value = item.categoryId || key;
+            document.getElementById('vod-cat-name').value = item.name || '';
+            document.getElementById('vod-cat-host').value = item.server_host || item.host || '';
+            document.getElementById('vod-cat-user').value = item.username || item.user || '';
+            document.getElementById('vod-cat-pass').value = item.password || item.pass || '';
+
+            document.getElementById('vod-cat-panel-title').innerText = 'تعديل حساب قسم الأفلام: ' + (item.categoryId || key);
+            document.getElementById('btn-save-vod-cat').innerText = 'تحديث حساب القسم';
+            document.getElementById('btn-cancel-vod-cat').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetVodCategoryForm() {
+            document.getElementById('vod-cat-id-key').value = '';
+            document.getElementById('vod-cat-id').value = '';
+            document.getElementById('vod-cat-name').value = '';
+            document.getElementById('vod-cat-host').value = '';
+            document.getElementById('vod-cat-user').value = '';
+            document.getElementById('vod-cat-pass').value = '';
+
+            document.getElementById('vod-cat-panel-title').innerText = '🎬 تخصيص حساب Xtream مخصص لكل قسم أفلام (Path: vod_categories_accounts)';
+            document.getElementById('btn-save-vod-cat').innerText = 'حفظ وربط حساب القسم في الأفلام';
+            document.getElementById('btn-cancel-vod-cat').style.display = 'none';
+        }
+
+        vodCatAccountsRef.on('value', (snap) => {
+            const el = document.getElementById('vod-categories-accounts-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) {
+                el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد حسابات مخصصة لأقسام الأفلام حالياً. الحساب الافتراضي يعمل لجميع الأقسام.</div>';
+                return;
+            }
+            Object.keys(data).forEach((key) => {
+                const item = data[key];
+                const card = document.createElement('div');
+                card.className = 'account-card vod-acc';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:12px; color:#ff80ab; font-weight:bold;">🎬 قسم: ${escapeHtml(item.categoryId || key)}</span>
+                        <span style="font-size:10px; color:#94a3b8;">Path: vod_categories_accounts/${key}</span>
+                    </div>
+                    <div style="font-size:15px; font-weight:bold; margin-bottom:6px; color:#fff;">${escapeHtml(item.name || 'حساب مخصص')}</div>
+                    <div style="font-size:11px; color:#ff80ab; background:#060a12; padding:8px; border-radius:8px; margin-bottom:6px; word-break:break-all;">🌐 الخادم: ${escapeHtml(item.server_host || item.host || '')}</div>
+                    <div style="font-size:11px; color:#cbd5e1; background:#060a12; padding:8px; border-radius:8px; margin-bottom:8px;">
+                        👤 يوزر: <b>${escapeHtml(item.username || item.user || '')}</b> | 🔑 باسورد: <b>${escapeHtml(item.password || item.pass || '')}</b>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick='editVodCategoryAccount("${key}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>تعديل</button>
+                        <button class="btn-delete" onclick='if(confirm("حذف حساب هذا القسم؟ سيعود القسم لاستخدام السيرفر الرئيسي")) vodCatAccountsRef.child("${key}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
         });
 
         /* =========================================
@@ -793,7 +1383,7 @@
             document.getElementById('m3u-title').value = '';
             document.getElementById('m3u-url').value = '';
             document.getElementById('m3u-status').value = 'true';
-            document.getElementById('m3u-panel-title').innerText = '📋 إدارة وسحب باقات وروابط M3U / M3U8 المتعددة (Path: m3u_playlists)';
+            document.getElementById('m3u-panel-title').innerText = '📋 إدارة وسحب باقات وروابط M3U / M3U8 للقنوات (Path: m3u_playlists)';
             document.getElementById('btn-save-m3u').innerText = 'حفظ باقة M3U ونشرها للمستخدمين فورياً';
             document.getElementById('btn-cancel-m3u').style.display = 'none';
         }
@@ -822,6 +1412,235 @@
                     <div class="card-actions">
                         <button class="btn-edit" onclick='editM3u("${key}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>تعديل</button>
                         <button class="btn-delete" onclick='if(confirm("حذف هذه الباقة؟")) m3uPlaylistsRef.child("${key}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        /* =========================================
+           2.1 إدارة وسحب باقات وروابط M3U للأفلام (Path: m3u_movies_playlists)
+        ========================================= */
+        function saveM3uMoviesPlaylist() {
+            const id = document.getElementById('m3u-movies-id').value;
+            const title = document.getElementById('m3u-movies-title').value.trim();
+            const url = document.getElementById('m3u-movies-url').value.trim();
+            const enabled = document.getElementById('m3u-movies-status').value === 'true';
+
+            if (!title || !url) {
+                alert('يرجى كتابة اسم باقة الأفلام ورابط M3U أو M3U8 الخاص بها');
+                return;
+            }
+
+            const payload = {
+                name: title,
+                title: title,
+                url: url,
+                playlist_url: url,
+                enabled: enabled,
+                isEnabled: enabled,
+                updatedAt: Date.now()
+            };
+
+            const ref = id ? m3uMoviesPlaylistsRef.child(id).update(payload) : m3uMoviesPlaylistsRef.push(payload);
+            ref.then(() => {
+                alert('✅ تم حفظ باقة أفلام M3U بنجاح! سيتم سحب الأفلام وتصنيفاتها فورياً في التطبيق.');
+                resetM3uMoviesForm();
+            }).catch(err => alert('خطأ: ' + err.message));
+        }
+
+        function editM3uMovies(key, item) {
+            document.getElementById('m3u-movies-id').value = key;
+            document.getElementById('m3u-movies-title').value = item.name || item.title || '';
+            document.getElementById('m3u-movies-url').value = item.url || item.playlist_url || '';
+            document.getElementById('m3u-movies-status').value = (item.enabled !== false && item.isEnabled !== false) ? 'true' : 'false';
+            document.getElementById('m3u-movies-panel-title').innerText = 'تعديل باقة أفلام M3U / M3U8';
+            document.getElementById('btn-save-m3u-movies').innerText = 'تحديث باقة الأفلام';
+            document.getElementById('btn-cancel-m3u-movies').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetM3uMoviesForm() {
+            document.getElementById('m3u-movies-id').value = '';
+            document.getElementById('m3u-movies-title').value = '';
+            document.getElementById('m3u-movies-url').value = '';
+            document.getElementById('m3u-movies-status').value = 'true';
+            document.getElementById('m3u-movies-panel-title').innerText = '🍿 إدارة وسحب باقات وروابط M3U / M3U8 للأفلام (Path: m3u_movies_playlists)';
+            document.getElementById('btn-save-m3u-movies').innerText = 'حفظ باقة أفلام M3U ونشرها للمستخدمين فورياً';
+            document.getElementById('btn-cancel-m3u-movies').style.display = 'none';
+        }
+
+        m3uMoviesPlaylistsRef.on('value', (snap) => {
+            const el = document.getElementById('m3u-movies-playlists-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) {
+                el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد باقات أفلام M3U مضافة حالياً.</div>';
+                return;
+            }
+            Object.keys(data).forEach((key) => {
+                const item = data[key];
+                const isAct = item.enabled !== false && item.isEnabled !== false;
+                const card = document.createElement('div');
+                card.className = 'notif-card m3u-movies-card';
+                card.style.borderRightColor = isAct ? '#ff4081' : '#ff5252';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <span style="font-size:11px; color:${isAct ? '#ff4081' : '#ff5252'}; font-weight:bold;">${isAct ? '✅ نشطة وتسحب الأفلام' : '❌ معطلة'}</span>
+                        <span style="font-size:10px; color:#94a3b8;">Path: m3u_movies_playlists/${key}</span>
+                    </div>
+                    <div style="font-size:15px; font-weight:bold; margin-bottom:6px; color:#fff;">🍿 ${escapeHtml(item.name || item.title || 'باقة أفلام')}</div>
+                    <div style="font-size:11px; color:#ff4081; background:#060a12; padding:8px; border-radius:8px; word-break:break-all; margin-bottom:8px; font-family:monospace;">${escapeHtml(item.url || item.playlist_url || '')}</div>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick='editM3uMovies("${key}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>تعديل</button>
+                        <button class="btn-delete" onclick='if(confirm("حذف هذه الباقة؟")) m3uMoviesPlaylistsRef.child("${key}").remove()'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
+        });
+
+        /* =========================================
+           2.2 إضافة وإدارة الأفلام المباشرة (Path: movies)
+        ========================================= */
+        function saveMovie() {
+            const id = document.getElementById('movie-id').value;
+            const title = document.getElementById('movie-title').value.trim();
+            const genre = document.getElementById('movie-genre').value.trim() || 'أفلام سينما';
+            const year = document.getElementById('movie-year').value.trim() || '2024';
+            const rating = document.getElementById('movie-rating').value.trim() || '8.8';
+            const poster = document.getElementById('movie-poster').value.trim();
+            const backdrop = document.getElementById('movie-backdrop').value.trim() || poster;
+            const duration = document.getElementById('movie-duration').value.trim() || '120 دقيقة';
+            const isTop = document.getElementById('movie-is-top').value === 'true';
+            const story = document.getElementById('movie-story').value.trim() || 'فيلم متاح عبر البث السحابي عالي الدقة';
+
+            const s1 = document.getElementById('movie-server1').value.trim();
+            const s2 = document.getElementById('movie-server2').value.trim();
+            const s3 = document.getElementById('movie-server3').value.trim();
+
+            if (!title) {
+                alert('يرجى إدخال اسم الفيلم');
+                return;
+            }
+            if (!poster) {
+                alert('يرجى إدخال رابط بوستر الفيلم');
+                return;
+            }
+            if (!s1 && !s2 && !s3) {
+                alert('يرجى إدخال سيرفر تشغيل واحد على الأقل للفيلم (رابط m3u8 أو mp4)');
+                return;
+            }
+
+            const moviePayload = {
+                title: title,
+                name: title,
+                genre: genre,
+                category: genre,
+                categoryName: genre,
+                year: year,
+                rating: rating,
+                movieRating: rating,
+                poster: poster,
+                posterUrl: poster,
+                image: poster,
+                logo: poster,
+                backdrop: backdrop,
+                backdropUrl: backdrop,
+                duration: duration,
+                story: story,
+                description: story,
+                is_top: isTop,
+                isTop: isTop,
+                server1: s1,
+                server2: s2,
+                server3: s3,
+                url: s1 || s2 || s3,
+                streamUrl: s1 || s2 || s3,
+                m3u8: s1 || s2 || s3,
+                updatedAt: Date.now()
+            };
+
+            const ref = id ? moviesRef.child(id).update(moviePayload) : moviesRef.push(moviePayload);
+            ref.then(() => {
+                alert('✅ تم حفظ الفيلم بنجاح ونشره في التطبيق!');
+                resetMovieForm();
+            }).catch(err => alert('خطأ: ' + err.message));
+        }
+
+        function editMovie(key, item) {
+            document.getElementById('movie-id').value = key;
+            document.getElementById('movie-title').value = item.title || item.name || '';
+            document.getElementById('movie-genre').value = item.genre || item.category || item.categoryName || '';
+            document.getElementById('movie-year').value = item.year || '2024';
+            document.getElementById('movie-rating').value = item.rating || item.movieRating || '8.8';
+            document.getElementById('movie-poster').value = item.poster || item.posterUrl || item.image || item.logo || '';
+            document.getElementById('movie-backdrop').value = item.backdrop || item.backdropUrl || '';
+            document.getElementById('movie-duration').value = item.duration || '120 دقيقة';
+            document.getElementById('movie-is-top').value = (item.is_top === true || item.isTop === true) ? 'true' : 'false';
+            document.getElementById('movie-story').value = item.story || item.description || '';
+            document.getElementById('movie-server1').value = item.server1 || item.url || item.streamUrl || '';
+            document.getElementById('movie-server2').value = item.server2 || '';
+            document.getElementById('movie-server3').value = item.server3 || '';
+
+            document.getElementById('movie-panel-title').innerText = 'تعديل بيانات الفيلم';
+            document.getElementById('btn-save-movie').innerText = 'تحديث الفيلم';
+            document.getElementById('btn-cancel-movie').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetMovieForm() {
+            document.getElementById('movie-id').value = '';
+            document.getElementById('movie-title').value = '';
+            document.getElementById('movie-genre').value = '';
+            document.getElementById('movie-year').value = '';
+            document.getElementById('movie-rating').value = '';
+            document.getElementById('movie-poster').value = '';
+            document.getElementById('movie-backdrop').value = '';
+            document.getElementById('movie-duration').value = '';
+            document.getElementById('movie-is-top').value = 'false';
+            document.getElementById('movie-story').value = '';
+            document.getElementById('movie-server1').value = '';
+            document.getElementById('movie-server2').value = '';
+            document.getElementById('movie-server3').value = '';
+
+            document.getElementById('movie-panel-title').innerText = '🎬 إضافة وإدارة الأفلام السينمائية المباشرة (Path: movies)';
+            document.getElementById('btn-save-movie').innerText = 'حفظ الفيلم ونشره في التطبيق فورياً';
+            document.getElementById('btn-cancel-movie').style.display = 'none';
+        }
+
+        function deleteMovie(key) {
+            if (confirm('هل أنت متأكد من حذف هذا الفيلم؟')) {
+                moviesRef.child(key).remove().then(() => {
+                    alert('تم حذف الفيلم بنجاح');
+                }).catch(err => alert('خطأ: ' + err.message));
+            }
+        }
+
+        moviesRef.on('value', (snap) => {
+            const el = document.getElementById('movies-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) {
+                el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد أفلام مباشرة مضافة حالياً. يمكنك إضافة أفلامك لتظهر فوراً في تبويب الترفيه.</div>';
+                return;
+            }
+            Object.keys(data).forEach((key) => {
+                const m = data[key];
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                const poster = m.poster || m.posterUrl || m.image || m.logo || 'https://via.placeholder.com/200x300?text=No+Poster';
+                const isTop = m.is_top === true || m.isTop === true;
+                card.innerHTML = `
+                    ${isTop ? '<span class="movie-top-badge">⭐ مميز TOP</span>' : ''}
+                    <img src="${escapeHtml(poster)}" onerror="this.src='https://via.placeholder.com/200x300?text=Poster+Error'">
+                    <div style="font-size:15px; font-weight:bold; color:#fff; margin-bottom:4px;">${escapeHtml(m.title || m.name || 'فيلم سينمائي')}</div>
+                    <div style="font-size:12px; color:#e040fb; font-weight:600; margin-bottom:6px;">${escapeHtml(m.genre || m.category || 'سينما')} • ${escapeHtml(m.year || '2024')} • ⭐ ${escapeHtml(m.rating || '8.8')}</div>
+                    <div style="font-size:11px; color:#94a3b8; line-height:1.4; margin-bottom:10px; max-height:45px; overflow:hidden;">${escapeHtml(m.story || m.description || '')}</div>
+                    <div style="font-size:10px; color:#00d2ff; background:#060a12; padding:6px; border-radius:6px; margin-bottom:8px; word-break:break-all;">سيرفر: ${escapeHtml(m.server1 || m.url || m.streamUrl || 'غير محدد')}</div>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick='editMovie("${key}", ${JSON.stringify(m).replace(/'/g, "&apos;")})'>تعديل</button>
+                        <button class="btn-delete" onclick='deleteMovie("${key}")'>حذف</button>
                     </div>
                 `;
                 el.appendChild(card);

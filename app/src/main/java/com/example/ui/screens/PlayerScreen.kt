@@ -284,7 +284,7 @@ fun PlayerScreen(
                         .setReadTimeoutMs(20000)
                     StreamUrlParser.configureHttpDataSource(httpDataSourceFactory, parsed)
 
-                    val mediaSourceFactory = DefaultMediaSourceFactory(httpDataSourceFactory)
+                    val mediaSourceFactory = DefaultMediaSourceFactory(httpDataSourceFactory, StreamUrlParser.createExtractorsFactory())
                     val drmManager = StreamUrlParser.createDrmSessionManager(parsed)
                     if (drmManager != null) {
                         mediaSourceFactory.setDrmSessionManagerProvider { drmManager }
@@ -328,7 +328,7 @@ fun PlayerScreen(
                         .setConnectTimeoutMs(15000)
                         .setReadTimeoutMs(15000)
                     StreamUrlParser.configureHttpDataSource(httpFactory, parsed)
-                    val msFactory = DefaultMediaSourceFactory(httpFactory)
+                    val msFactory = DefaultMediaSourceFactory(httpFactory, StreamUrlParser.createExtractorsFactory())
                     val drm = StreamUrlParser.createDrmSessionManager(parsed)
                     if (drm != null) msFactory.setDrmSessionManagerProvider { drm }
                     val mb = MediaItem.Builder().setUri(Uri.parse(parsed.cleanUrl))

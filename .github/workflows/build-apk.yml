@@ -14,72 +14,67 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Temurin Java 17
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Verify Java environment
-        run: |
-          java -version
-          echo "JAVA_HOME: $JAVA_HOME"
-          JAVA_MAJOR=$(java -version 2>&1 | head -n 1 | awk -F '"' '{print $2}' | awk -F '.' '{print $1}')
-          echo "Detected Java major version: $JAVA_MAJOR"
-          if [ -z "$JAVA_MAJOR" ] || [ "$JAVA_MAJOR" -lt 17 ]; then
-            echo "Error: Active Java major version is lower than 17 or could not be determined."
-            exit 1
-          fi
-          echo "Java 17+ requirement verified successfully."
 
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
 
+      - name: Verify Java environment
+        run: |
+          java -version
+          echo "JAVA_HOME=$JAVA_HOME"
+          JAVA_MAJOR=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' | awk -F '.' '{print $1}')
+          echo "Detected Java major version: $JAVA_MAJOR"
+          if [ -z "$JAVA_MAJOR" ] || [ "$JAVA_MAJOR" -lt 17 ]; then
+            echo "Error: Java major version must be 17 or higher. Found: $JAVA_MAJOR"
+            exit 1
+          fi
+
       - name: Create temporary debug keystore
         run: |
           if [ -f "./debug.keystore" ]; then
-            echo "./debug.keystore already exists."
+            echo "debug.keystore already exists."
           else
-            echo "Generating temporary debug.keystore..."
-            keytool -genkey -v \
+            echo "debug.keystore not found. Generating temporary debug keystore..."
+            keytool -genkeypair \
+              -v \
               -keystore ./debug.keystore \
-              -storepass android \
               -alias androiddebugkey \
-              -keypass android \
-              -dname "CN=Android Debug,O=Android,C=US" \
               -keyalg RSA \
               -keysize 2048 \
-              -validity 10000
+              -validity 10000 \
+              -storepass android \
+              -keypass android \
+              -dname "CN=Android Debug,O=Android,C=US"
           fi
-
           if [ ! -f "./debug.keystore" ]; then
-            echo "Error: ./debug.keystore could not be created or does not exist."
+            echo "Error: debug.keystore could not be verified."
             exit 1
           fi
-          echo "Debug keystore verified successfully."
+          echo "debug.keystore is ready."
 
-      - name: Build debug APK
+      - name: Build Debug APK
         run: gradle :app:assembleDebug --stacktrace --no-daemon
 
-      - name: Verify debug APK output
+      - name: Verify Debug APK
         run: |
-          TARGET_APK="app/build/outputs/apk/debug/app-debug.apk"
-          if [ -f "$TARGET_APK" ]; then
-            echo "Target debug APK found at $TARGET_APK"
+          APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
+          if [ -f "$APK_PATH" ]; then
+            echo "Found debug APK at $APK_PATH"
           else
-            echo "Error: $TARGET_APK does not exist."
-            echo "Listing files inside app/build/outputs/apk:"
-            if [ -d "app/build/outputs/apk" ]; then
-              find app/build/outputs/apk -maxdepth 3 -name "*.apk"
-            else
-              echo "Directory app/build/outputs/apk not found."
-            fi
+            echo "Error: Expected debug APK not found at $APK_PATH"
+            echo "Searching inside app/build/outputs/apk for discovered APKs:"
+            find app/build/outputs/apk -name "*.apk" || echo "No APKs found"
             exit 1
           fi
 
-      - name: Upload Debug APK Artifact
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk

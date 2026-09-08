@@ -7,6 +7,9 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.extractor.DefaultExtractorsFactory
+import androidx.media3.extractor.ts.DefaultTsPayloadReaderFactory
+import androidx.media3.extractor.ts.TsExtractor
 import androidx.media3.exoplayer.drm.DefaultDrmSessionManager
 import androidx.media3.exoplayer.drm.DrmSessionManager
 import androidx.media3.exoplayer.drm.FrameworkMediaDrm
@@ -238,32 +241,34 @@ object StreamUrlParser {
         val lower = cleanUrl.lowercase()
         val targetLower = embeddedTargetUrl?.lowercase().orEmpty()
 
+        // Extract path portion without query string to accurately determine file extensions
+        val pathWithoutQuery = cleanUrl.substringBefore('?').substringBefore('#').lowercase()
+        val targetPathWithoutQuery = (embeddedTargetUrl ?: "").substringBefore('?').substringBefore('#').lowercase()
+
+        val isDASH = pathWithoutQuery.endsWith(".mpd") || lower.contains(".mpd") || targetPathWithoutQuery.endsWith(".mpd") || targetLower.contains(".mpd")
+        val isM3u8 = pathWithoutQuery.endsWith(".m3u8") || lower.contains(".m3u8") || targetPathWithoutQuery.endsWith(".m3u8") || targetLower.contains(".m3u8") || lower.contains(".m3u") || targetLower.contains(".m3u")
+        val isTs = pathWithoutQuery.endsWith(".ts") || targetPathWithoutQuery.endsWith(".ts") ||
+                lower.contains(".ts?") || targetLower.contains(".ts?") ||
+                pathWithoutQuery.contains(".ts") || targetPathWithoutQuery.contains(".ts")
+        val isMp4 = pathWithoutQuery.endsWith(".mp4") || targetPathWithoutQuery.endsWith(".mp4") ||
+                lower.contains(".mp4?") || targetLower.contains(".mp4?")
+        val isMkv = pathWithoutQuery.endsWith(".mkv") || targetPathWithoutQuery.endsWith(".mkv")
+        val isWebm = pathWithoutQuery.endsWith(".webm") || targetPathWithoutQuery.endsWith(".webm")
+
         val mimeType = when {
-            // DASH Manifest
-            lower.contains(".mpd") || lower.contains("/dash/") || targetLower.contains(".mpd") -> {
-                MimeTypes.APPLICATION_MPD
-            }
-            // Explicit HLS M3U8
-            lower.contains(".m3u8") || lower.contains("/hls/") || targetLower.contains(".m3u8") -> {
-                MimeTypes.APPLICATION_M3U8
-            }
-            // Cloudflare Worker Proxies, PHP stream scripts, and IPTV tokenized endpoints
-            // (e.g., ostora.workers.dev/proxy, .php endpoints, ostora/yacine proxies)
+            isDASH -> MimeTypes.APPLICATION_MPD
+            isM3u8 -> MimeTypes.APPLICATION_M3U8
+            isTs -> MimeTypes.VIDEO_MP2T
+            isMp4 -> MimeTypes.APPLICATION_MP4
+            isMkv -> MimeTypes.APPLICATION_MATROSKA
+            isWebm -> MimeTypes.APPLICATION_WEBM
+            // Cloudflare Worker Proxies, PHP stream scripts (when not an explicit video file)
             lower.contains("workers.dev") || lower.contains("/proxy") || lower.contains("proxy?url=") ||
             lower.contains(".php") || targetLower.contains(".php") ||
-            lower.contains(".m3u") || lower.contains("live") || lower.contains("stream") ||
-            lower.contains("playlist") || lower.contains("manifest") || lower.contains(".ts") ||
-            targetLower.contains(".m3u") || targetLower.contains(".ts") -> {
+            lower.contains("playlist") || lower.contains("manifest") -> {
                 MimeTypes.APPLICATION_M3U8
             }
-            // MP4 Direct Video
-            (lower.endsWith(".mp4") || lower.contains(".mp4?")) && !lower.contains("proxy") -> {
-                MimeTypes.APPLICATION_MP4
-            }
-            // Default: Most live IPTV and proxy streaming links are HLS
-            else -> {
-                MimeTypes.APPLICATION_M3U8
-            }
+            else -> null
         }
 
         return ParsedStreamConfig(
@@ -276,6 +281,18 @@ object StreamUrlParser {
             widevineLicenseUrl = widevineLicenseUrl,
             targetHost = targetHost
         )
+    }
+
+    /**
+     * Builds a DefaultExtractorsFactory optimized for MPEG-TS, HLS, MP4 and live streams.
+     */
+    fun createExtractorsFactory(): DefaultExtractorsFactory {
+        return DefaultExtractorsFactory()
+            .setConstantBitrateSeekingEnabled(true)
+            .setTsExtractorFlags(
+                DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES or
+                DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
+            )
     }
 
     /**
