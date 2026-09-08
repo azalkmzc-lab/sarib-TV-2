@@ -50,6 +50,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.VolumeOff
+import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LiveTv
 import androidx.compose.material.icons.outlined.Search
@@ -64,12 +66,25 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
+import com.example.util.StreamUrlParser
+import kotlinx.coroutines.delay
 import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import androidx.compose.ui.draw.drawBehind
@@ -321,11 +336,13 @@ fun HeroSlider(
 
     val pageCount = sliders.size
     val pagerState = rememberPagerState(pageCount = { pageCount })
+    var isMuted by remember { mutableStateOf(true) }
 
+    // Auto-advance slider smoothly every 8 seconds
     LaunchedEffect(pagerState, pageCount) {
         if (pageCount > 1) {
             while (true) {
-                delay(5000)
+                delay(8000)
                 val nextPage = (pagerState.currentPage + 1) % pageCount
                 pagerState.animateScrollToPage(nextPage)
             }
@@ -341,7 +358,7 @@ fun HeroSlider(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(230.dp)
+                .height(235.dp)
                 .shadow(16.dp, RoundedCornerShape(22.dp))
                 .clip(RoundedCornerShape(22.dp))
                 .border(1.dp, SaribCardBorder, RoundedCornerShape(22.dp)),
@@ -352,8 +369,11 @@ fun HeroSlider(
                 modifier = Modifier.fillMaxSize()
             ) { page ->
                 val currentItem = sliders.getOrNull(page) ?: sliders.first()
+                val isCurrentActivePage = pagerState.currentPage == page
+                val videoUrl = currentItem.streamUrl.ifBlank { currentItem.server1 }
+
                 Box(modifier = Modifier.fillMaxSize()) {
-                    // Backdrop Image with AsyncImage
+                    // 1. Base Backdrop Poster Image (Fallback & Loading preview)
                     if (currentItem.backdropUrl.isNotBlank()) {
                         AsyncImage(
                             model = currentItem.backdropUrl,
@@ -370,63 +390,100 @@ fun HeroSlider(
                         )
                     }
 
-                    // Dark Gradient Vignette
+                    // 2. Auto-Playing Video in Slider (Active page video stream)
+                    if (videoUrl.isNotBlank() && isCurrentActivePage) {
+                        HeroSliderVideoBackground(
+                            streamUrl = videoUrl,
+                            isActive = isCurrentActivePage,
+                            isMuted = isMuted,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
+                    // 3. Dark Gradient Vignette for clear typography
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(
                                 Brush.verticalGradient(
                                     listOf(
-                                        Color(0x33070C14),
-                                        Color(0x80070C14),
+                                        Color(0x44070C14),
+                                        Color(0x66070C14),
                                         Color(0xF5070C14)
                                     )
                                 )
                             )
                     )
 
-                    // Top tags pill / badge
+                    // 4. Top Header Badges & Mute/Unmute Control
                     Row(
                         modifier = Modifier
+                            .fillMaxWidth()
                             .align(Alignment.TopCenter)
-                            .padding(top = 12.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xCC000000))
-                            .border(0.5.dp, SaribCyanAccent.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
+                            .padding(top = 12.dp, start = 12.dp, end = 12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (currentItem.isLive) {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(SaribLiveRed)
+                        // Top info badge (LIVE / Category)
+                        Row(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xCC000000))
+                                .border(0.5.dp, SaribCyanAccent.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                                .padding(horizontal = 10.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (currentItem.isLive) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(SaribLiveRed)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Tv,
+                                    contentDescription = null,
+                                    tint = SaribCyanAccent,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+                            Text(
+                                text = if (currentItem.badge.isNotBlank()) "${currentItem.badge} • ${currentItem.subtitle}" else currentItem.subtitle,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
-                            Spacer(modifier = Modifier.width(6.dp))
-                        } else {
-                            Icon(
-                                imageVector = Icons.Default.Tv,
-                                contentDescription = null,
-                                tint = SaribCyanAccent,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
                         }
-                        Text(
-                            text = if (currentItem.badge.isNotBlank()) "${currentItem.badge} • ${currentItem.subtitle}" else currentItem.subtitle,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
+
+                        // Mute / Unmute Button for Video Preview
+                        if (videoUrl.isNotBlank()) {
+                            IconButton(
+                                onClick = { isMuted = !isMuted },
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(Color(0xAA000000))
+                                    .border(1.dp, Color(0x44FFFFFF), CircleShape)
+                            ) {
+                                Icon(
+                                    imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
+                                    contentDescription = if (isMuted) "تشغيل الصوت" else "كتم الصوت",
+                                    tint = if (isMuted) Color.White else SaribCyanAccent,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
                     }
 
-                    // Bottom info & Watch Button
+                    // 5. Bottom Title & Watch Button
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
@@ -440,9 +497,9 @@ fun HeroSlider(
                             overflow = TextOverflow.Ellipsis
                         )
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                        // Watch Button
+                        // Watch Button (Direct navigation to full player)
                         Box(
                             modifier = Modifier
                                 .testTag("hero_watch_button")
@@ -453,7 +510,7 @@ fun HeroSlider(
                                     )
                                 )
                                 .clickable { onWatchClick(currentItem) }
-                                .padding(horizontal = 24.dp, vertical = 8.dp)
+                                .padding(horizontal = 22.dp, vertical = 7.dp)
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -463,7 +520,7 @@ fun HeroSlider(
                                     imageVector = Icons.Default.PlayArrow,
                                     contentDescription = null,
                                     tint = Color.White,
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
@@ -502,6 +559,108 @@ fun HeroSlider(
                 }
             }
         }
+    }
+}
+
+/**
+ * High-performance, lifecycle-safe Video Auto-Play background composable for HeroSlider.
+ */
+@Composable
+fun HeroSliderVideoBackground(
+    streamUrl: String,
+    isActive: Boolean,
+    isMuted: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var isPlayerReady by remember { mutableStateOf(false) }
+
+    val exoPlayer = remember(streamUrl) {
+        ExoPlayer.Builder(context).build().apply {
+            repeatMode = Player.REPEAT_MODE_ONE
+            playWhenReady = true
+            volume = if (isMuted) 0f else 1f
+            videoScalingMode = androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+        }
+    }
+
+    // Update volume dynamically when isMuted changes
+    LaunchedEffect(isMuted) {
+        exoPlayer.volume = if (isMuted) 0f else 1f
+    }
+
+    // Prepare and play stream with StreamUrlParser (supports HLS, Dash, TS, Proxy worker streams)
+    LaunchedEffect(streamUrl, isActive) {
+        if (isActive && streamUrl.isNotBlank()) {
+            delay(400) // Debounce for smooth swiping
+            try {
+                val parsed = StreamUrlParser.parse(streamUrl)
+                val httpFactory = DefaultHttpDataSource.Factory()
+                    .setUserAgent(parsed.userAgent ?: StreamUrlParser.DEFAULT_USER_AGENT)
+                    .setAllowCrossProtocolRedirects(true)
+                    .setConnectTimeoutMs(8000)
+                    .setReadTimeoutMs(8000)
+                StreamUrlParser.configureHttpDataSource(httpFactory, parsed)
+
+                val mediaSourceFactory = DefaultMediaSourceFactory(httpFactory, StreamUrlParser.createExtractorsFactory())
+                val drmManager = StreamUrlParser.createDrmSessionManager(parsed)
+                if (drmManager != null) {
+                    mediaSourceFactory.setDrmSessionManagerProvider { drmManager }
+                }
+
+                val mediaItemBuilder = androidx.media3.common.MediaItem.Builder().setUri(parsed.cleanUrl)
+                parsed.mimeType?.let { mediaItemBuilder.setMimeType(it) }
+
+                val mediaSource = mediaSourceFactory.createMediaSource(mediaItemBuilder.build())
+                exoPlayer.setMediaSource(mediaSource)
+                exoPlayer.prepare()
+                exoPlayer.play()
+            } catch (e: Exception) {
+                // Fallback gracefully without breaking UI
+            }
+        } else {
+            exoPlayer.pause()
+        }
+    }
+
+    // Lifecycle cleanup
+    DisposableEffect(streamUrl) {
+        val listener = object : Player.Listener {
+            override fun onRenderedFirstFrame() {
+                isPlayerReady = true
+            }
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_READY) {
+                    isPlayerReady = true
+                }
+            }
+        }
+        exoPlayer.addListener(listener)
+
+        onDispose {
+            exoPlayer.removeListener(listener)
+            exoPlayer.stop()
+            exoPlayer.release()
+        }
+    }
+
+    Box(modifier = modifier) {
+        AndroidView(
+            factory = { ctx ->
+                PlayerView(ctx).apply {
+                    player = exoPlayer
+                    useController = false
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                    setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
+                }
+            },
+            update = { playerView ->
+                if (playerView.player != exoPlayer) {
+                    playerView.player = exoPlayer
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }
 
