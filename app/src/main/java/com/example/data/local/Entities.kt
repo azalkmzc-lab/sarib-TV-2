@@ -93,3 +93,16 @@ data class ApiSourceEntity(
     val status: String,
     val lastChecked: String
 )
+
+@Entity(tableName = "watch_history")
+data class WatchHistoryEntity(
+    @PrimaryKey val id: String,
+    val title: String,
+    val subtitle: String = "",
+    val posterUrl: String = "",
+    val streamUrl: String = "",
+    val contentType: String = "MOVIE", // MOVIE, SERIES, CHANNEL
+    val watchedAt: Long = System.currentTimeMillis(),
+    val progressMs: Long = 0L,
+    val durationMs: Long = 0L
+)

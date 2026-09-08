@@ -338,11 +338,11 @@ fun HeroSlider(
     val pagerState = rememberPagerState(pageCount = { pageCount })
     var isMuted by remember { mutableStateOf(true) }
 
-    // Auto-advance slider smoothly every 8 seconds
+    // Auto-advance slider smoothly every 10 seconds
     LaunchedEffect(pagerState, pageCount) {
         if (pageCount > 1) {
             while (true) {
-                delay(8000)
+                delay(10000)
                 val nextPage = (pagerState.currentPage + 1) % pageCount
                 pagerState.animateScrollToPage(nextPage)
             }
@@ -592,7 +592,7 @@ fun HeroSliderVideoBackground(
     // Prepare and play stream with StreamUrlParser (supports HLS, Dash, TS, Proxy worker streams)
     LaunchedEffect(streamUrl, isActive) {
         if (isActive && streamUrl.isNotBlank()) {
-            delay(400) // Debounce for smooth swiping
+            delay(3000) // Stay on poster for 3 seconds before auto-playing
             try {
                 val parsed = StreamUrlParser.parse(streamUrl)
                 val httpFactory = DefaultHttpDataSource.Factory()

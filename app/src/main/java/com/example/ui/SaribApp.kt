@@ -81,6 +81,7 @@ fun SaribApp(
     val featuredSeries by viewModel.featuredSeries.collectAsState()
     val animePicks by viewModel.animePicks.collectAsState()
     val favorites by viewModel.favorites.collectAsState()
+    val watchHistory by viewModel.watchHistory.collectAsState()
 
     // Persistent scroll states across navigation and category exits
     val homeListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
@@ -129,7 +130,9 @@ fun SaribApp(
                 subtitle = "${media.year} • ${media.genre}",
                 streamUrl = media.streamUrl,
                 isLive = false,
-                servers = media.getActiveServers()
+                servers = media.getActiveServers(),
+                posterUrl = media.posterUrl,
+                contentType = if (media.type == ContentType.SERIES) "SERIES" else "MOVIE"
             )
         }
     }
@@ -276,6 +279,8 @@ fun SaribApp(
                                     HomeScreen(
                                         heroSliders = heroSliders,
                                         popularChannels = mostWatchedChannels,
+                                        movies = featuredMovies.take(5),
+                                        series = featuredSeries.take(5),
                                         selectedChip = selectedHomeChip,
                                         onChipSelected = { viewModel.selectHomeChip(it) },
                                         onMenuClick = { scope.launch { drawerState.open() } },
@@ -295,19 +300,25 @@ fun SaribApp(
                                                 subtitle = "${channel.categoryName} • ${channel.country}",
                                                 streamUrl = channel.streamUrl,
                                                 isLive = true,
-                                                servers = channel.getActiveServers()
+                                                servers = channel.getActiveServers(),
+                                                posterUrl = channel.logoUrl,
+                                                contentType = "CHANNEL"
                                             )
                                         },
+                                        onMediaClick = handleMediaClick,
                                         onHeroWatchClick = { banner ->
                                             viewModel.playMedia(
                                                 title = banner.title,
                                                 subtitle = banner.subtitle,
                                                 streamUrl = banner.streamUrl,
                                                 isLive = banner.isLive,
-                                                servers = banner.getActiveServers()
+                                                servers = banner.getActiveServers(),
+                                                posterUrl = banner.backdropUrl,
+                                                contentType = if (banner.isLive) "CHANNEL" else "MOVIE"
                                             )
                                         },
                                         onViewAllChannelsClick = { viewModel.selectTab("channels") },
+                                        onViewAllEntertainmentClick = { viewModel.selectTab("entertainment") },
                                         currentTab = currentTab,
                                         onTabSelected = { viewModel.selectTab(it) },
                                         onFavoriteToggle = { channel ->
@@ -320,6 +331,7 @@ fun SaribApp(
                                                 isFav = channel.isFavorite
                                             )
                                         },
+                                        onMediaFavoriteToggle = handleMediaFavoriteToggle,
                                         listState = homeListState,
                                         showBars = false
                                     )
@@ -378,8 +390,22 @@ fun SaribApp(
                                         entertainmentCategories = entertainmentCategories,
                                         vodCategories = vodCategories,
                                         seriesCategories = seriesCategories,
+                                        watchHistory = watchHistory,
                                         onCategoryClick = { cat -> viewModel.openMediaCategory(cat) },
                                         onMediaClick = handleMediaClick,
+                                        onWatchHistoryClick = { historyItem ->
+                                            viewModel.playMedia(
+                                                title = historyItem.title,
+                                                subtitle = historyItem.subtitle,
+                                                streamUrl = historyItem.streamUrl,
+                                                isLive = historyItem.contentType == "CHANNEL",
+                                                servers = emptyList(),
+                                                posterUrl = historyItem.posterUrl,
+                                                contentType = historyItem.contentType
+                                            )
+                                        },
+                                        onDeleteWatchHistoryItem = { id -> viewModel.deleteWatchHistoryItem(id) },
+                                        onClearWatchHistory = { viewModel.clearWatchHistory() },
                                         onFavoriteToggle = handleMediaFavoriteToggle,
                                         onMenuClick = { scope.launch { drawerState.open() } },
                                         onTelegramClick = openTelegram,

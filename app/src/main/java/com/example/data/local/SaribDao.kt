@@ -146,6 +146,19 @@ interface SaribDao {
     @Delete
     suspend fun deleteApiSource(source: ApiSourceEntity)
 
+    // Watch History
+    @Query("SELECT * FROM watch_history ORDER BY watchedAt DESC LIMIT 50")
+    fun getWatchHistory(): Flow<List<WatchHistoryEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertWatchHistory(item: WatchHistoryEntity)
+
+    @Query("DELETE FROM watch_history WHERE id = :id")
+    suspend fun deleteWatchHistoryById(id: String)
+
+    @Query("DELETE FROM watch_history")
+    suspend fun clearWatchHistory()
+
     // Counts for Admin Dashboard
     @Query("SELECT COUNT(*) FROM channels")
     suspend fun getChannelsCount(): Int

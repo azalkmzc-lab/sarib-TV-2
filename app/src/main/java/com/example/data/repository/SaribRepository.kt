@@ -622,6 +622,44 @@ class SaribRepository(private val context: Context) {
         return dao.getAllFavorites().flowOn(Dispatchers.IO)
     }
 
+    fun getWatchHistory(): Flow<List<com.example.data.local.WatchHistoryEntity>> {
+        return dao.getWatchHistory().flowOn(Dispatchers.IO)
+    }
+
+    suspend fun addToWatchHistory(
+        id: String,
+        title: String,
+        subtitle: String = "",
+        posterUrl: String = "",
+        streamUrl: String = "",
+        contentType: String = "MOVIE",
+        progressMs: Long = 0L,
+        durationMs: Long = 0L
+    ) = withContext(Dispatchers.IO) {
+        if (title.isBlank()) return@withContext
+        dao.insertWatchHistory(
+            com.example.data.local.WatchHistoryEntity(
+                id = id.ifBlank { title },
+                title = title,
+                subtitle = subtitle,
+                posterUrl = posterUrl,
+                streamUrl = streamUrl,
+                contentType = contentType,
+                watchedAt = System.currentTimeMillis(),
+                progressMs = progressMs,
+                durationMs = durationMs
+            )
+        )
+    }
+
+    suspend fun deleteWatchHistoryById(id: String) = withContext(Dispatchers.IO) {
+        dao.deleteWatchHistoryById(id)
+    }
+
+    suspend fun clearWatchHistory() = withContext(Dispatchers.IO) {
+        dao.clearWatchHistory()
+    }
+
     suspend fun toggleFavorite(itemId: String, title: String, subtitle: String, type: String, streamUrl: String, isFav: Boolean) {
         withContext(Dispatchers.IO) {
             if (isFav) {

@@ -19,10 +19,12 @@ import androidx.compose.ui.unit.dp
 import com.example.data.local.tr
 import com.example.data.model.ChannelItem
 import com.example.data.model.HeroBannerItem
+import com.example.data.model.MediaItem
 import com.example.ui.components.CategoryChipsRow
 import com.example.ui.components.ChannelCardItem
 import com.example.ui.components.HeroSlider
 import com.example.ui.components.MainCategoriesRoundGrid
+import com.example.ui.components.MediaCardItem
 import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribTopHeader
 import com.example.ui.components.SectionHeader
@@ -31,6 +33,8 @@ import com.example.ui.components.SectionHeader
 fun HomeScreen(
     heroSliders: List<HeroBannerItem>,
     popularChannels: List<ChannelItem>,
+    movies: List<MediaItem> = emptyList(),
+    series: List<MediaItem> = emptyList(),
     selectedChip: String,
     onChipSelected: (String) -> Unit,
     onMenuClick: () -> Unit,
@@ -39,11 +43,14 @@ fun HomeScreen(
     onSearchClick: () -> Unit,
     onCategoryClick: (String) -> Unit,
     onChannelClick: (ChannelItem) -> Unit,
+    onMediaClick: (MediaItem) -> Unit = {},
     onHeroWatchClick: (HeroBannerItem) -> Unit,
     onViewAllChannelsClick: () -> Unit,
+    onViewAllEntertainmentClick: () -> Unit = {},
     currentTab: String,
     onTabSelected: (String) -> Unit,
     onFavoriteToggle: (ChannelItem) -> Unit = {},
+    onMediaFavoriteToggle: ((MediaItem) -> Unit)? = null,
     listState: androidx.compose.foundation.lazy.LazyListState = androidx.compose.foundation.lazy.rememberLazyListState(),
     showBars: Boolean = true,
     modifier: Modifier = Modifier
@@ -110,6 +117,56 @@ fun HomeScreen(
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            // Featured Xtream Movies (أحدث الأفلام من اكستريم - 5 أفلام)
+            if (movies.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "أحدث الأفلام",
+                        onViewAllClick = onViewAllEntertainmentClick
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(movies.take(5), key = { it.id }, contentType = { "home_movie" }) { movie ->
+                            MediaCardItem(
+                                item = movie,
+                                onClick = onMediaClick,
+                                onFavoriteToggle = onMediaFavoriteToggle
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+
+            // Featured Xtream Series (أحدث المسلسلات من اكستريم - 5 مسلسلات)
+            if (series.isNotEmpty()) {
+                item {
+                    SectionHeader(
+                        title = "أحدث المسلسلات",
+                        onViewAllClick = onViewAllEntertainmentClick
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(series.take(5), key = { it.id }, contentType = { "home_series" }) { s ->
+                            MediaCardItem(
+                                item = s,
+                                onClick = onMediaClick,
+                                onFavoriteToggle = onMediaFavoriteToggle
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
         }
     }

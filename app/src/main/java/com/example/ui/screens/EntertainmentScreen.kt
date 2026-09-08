@@ -22,8 +22,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Movie
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -44,9 +47,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.example.data.local.WatchHistoryEntity
 import com.example.data.local.tr
 import com.example.data.model.ChannelCategory
 import com.example.data.model.MediaItem
@@ -74,8 +81,12 @@ fun EntertainmentScreen(
     entertainmentCategories: List<ChannelCategory>,
     vodCategories: List<ChannelCategory>,
     seriesCategories: List<ChannelCategory>,
+    watchHistory: List<WatchHistoryEntity> = emptyList(),
     onCategoryClick: (ChannelCategory) -> Unit,
     onMediaClick: (MediaItem) -> Unit,
+    onWatchHistoryClick: (WatchHistoryEntity) -> Unit = {},
+    onDeleteWatchHistoryItem: (String) -> Unit = {},
+    onClearWatchHistory: () -> Unit = {},
     onFavoriteToggle: ((MediaItem) -> Unit)? = null,
     onMenuClick: () -> Unit,
     onTelegramClick: () -> Unit,
@@ -128,6 +139,62 @@ fun EntertainmentScreen(
                     )
                 }
                 Spacer(modifier = Modifier.height(14.dp))
+            }
+
+            // Watch History Section (سجل المشاهدة / متابعة المشاهدة)
+            if (watchHistory.isNotEmpty()) {
+                item {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.History,
+                                contentDescription = null,
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "سجل المشاهدة",
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = SaribTextPrimary
+                                )
+                            )
+                        }
+                        Text(
+                            text = "مسح السجل",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = SaribTextMuted,
+                                fontWeight = FontWeight.SemiBold
+                            ),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .clickable { onClearWatchHistory() }
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        items(watchHistory, key = { it.id }, contentType = { "watch_history" }) { item ->
+                            WatchHistoryCardItem(
+                                item = item,
+                                onClick = { onWatchHistoryClick(item) },
+                                onDelete = { onDeleteWatchHistoryItem(item.id) }
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
             }
 
             // Dynamic filter tabs
@@ -477,6 +544,134 @@ private fun EmptyPreviewPlaceholder(
                     fontWeight = FontWeight.Bold
                 )
             )
+        }
+    }
+}
+
+@Composable
+private fun WatchHistoryCardItem(
+    item: WatchHistoryEntity,
+    onClick: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .width(175.dp)
+            .height(110.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, SaribCardBorder, RoundedCornerShape(14.dp))
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = SaribCardBg)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (item.posterUrl.isNotBlank()) {
+                AsyncImage(
+                    model = item.posterUrl,
+                    contentDescription = item.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color(0xFF1E293B), Color(0xFF0F172A))
+                            )
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Movie,
+                        contentDescription = null,
+                        tint = SaribCyanAccent.copy(alpha = 0.5f),
+                        modifier = Modifier.size(36.dp)
+                    )
+                }
+            }
+
+            // Dark gradient overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.25f),
+                                Color.Black.copy(alpha = 0.85f)
+                            )
+                        )
+                    )
+            )
+
+            // Top row: Play indicator badge & delete button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(SaribCyanAccent.copy(alpha = 0.9f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.PlayArrow,
+                        contentDescription = null,
+                        tint = Color.Black,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .clip(CircleShape)
+                        .background(Color.Black.copy(alpha = 0.65f))
+                        .clickable { onDelete() },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "حذف من السجل",
+                        tint = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier.size(13.dp)
+                    )
+                }
+            }
+
+            // Bottom title & type info
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomStart)
+                    .padding(8.dp)
+            ) {
+                Text(
+                    text = item.title,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = if (item.subtitle.isNotBlank()) item.subtitle else "متابعة المشاهدة",
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = SaribCyanAccent,
+                        fontSize = 10.sp
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
         }
     }
 }

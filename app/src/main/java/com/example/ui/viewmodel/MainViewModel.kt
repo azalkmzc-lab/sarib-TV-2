@@ -102,6 +102,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val favorites: StateFlow<List<FavoriteEntity>> = repository.getFavorites()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val watchHistory: StateFlow<List<com.example.data.local.WatchHistoryEntity>> = repository.getWatchHistory()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     // Category Detail Screen State
     private val _selectedCategory = MutableStateFlow<ChannelCategory?>(null)
     val selectedCategory: StateFlow<ChannelCategory?> = _selectedCategory.asStateFlow()
@@ -366,8 +369,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         subtitle: String,
         streamUrl: String,
         isLive: Boolean = false,
-        servers: List<Pair<String, String>> = emptyList()
+        servers: List<Pair<String, String>> = emptyList(),
+        posterUrl: String = "",
+        contentType: String = if (isLive) "CHANNEL" else "MOVIE"
     ) {
+        // Record to watch history
+        if (title.isNotBlank()) {
+            viewModelScope.launch {
+                repository.addToWatchHistory(
+                    id = if (streamUrl.isNotBlank()) streamUrl else title,
+                    title = title,
+                    subtitle = subtitle,
+                    posterUrl = posterUrl,
+                    streamUrl = streamUrl,
+                    contentType = contentType
+                )
+            }
+        }
+
         val curr = _currentScreen.value
         if (curr is AppScreen.Player && curr.streamUrl == streamUrl) return
         if (curr != AppScreen.Splash && curr !is AppScreen.Player) {
@@ -380,6 +399,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             isLive = isLive,
             servers = servers
         )
+    }
+
+    fun deleteWatchHistoryItem(id: String) {
+        viewModelScope.launch {
+            repository.deleteWatchHistoryById(id)
+        }
+    }
+
+    fun clearWatchHistory() {
+        viewModelScope.launch {
+            repository.clearWatchHistory()
+        }
     }
 
     fun toggleFavorite(itemId: String, title: String, subtitle: String, type: String, streamUrl: String, isFav: Boolean) {
