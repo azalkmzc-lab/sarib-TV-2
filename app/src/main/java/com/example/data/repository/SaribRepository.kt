@@ -637,19 +637,33 @@ class SaribRepository(private val context: Context) {
         durationMs: Long = 0L
     ) = withContext(Dispatchers.IO) {
         if (title.isBlank()) return@withContext
+        val itemId = id.ifBlank { title }
+        val existing = dao.getWatchHistoryById(itemId)
+        val finalProgress = if (progressMs > 0L) progressMs else (existing?.progressMs ?: 0L)
+        val finalDuration = if (durationMs > 0L) durationMs else (existing?.durationMs ?: 0L)
         dao.insertWatchHistory(
             com.example.data.local.WatchHistoryEntity(
-                id = id.ifBlank { title },
+                id = itemId,
                 title = title,
                 subtitle = subtitle,
-                posterUrl = posterUrl,
-                streamUrl = streamUrl,
+                posterUrl = posterUrl.ifBlank { existing?.posterUrl ?: "" },
+                streamUrl = streamUrl.ifBlank { existing?.streamUrl ?: "" },
                 contentType = contentType,
                 watchedAt = System.currentTimeMillis(),
-                progressMs = progressMs,
-                durationMs = durationMs
+                progressMs = finalProgress,
+                durationMs = finalDuration
             )
         )
+    }
+
+    suspend fun getWatchHistoryItem(id: String): com.example.data.local.WatchHistoryEntity? = withContext(Dispatchers.IO) {
+        dao.getWatchHistoryById(id)
+    }
+
+    suspend fun updateWatchProgress(id: String, progressMs: Long, durationMs: Long) = withContext(Dispatchers.IO) {
+        if (id.isNotBlank()) {
+            dao.updateWatchProgress(id, progressMs, durationMs)
+        }
     }
 
     suspend fun deleteWatchHistoryById(id: String) = withContext(Dispatchers.IO) {

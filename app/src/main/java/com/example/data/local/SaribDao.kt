@@ -150,8 +150,14 @@ interface SaribDao {
     @Query("SELECT * FROM watch_history ORDER BY watchedAt DESC LIMIT 50")
     fun getWatchHistory(): Flow<List<WatchHistoryEntity>>
 
+    @Query("SELECT * FROM watch_history WHERE id = :id LIMIT 1")
+    suspend fun getWatchHistoryById(id: String): WatchHistoryEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWatchHistory(item: WatchHistoryEntity)
+
+    @Query("UPDATE watch_history SET progressMs = :progressMs, durationMs = :durationMs, watchedAt = :watchedAt WHERE id = :id")
+    suspend fun updateWatchProgress(id: String, progressMs: Long, durationMs: Long, watchedAt: Long = System.currentTimeMillis())
 
     @Query("DELETE FROM watch_history WHERE id = :id")
     suspend fun deleteWatchHistoryById(id: String)

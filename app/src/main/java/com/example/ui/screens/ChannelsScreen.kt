@@ -163,65 +163,6 @@ fun ChannelsScreen(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Quick M3U8 Import Banner Card
-            item {
-                Card(
-                    onClick = { showImportDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp, vertical = 4.dp)
-                        .testTag("import_m3u_card"),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = CardDefaults.cardColors(containerColor = SaribCardBg),
-                    border = BorderStroke(1.dp, SaribCyanAccent.copy(alpha = 0.45f))
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(14.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .clip(CircleShape)
-                                .background(SaribCyanAccent.copy(alpha = 0.15f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.CloudDownload,
-                                contentDescription = "سحب M3U8",
-                                tint = SaribCyanAccent,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = tr("pull_m3u"),
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                            )
-                            Text(
-                                text = "إضافة رابط باقة M3U / M3U8 وسحب القنوات تلقائياً",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            )
-                        }
-                        Icon(
-                            imageVector = Icons.Default.AddLink,
-                            contentDescription = null,
-                            tint = SaribCyanAccent,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(10.dp))
-            }
-
             // Empty state if no categories exist yet
             if (categories.isEmpty()) {
                 item {

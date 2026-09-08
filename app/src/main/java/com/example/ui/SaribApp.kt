@@ -401,7 +401,8 @@ fun SaribApp(
                                                 isLive = historyItem.contentType == "CHANNEL",
                                                 servers = emptyList(),
                                                 posterUrl = historyItem.posterUrl,
-                                                contentType = historyItem.contentType
+                                                contentType = historyItem.contentType,
+                                                initialProgressMs = historyItem.progressMs
                                             )
                                         },
                                         onDeleteWatchHistoryItem = { id -> viewModel.deleteWatchHistoryItem(id) },
@@ -556,7 +557,16 @@ fun SaribApp(
                         isLive = screen.isLive,
                         onBackClick = { viewModel.popBack() },
                         servers = screen.servers,
-                        availableChannels = allChannels
+                        availableChannels = allChannels,
+                        initialProgressMs = screen.initialProgressMs,
+                        onProgressUpdate = { progress, duration ->
+                            viewModel.updatePlaybackProgress(
+                                streamUrl = screen.streamUrl,
+                                title = screen.title,
+                                progressMs = progress,
+                                durationMs = duration
+                            )
+                        }
                     )
                 }
 

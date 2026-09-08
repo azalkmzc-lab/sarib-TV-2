@@ -555,10 +555,37 @@ private fun WatchHistoryCardItem(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val progressRatio = remember(item.progressMs, item.durationMs) {
+        if (item.durationMs > 0L) {
+            (item.progressMs.toFloat() / item.durationMs.toFloat()).coerceIn(0f, 1f)
+        } else if (item.progressMs > 0L) {
+            0.5f // Default indicator when total duration unknown
+        } else {
+            0f
+        }
+    }
+
+    val resumeLabel = remember(item.progressMs, item.durationMs) {
+        if (item.progressMs > 0L) {
+            val totalSec = item.progressMs / 1000
+            val hours = totalSec / 3600
+            val minutes = (totalSec % 3600) / 60
+            val seconds = totalSec % 60
+            val timeStr = if (hours > 0) {
+                String.format(java.util.Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
+            } else {
+                String.format(java.util.Locale.US, "%02d:%02d", minutes, seconds)
+            }
+            "استئناف عند $timeStr"
+        } else {
+            if (item.subtitle.isNotBlank()) item.subtitle else "متابعة المشاهدة"
+        }
+    }
+
     Card(
         modifier = modifier
-            .width(175.dp)
-            .height(110.dp)
+            .width(185.dp)
+            .height(118.dp)
             .clip(RoundedCornerShape(14.dp))
             .border(1.dp, SaribCardBorder, RoundedCornerShape(14.dp))
             .clickable { onClick() },
@@ -599,8 +626,8 @@ private fun WatchHistoryCardItem(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.Black.copy(alpha = 0.25f),
-                                Color.Black.copy(alpha = 0.85f)
+                                Color.Black.copy(alpha = 0.3f),
+                                Color.Black.copy(alpha = 0.88f)
                             )
                         )
                     )
@@ -646,31 +673,50 @@ private fun WatchHistoryCardItem(
                 }
             }
 
-            // Bottom title & type info
+            // Bottom title & type info & progress line
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .align(Alignment.BottomStart)
-                    .padding(8.dp)
             ) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = if (item.subtitle.isNotBlank()) item.subtitle else "متابعة المشاهدة",
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = SaribCyanAccent,
-                        fontSize = 10.sp
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Column(modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp)) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = resumeLabel,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = SaribCyanAccent,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Progress Bar at the bottom
+                if (progressRatio > 0f) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(3.dp)
+                            .background(Color.White.copy(alpha = 0.2f))
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(progressRatio)
+                                .height(3.dp)
+                                .background(SaribCyanAccent)
+                        )
+                    }
+                }
             }
         }
     }

@@ -185,6 +185,8 @@ fun PlayerScreen(
     onBackClick: () -> Unit,
     servers: List<Pair<String, String>> = emptyList(),
     availableChannels: List<ChannelItem> = emptyList(),
+    initialProgressMs: Long = 0L,
+    onProgressUpdate: (progressMs: Long, durationMs: Long) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -207,8 +209,9 @@ fun PlayerScreen(
     var isPlaying by remember { mutableStateOf(true) }
     var isBuffering by remember { mutableStateOf(true) }
     var hasError by remember { mutableStateOf(false) }
-    var currentPosition by remember { mutableLongStateOf(0L) }
+    var currentPosition by remember { mutableLongStateOf(initialProgressMs.coerceAtLeast(0L)) }
     var duration by remember { mutableLongStateOf(0L) }
+    var hasResumedInitialProgress by remember { mutableStateOf(false) }
     var areControlsVisible by remember { mutableStateOf(true) }
     var isControlsLocked by remember { mutableStateOf(false) }
     var isLandscape by remember { mutableStateOf(true) }
@@ -475,6 +478,14 @@ fun PlayerScreen(
                 if (state == Player.STATE_READY) {
                     duration = exoPlayer.duration.coerceAtLeast(0L)
                     hasError = false
+                    if (!isLive && initialProgressMs > 3000L && !hasResumedInitialProgress) {
+                        hasResumedInitialProgress = true
+                        val validSeek = initialProgressMs.coerceAtMost((exoPlayer.duration - 2000L).coerceAtLeast(0L))
+                        if (validSeek > 0L) {
+                            exoPlayer.seekTo(validSeek)
+                            Toast.makeText(context, "تم استئناف المشاهدة من حيث توقفت", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             }
 
@@ -608,6 +619,9 @@ fun PlayerScreen(
         exoPlayer.addListener(listener)
 
         onDispose {
+            if (!isLive && exoPlayer.currentPosition > 0L) {
+                onProgressUpdate(exoPlayer.currentPosition, exoPlayer.duration.coerceAtLeast(0L))
+            }
             exoPlayer.removeListener(listener)
             exoPlayer.release()
             activity?.requestedOrientation = originalOrientation
@@ -624,6 +638,9 @@ fun PlayerScreen(
         if (!isLive && duration > 0) {
             while (isPlaying) {
                 currentPosition = exoPlayer.currentPosition.coerceAtLeast(0L)
+                if (currentPosition > 0L) {
+                    onProgressUpdate(currentPosition, duration)
+                }
                 delay(1000)
             }
         }

@@ -35,7 +35,10 @@ sealed interface AppScreen {
         val subtitle: String,
         val streamUrl: String,
         val isLive: Boolean = false,
-        val servers: List<Pair<String, String>> = emptyList()
+        val servers: List<Pair<String, String>> = emptyList(),
+        val initialProgressMs: Long = 0L,
+        val posterUrl: String = "",
+        val contentType: String = "MOVIE"
     ) : AppScreen
     object Search : AppScreen
 }
@@ -371,34 +374,53 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         isLive: Boolean = false,
         servers: List<Pair<String, String>> = emptyList(),
         posterUrl: String = "",
-        contentType: String = if (isLive) "CHANNEL" else "MOVIE"
+        contentType: String = if (isLive) "CHANNEL" else "MOVIE",
+        initialProgressMs: Long = 0L
     ) {
-        // Record to watch history
-        if (title.isNotBlank()) {
-            viewModelScope.launch {
-                repository.addToWatchHistory(
-                    id = if (streamUrl.isNotBlank()) streamUrl else title,
-                    title = title,
-                    subtitle = subtitle,
-                    posterUrl = posterUrl,
-                    streamUrl = streamUrl,
-                    contentType = contentType
-                )
-            }
-        }
-
+        val historyId = if (streamUrl.isNotBlank()) streamUrl else title
         val curr = _currentScreen.value
         if (curr is AppScreen.Player && curr.streamUrl == streamUrl) return
         if (curr != AppScreen.Splash && curr !is AppScreen.Player) {
             backStack.add(curr)
         }
-        _currentScreen.value = AppScreen.Player(
-            title = title,
-            subtitle = subtitle,
-            streamUrl = streamUrl,
-            isLive = isLive,
-            servers = servers
-        )
+
+        viewModelScope.launch {
+            val existing = repository.getWatchHistoryItem(historyId)
+            val targetProgress = if (initialProgressMs > 0L) initialProgressMs else (existing?.progressMs ?: 0L)
+            
+            if (title.isNotBlank()) {
+                repository.addToWatchHistory(
+                    id = historyId,
+                    title = title,
+                    subtitle = subtitle,
+                    posterUrl = posterUrl,
+                    streamUrl = streamUrl,
+                    contentType = contentType,
+                    progressMs = targetProgress,
+                    durationMs = existing?.durationMs ?: 0L
+                )
+            }
+
+            _currentScreen.value = AppScreen.Player(
+                title = title,
+                subtitle = subtitle,
+                streamUrl = streamUrl,
+                isLive = isLive,
+                servers = servers,
+                initialProgressMs = targetProgress,
+                posterUrl = posterUrl,
+                contentType = contentType
+            )
+        }
+    }
+
+    fun updatePlaybackProgress(streamUrl: String, title: String, progressMs: Long, durationMs: Long) {
+        val historyId = if (streamUrl.isNotBlank()) streamUrl else title
+        if (historyId.isNotBlank() && progressMs > 0L) {
+            viewModelScope.launch {
+                repository.updateWatchProgress(historyId, progressMs, durationMs)
+            }
+        }
     }
 
     fun deleteWatchHistoryItem(id: String) {
