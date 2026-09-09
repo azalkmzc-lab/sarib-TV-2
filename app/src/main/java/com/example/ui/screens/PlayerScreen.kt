@@ -2,11 +2,15 @@ package com.example.ui.screens
 
 import android.app.Activity
 import android.app.PictureInPictureParams
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.util.Rational
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -44,6 +48,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Audiotrack
+import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ClosedCaption
@@ -95,6 +100,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -127,6 +133,7 @@ import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.example.data.model.ChannelItem
 import com.example.security.AppSecurityGuard
@@ -222,8 +229,11 @@ fun PlayerScreen(
     var showAudioDialog by remember { mutableStateOf(false) }
     var showSubtitleDialog by remember { mutableStateOf(false) }
     var showServerDialog by remember { mutableStateOf(false) }
+    var showCastDialog by remember { mutableStateOf(false) }
     var showChannelPickerSheet by remember { mutableStateOf(false) }
     var activePickingSlot by remember { mutableIntStateOf(1) } // 0 = main, 1 = slot2, 2 = slot3
+    var autoRetryCount by remember { mutableIntStateOf(0) }
+    val coroutineScope = rememberCoroutineScope()
 
     var availableQualityOptions by remember {
         mutableStateOf(
@@ -254,16 +264,17 @@ fun PlayerScreen(
     // Anti-VPN 3-Second Security Scanner state
     var isVpnDetectedInPlayer by remember { mutableStateOf(false) }
 
-    // High performance SINGLE ExoPlayer configuration (reused across server switches)
+    // High performance SINGLE ExoPlayer configuration with robust live buffering to prevent dropouts
     val exoPlayer = remember {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                4000,   // Min buffer 4s: fast startup on weak devices & slow connections
-                20000,  // Max buffer 20s: keeps memory overhead constrained on low-RAM devices
-                1000,   // Buffer for initial playback 1.0s
-                1800    // Buffer for resume after rebuffer 1.8s
+                12000,  // Min buffer 12s: prevents sudden playback interruption on weak/fluctuating networks
+                45000,  // Max buffer 45s: solid buffer ceiling
+                1500,   // Buffer for initial playback 1.5s
+                2500    // Buffer for resume after rebuffer 2.5s
             )
-            .setTargetBufferBytes(12 * 1024 * 1024) // 12 MB buffer ceiling prevents high-RAM footprint
+            .setBackBuffer(10000, false)
+            .setTargetBufferBytes(20 * 1024 * 1024) // 20 MB buffer ceiling prevents high-RAM footprint
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
@@ -288,8 +299,8 @@ fun PlayerScreen(
                     val httpDataSourceFactory = DefaultHttpDataSource.Factory()
                         .setUserAgent(parsed.userAgent ?: StreamUrlParser.DEFAULT_USER_AGENT)
                         .setAllowCrossProtocolRedirects(true)
-                        .setConnectTimeoutMs(20000)
-                        .setReadTimeoutMs(20000)
+                        .setConnectTimeoutMs(25000)
+                        .setReadTimeoutMs(25000)
                     StreamUrlParser.configureHttpDataSource(httpDataSourceFactory, parsed)
 
                     val mediaSourceFactory = DefaultMediaSourceFactory(httpDataSourceFactory, StreamUrlParser.createExtractorsFactory())
@@ -476,6 +487,7 @@ fun PlayerScreen(
             override fun onPlaybackStateChanged(state: Int) {
                 isBuffering = state == Player.STATE_BUFFERING
                 if (state == Player.STATE_READY) {
+                    autoRetryCount = 0
                     duration = exoPlayer.duration.coerceAtLeast(0L)
                     hasError = false
                     if (!isLive && initialProgressMs > 3000L && !hasResumedInitialProgress) {
@@ -494,8 +506,36 @@ fun PlayerScreen(
             }
 
             override fun onPlayerError(error: PlaybackException) {
-                // Automatic failover to next available server if available
-                if (selectedServerIndex < serverOptions.size - 1) {
+                android.util.Log.w("PlayerScreen", "Player encountered error (Code: ${error.errorCode}, Msg: ${error.message})")
+
+                // 1. Recover Behind Live Window Exception automatically (common in HLS live streams)
+                if (error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW) {
+                    exoPlayer.seekToDefaultPosition()
+                    exoPlayer.prepare()
+                    exoPlayer.play()
+                    return
+                }
+
+                // 2. Automatic Reconnection & Self-Healing before reporting error
+                if (autoRetryCount < 3) {
+                    autoRetryCount++
+                    isBuffering = true
+                    hasError = false
+                    coroutineScope.launch {
+                        kotlinx.coroutines.delay(1200L)
+                        try {
+                            if (isLive) {
+                                exoPlayer.seekToDefaultPosition()
+                            }
+                            exoPlayer.prepare()
+                            exoPlayer.play()
+                        } catch (e: Exception) {
+                            android.util.Log.e("PlayerScreen", "Auto reconnect attempt error: ${e.message}")
+                        }
+                    }
+                } else if (selectedServerIndex < serverOptions.size - 1) {
+                    // 3. Automatic Failover to backup server if available
+                    autoRetryCount = 0
                     val nextIdx = selectedServerIndex + 1
                     val nextServer = serverOptions[nextIdx]
                     selectedServerIndex = nextIdx
@@ -504,16 +544,17 @@ fun PlayerScreen(
                     isBuffering = true
                     Toast.makeText(
                         context,
-                        "تعذر تشغيل السيرفر الحالي. جاري الانتقال التلقائي إلى: ${nextServer.first}",
+                        "جاري التبديل التلقائي إلى السيرفر البديل: ${nextServer.first}",
                         Toast.LENGTH_SHORT
                     ).show()
                 } else {
+                    // 4. Fatal error only after all retries & servers fail
                     hasError = true
                     isBuffering = false
                     Toast.makeText(
                         context,
-                        "تعذر تشغيل البث من كافة السيرفرات المتاحة",
-                        Toast.LENGTH_LONG
+                        "تعذر استعادة البث، اضغط على زر إعادة المحاولة أو اختر سيرفر آخر",
+                        Toast.LENGTH_SHORT
                     ).show()
                 }
             }
@@ -1090,69 +1131,179 @@ fun PlayerScreen(
                     )
                     .padding(14.dp)
             ) {
-                // ================= TOP BAR (matching image) =================
+                // ================= TOP BAR (matching image & TV Cast Action) =================
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.TopStart)
-                        .padding(top = 10.dp, start = 8.dp),
-                    verticalAlignment = Alignment.Top
+                        .padding(top = 10.dp, start = 8.dp, end = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    IconButton(
-                        onClick = onBackClick,
-                        modifier = Modifier
-                            .testTag("player_back_button")
-                            .size(40.dp)
+                    // Left side: Back button + Title + Live badge
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f, fill = false)
                     ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "رجوع",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
-                        )
+                        IconButton(
+                            onClick = onBackClick,
+                            modifier = Modifier
+                                .testTag("player_back_button")
+                                .size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "رجوع",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        Column {
+                            Text(
+                                text = title,
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 20.sp
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+
+                            // Red LIVE pill badge
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(Color(0xFF5A1414))
+                                    .padding(horizontal = 10.dp, vertical = 3.dp)
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(7.dp)
+                                            .clip(CircleShape)
+                                            .background(Color(0xFFFF3B30))
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = if (isLive) "LIVE" else "VOD",
+                                        style = MaterialTheme.typography.labelSmall.copy(
+                                            color = Color(0xFFFF5252),
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 11.sp,
+                                            letterSpacing = 0.5.sp
+                                        )
+                                    )
+                                }
+                            }
+                        }
                     }
 
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    Column {
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 22.sp
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        // Red LIVE pill badge
-                        Box(
+                    // Right side: TV Cast Button, Multi-View, PiP, Lock
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // 1. Cast To TV Button (زر بث ومشاركة الشاشة على التلفاز)
+                        Surface(
+                            color = SaribElectricBlue.copy(alpha = 0.55f),
+                            shape = RoundedCornerShape(20.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SaribCyanAccent.copy(alpha = 0.8f)),
                             modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xFF5A1414))
-                                .padding(horizontal = 10.dp, vertical = 3.dp)
+                                .clip(RoundedCornerShape(20.dp))
+                                .clickable {
+                                    showCastDialog = true
+                                    showQualityDialog = false
+                                    showAudioDialog = false
+                                    showSubtitleDialog = false
+                                    showServerDialog = false
+                                }
+                                .testTag("tv_cast_button")
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(7.dp)
-                                        .clip(CircleShape)
-                                        .background(Color(0xFFFF3B30))
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Tv,
+                                    contentDescription = "بث على التلفاز",
+                                    tint = SaribCyanAccent,
+                                    modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(5.dp))
                                 Text(
-                                    text = "LIVE",
+                                    text = "بث للشاشة",
+                                    color = Color.White,
                                     style = MaterialTheme.typography.labelSmall.copy(
-                                        color = Color(0xFFFF5252),
-                                        fontWeight = FontWeight.Black,
-                                        fontSize = 11.sp,
-                                        letterSpacing = 0.5.sp
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 12.sp
                                     )
                                 )
                             }
+                        }
+
+                        // 2. Multi-View Button (if channels exist)
+                        if (availableChannels.isNotEmpty()) {
+                            IconButton(
+                                onClick = {
+                                    isMultiViewMode = !isMultiViewMode
+                                    if (isMultiViewMode) activeAudioSlot = 0
+                                },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isMultiViewMode) SaribCyanAccent.copy(alpha = 0.35f) else Color(0x55000000))
+                                    .testTag("multi_view_toggle_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Dashboard,
+                                    contentDescription = "تعدد القنوات",
+                                    tint = if (isMultiViewMode) SaribCyanAccent else Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        // 3. PiP Button
+                        IconButton(
+                            onClick = enterPiPMode,
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x55000000))
+                                .testTag("pip_mode_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PictureInPictureAlt,
+                                contentDescription = "صورة في صورة",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        // 4. Lock Screen Button
+                        IconButton(
+                            onClick = {
+                                isControlsLocked = true
+                                areControlsVisible = false
+                            },
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x55000000))
+                                .testTag("lock_screen_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Lock,
+                                contentDescription = "قفل الشاشة",
+                                tint = Color.White,
+                                modifier = Modifier.size(20.dp)
+                            )
                         }
                     }
                 }
@@ -2146,6 +2297,181 @@ fun PlayerScreen(
                             }
                         }
                     }
+                }
+            }
+        }
+
+        // TV SCREEN CAST / WIRELESS DISPLAY MODAL (STRICTLY WIRELESS DISPLAY - NO LINK EXPOSURE)
+        AnimatedVisibility(
+            visible = showCastDialog,
+            enter = slideInVertically { it } + fadeIn(),
+            exit = slideOutVertically { it } + fadeOut(),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            Box(
+                modifier = Modifier
+                    .widthIn(max = 420.dp)
+                    .fillMaxWidth(0.90f)
+                    .clip(RoundedCornerShape(22.dp))
+                    .background(SaribDarkCard)
+                    .border(1.5.dp, SaribCyanAccent.copy(alpha = 0.6f), RoundedCornerShape(22.dp))
+                    .padding(20.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(38.dp)
+                                    .clip(CircleShape)
+                                    .background(SaribCyanAccent.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Tv,
+                                    contentDescription = null,
+                                    tint = SaribCyanAccent,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "بث الشاشة اللاسلكي للتلفاز",
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        color = Color.White,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 16.sp
+                                    )
+                                )
+                                Text(
+                                    text = "Wireless Display & Smart View",
+                                    style = MaterialTheme.typography.bodySmall.copy(
+                                        color = SaribCyanAccent,
+                                        fontSize = 11.sp
+                                    )
+                                )
+                            }
+                        }
+                        IconButton(
+                            onClick = { showCastDialog = false },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(imageVector = Icons.Default.Close, contentDescription = "إغلاق", tint = SaribTextMuted)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Wi-Fi Connection Tip Banner
+                    Surface(
+                        color = Color(0x2200D4FF),
+                        shape = RoundedCornerShape(12.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SaribCyanAccent.copy(alpha = 0.35f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Dns,
+                                contentDescription = null,
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(
+                                text = "تأكد من اتصال الهاتف وشاشة التلفاز بنفس شبكة الـ Wi-Fi المنزلية",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    lineHeight = 17.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Connect Button
+                    Button(
+                        onClick = {
+                            showCastDialog = false
+                            val castIntents = listOf(
+                                Intent("android.settings.CAST_SETTINGS"),
+                                Intent("android.settings.WIFI_DISPLAY_SETTINGS"),
+                                Intent(Settings.ACTION_CAST_SETTINGS),
+                                Intent(Settings.ACTION_WIRELESS_SETTINGS)
+                            )
+                            var launched = false
+                            for (intent in castIntents) {
+                                try {
+                                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    context.startActivity(intent)
+                                    launched = true
+                                    break
+                                } catch (_: Exception) {}
+                            }
+                            if (!launched) {
+                                try {
+                                    val fallback = Intent(Settings.ACTION_SETTINGS).apply {
+                                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                                    }
+                                    context.startActivity(fallback)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, "تعذر فتح إعدادات البث اللاسلكي في جهازك", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = SaribCyanAccent,
+                            contentColor = Color.Black
+                        ),
+                        shape = RoundedCornerShape(14.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                            .testTag("launch_smart_view_button")
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Tv,
+                                contentDescription = null,
+                                tint = Color.Black,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "اتصال وبث للشاشة الآن (Smart View)",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Text(
+                        text = "يدعم شاشات Samsung Smart View, LG, Android TV, Roku وغيرها لاسلكياً وبأعلى حماية للمحتوى",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = SaribTextMuted,
+                            fontSize = 10.5.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
                 }
             }
         }
