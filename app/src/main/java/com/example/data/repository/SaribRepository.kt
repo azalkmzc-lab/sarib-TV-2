@@ -13,7 +13,9 @@ import com.example.data.model.ChannelItem
 import com.example.data.model.ContentType
 import com.example.data.model.HeroBannerItem
 import com.example.data.model.MatchItem
+import com.example.data.model.MatchStreamOverride
 import com.example.data.model.MediaItem
+import com.example.data.model.NewsArticle
 import com.example.data.remote.FirebaseStreamManager
 import com.example.data.remote.MatchesApiClient
 import com.example.data.remote.RemoteStreamConfig
@@ -67,6 +69,9 @@ class SaribRepository(private val context: Context) {
 
     private val _heroSliders = MutableStateFlow<List<HeroBannerItem>>(emptyList())
     val heroSliders: StateFlow<List<HeroBannerItem>> = _heroSliders.asStateFlow()
+
+    private val _newsList = MutableStateFlow<List<NewsArticle>>(emptyList())
+    val newsList: StateFlow<List<NewsArticle>> = _newsList.asStateFlow()
 
     fun getSeriesClientForCategory(categoryId: String?): XtreamApiClient {
         if (!categoryId.isNullOrBlank()) {
@@ -226,7 +231,8 @@ class SaribRepository(private val context: Context) {
                         if (currentRemoteConfig.m3uMoviesUrl.isNotBlank()) listOf(currentRemoteConfig.m3uMoviesUrl) else emptyList()
                     )
                 }
-                val matchesDeferred = async { matchesClient.fetchMatches(0) }
+                val matchesDeferred = async { fetchMatchesForDay(0) }
+                val newsDeferred = async { fetchNews() }
 
                 // Xtream: VOD Movies & Series categories and previews using dedicated accounts
                 val vodCategoriesDeferred = async { vodXtreamClient.fetchVodCategories() }
@@ -244,6 +250,7 @@ class SaribRepository(private val context: Context) {
                 val customMovieCategories = customMovieCategoriesDeferred.await()
                 val m3uMoviesResult = m3uMoviesDeferred.await()
                 val remoteMatches = matchesDeferred.await()
+                newsDeferred.await()
                 val vodCategories = vodCategoriesDeferred.await()
                 val seriesCategories = seriesCategoriesDeferred.await()
                 val topMovies = topMoviesDeferred.await()
@@ -534,14 +541,80 @@ class SaribRepository(private val context: Context) {
         }
     }
 
-    suspend fun fetchMatchesForDay(dayOffset: Int) = withContext(Dispatchers.IO) {
+    suspend fun fetchMatchesForDay(dayOffset: Int): List<MatchItem> = withContext(Dispatchers.IO) {
         try {
-            val matches = matchesClient.fetchMatches(dayOffset)
-            if (matches.isNotEmpty()) {
-                dao.insertMatches(matches.map { it.toEntity() })
+            val manualMatchesDeferred = async { firebaseStreamManager.fetchManualMatches() }
+            val overridesDeferred = async { firebaseStreamManager.fetchMatchStreamOverrides() }
+            val apiMatchesDeferred = async { matchesClient.fetchMatches(dayOffset) }
+
+            val manualMatches = manualMatchesDeferred.await()
+            val streamOverrides = overridesDeferred.await()
+            val apiMatches = apiMatchesDeferred.await()
+
+            val enrichedApiMatches = apiMatches.mapIndexed { index, match ->
+                applyMatchOverride(match, index + 1, streamOverrides)
             }
+
+            val combined = (manualMatches + enrichedApiMatches).distinctBy { it.id }
+            if (combined.isNotEmpty()) {
+                if (dayOffset == 0) {
+                    dao.clearAllMatches()
+                }
+                dao.insertMatches(combined.map { it.toEntity() })
+            }
+            combined
         } catch (e: Exception) {
             Log.e("SaribRepository", "Error fetching matches for day $dayOffset: ${e.message}", e)
+            dao.getAllMatchesList().map { it.toModel() }
+        }
+    }
+
+    private fun applyMatchOverride(match: MatchItem, matchNumber: Int, overrides: List<MatchStreamOverride>): MatchItem {
+        val override = overrides.firstOrNull { ov ->
+            ov.isEnabled && (
+                ov.matchKey.equals("match_$matchNumber", ignoreCase = true) ||
+                ov.matchKey.equals("match$matchNumber", ignoreCase = true) ||
+                ov.matchKey.equals("$matchNumber", ignoreCase = true) ||
+                ov.matchKey.equals(match.id, ignoreCase = true) ||
+                (ov.matchKey.isNotBlank() && (
+                    match.homeTeam.contains(ov.matchKey, ignoreCase = true) ||
+                    match.awayTeam.contains(ov.matchKey, ignoreCase = true)
+                ))
+            )
+        } ?: return match
+
+        val newS1 = if (override.server1.isNotBlank()) override.server1 else match.server1
+        val newS2 = if (override.server2.isNotBlank()) override.server2 else match.server2
+        val newS3 = if (override.server3.isNotBlank()) override.server3 else match.server3
+        val newS4 = if (override.server4.isNotBlank()) override.server4 else match.server4
+        val newS5 = if (override.server5.isNotBlank()) override.server5 else match.server5
+        val newStreamUrl = if (override.streamUrl.isNotBlank()) override.streamUrl else listOf(newS1, newS2, newS3, newS4, newS5, match.streamUrl).firstOrNull { it.isNotBlank() } ?: match.streamUrl
+
+        return match.copy(
+            streamUrl = newStreamUrl,
+            server1 = newS1,
+            server2 = newS2,
+            server3 = newS3,
+            server4 = newS4,
+            server5 = newS5,
+            commentator = if (override.commentator.isNotBlank()) override.commentator else match.commentator,
+            channelName = if (override.channelName.isNotBlank()) override.channelName else match.channelName,
+            status = if (override.status.isNotBlank()) override.status else match.status,
+            isLive = match.isLive || newStreamUrl.isNotBlank()
+        )
+    }
+
+    suspend fun fetchNews(): List<NewsArticle> = withContext(Dispatchers.IO) {
+        try {
+            val apiUrl = if (currentRemoteConfig.isNewsApiEnabled) currentRemoteConfig.newsApiUrl else ""
+            val articles = firebaseStreamManager.fetchNews(apiUrl)
+            if (articles.isNotEmpty()) {
+                _newsList.value = articles
+            }
+            articles
+        } catch (e: Exception) {
+            Log.e("SaribRepository", "Error fetching news: ${e.message}", e)
+            _newsList.value
         }
     }
 

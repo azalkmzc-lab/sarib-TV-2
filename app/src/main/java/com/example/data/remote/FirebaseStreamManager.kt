@@ -49,6 +49,8 @@ data class RemoteStreamConfig(
     val isLiveXtreamEnabled: Boolean = false,
     val channelsApiUrl: String = "",
     val isChannelsApiEnabled: Boolean = false,
+    val newsApiUrl: String = "",
+    val isNewsApiEnabled: Boolean = false,
     val seriesCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
     val vodCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
     val matchesApiUrl: String = "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
@@ -150,6 +152,12 @@ class FirebaseStreamManager(private val context: Context) {
                         ?: (docSnapshot.getString("channels_api_enabled") == "true")
                         ?: channelsApiUrl.isNotBlank()
 
+                    val newsApiUrl = docSnapshot.getString("news_api_url") ?: docSnapshot.getString("news_api") ?: ""
+                    val isNewsApiEnabled = docSnapshot.getBoolean("news_api_enabled") 
+                        ?: docSnapshot.getBoolean("is_news_api_enabled") 
+                        ?: (docSnapshot.getString("news_api_enabled") == "true")
+                        ?: newsApiUrl.isNotBlank()
+
                     baseConfig = RemoteStreamConfig(
                         serverHost = serverHost,
                         username = username,
@@ -160,6 +168,8 @@ class FirebaseStreamManager(private val context: Context) {
                         isLiveXtreamEnabled = isLiveXtreamEnabled,
                         channelsApiUrl = channelsApiUrl,
                         isChannelsApiEnabled = isChannelsApiEnabled,
+                        newsApiUrl = newsApiUrl,
+                        isNewsApiEnabled = isNewsApiEnabled,
                         matchesApiUrl = docSnapshot.getString("matches_api_url") ?: "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
                         m3uPlaylistUrl = docSnapshot.getString("m3u_playlist_url") 
                             ?: docSnapshot.getString("m3u_url") 
@@ -220,6 +230,9 @@ class FirebaseStreamManager(private val context: Context) {
                         val channelsApiUrl = targetObj.optString("channels_api_url", targetObj.optString("channels_api", baseConfig.channelsApiUrl))
                         val isChannelsApiEnabled = targetObj.optBoolean("channels_api_enabled", targetObj.optBoolean("is_channels_api_enabled", channelsApiUrl.isNotBlank()))
 
+                        val newsApiUrl = targetObj.optString("news_api_url", targetObj.optString("news_api", baseConfig.newsApiUrl))
+                        val isNewsApiEnabled = targetObj.optBoolean("news_api_enabled", targetObj.optBoolean("is_news_api_enabled", newsApiUrl.isNotBlank()))
+
                         baseConfig = RemoteStreamConfig(
                             serverHost = serverHost,
                             username = username,
@@ -230,6 +243,8 @@ class FirebaseStreamManager(private val context: Context) {
                             isLiveXtreamEnabled = isLiveXtreamEnabled,
                             channelsApiUrl = channelsApiUrl,
                             isChannelsApiEnabled = isChannelsApiEnabled,
+                            newsApiUrl = newsApiUrl,
+                            isNewsApiEnabled = isNewsApiEnabled,
                             matchesApiUrl = targetObj.optString("matches_api_url", baseConfig.matchesApiUrl),
                             m3uPlaylistUrl = targetObj.optString("m3u_playlist_url", targetObj.optString("m3u_url", baseConfig.m3uPlaylistUrl)),
                             m3uMoviesUrl = targetObj.optString("m3u_movies_url", targetObj.optString("movies_m3u_url", baseConfig.m3uMoviesUrl)),
@@ -1182,6 +1197,548 @@ class FirebaseStreamManager(private val context: Context) {
             isEnabled = true,
             sortOrder = sortOrder,
             viewsCount = (500..5000).random()
+        )
+    }
+
+    /**
+     * Fetches News articles from Firebase (Firestore & RTDB) and external News API.
+     */
+    suspend fun fetchNews(apiUrl: String = ""): List<com.example.data.model.NewsArticle> = withContext(Dispatchers.IO) {
+        val resultList = mutableListOf<com.example.data.model.NewsArticle>()
+        val seenIds = mutableSetOf<String>()
+
+        // 1. Try Firebase Firestore ('news' and 'custom_news' collections)
+        if (isFirebaseAvailable()) {
+            val firestore = FirebaseFirestore.getInstance()
+            val colNames = listOf("news", "custom_news")
+            for (col in colNames) {
+                try {
+                    val snapshot = firestore.collection(col).get().await()
+                    for (doc in snapshot.documents) {
+                        val id = doc.id
+                        if (seenIds.contains(id)) continue
+                        val title = doc.getString("title").orEmpty()
+                        if (title.isBlank()) continue
+                        seenIds.add(id)
+
+                        val content = doc.getString("content") ?: doc.getString("description") ?: doc.getString("body") ?: doc.getString("details").orEmpty()
+                        val image = doc.getString("imageUrl") ?: doc.getString("image_url") ?: doc.getString("image") ?: doc.getString("thumbnail") ?: doc.getString("poster").orEmpty()
+                        val category = doc.getString("category") ?: doc.getString("tag") ?: "أخبار رياضية"
+                        val date = doc.getString("date") ?: doc.getString("time") ?: doc.getString("publishedAt") ?: "اليوم"
+                        val source = doc.getString("source") ?: doc.getString("sourceName") ?: doc.getString("author") ?: "SARIB NEWS"
+                        val sourceUrl = doc.getString("sourceUrl") ?: doc.getString("source_url") ?: doc.getString("url") ?: doc.getString("link").orEmpty()
+                        val isBreaking = doc.getBoolean("isBreaking") ?: doc.getBoolean("is_breaking") ?: false
+                        val views = doc.getLong("views")?.toInt() ?: doc.getLong("viewsCount")?.toInt() ?: (100..2500).random()
+                        val sortOrder = doc.getLong("sortOrder")?.toInt() ?: doc.getLong("order")?.toInt() ?: 0
+
+                        resultList.add(
+                            com.example.data.model.NewsArticle(
+                                id = id,
+                                title = title,
+                                content = content,
+                                imageUrl = image,
+                                category = category,
+                                date = date,
+                                source = source,
+                                sourceUrl = sourceUrl,
+                                isBreaking = isBreaking,
+                                isManual = true,
+                                viewsCount = views,
+                                sortOrder = sortOrder
+                            )
+                        )
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed reading Firestore collection $col: ${e.message}")
+                }
+            }
+        }
+
+        // 2. Try Firebase Realtime Database ('/news.json' and '/custom_news.json')
+        val rtdbNewsPaths = listOf(
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/news.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/custom_news.json"
+        )
+        for (url in rtdbNewsPaths) {
+            try {
+                val request = Request.Builder().url(url).build()
+                val response = httpClient.newCall(request).execute()
+                val body = response.body?.string().orEmpty().trim()
+                if (body.isNotEmpty() && body != "null") {
+                    if (body.startsWith("[")) {
+                        val arr = JSONArray(body)
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.optJSONObject(i) ?: continue
+                            parseNewsArticleJson(obj, "news_$i", isManual = true)?.let {
+                                if (!seenIds.contains(it.id)) {
+                                    seenIds.add(it.id)
+                                    resultList.add(it)
+                                }
+                            }
+                        }
+                    } else if (body.startsWith("{")) {
+                        val jsonObj = JSONObject(body)
+                        val keys = jsonObj.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val obj = jsonObj.optJSONObject(key) ?: continue
+                            parseNewsArticleJson(obj, key, isManual = true)?.let {
+                                if (!seenIds.contains(it.id)) {
+                                    seenIds.add(it.id)
+                                    resultList.add(it)
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "RTDB news fetch error from $url: ${e.message}")
+            }
+        }
+
+        // 3. Fetch from External News API if provided
+        if (apiUrl.isNotBlank()) {
+            try {
+                val request = Request.Builder()
+                    .url(apiUrl)
+                    .addHeader("User-Agent", "Mozilla/5.0 (Android; SARIB TV App)")
+                    .addHeader("Accept", "application/json")
+                    .build()
+                val response = httpClient.newCall(request).execute()
+                val body = response.body?.string().orEmpty().trim()
+                if (body.isNotEmpty() && body != "null") {
+                    if (body.startsWith("[")) {
+                        val arr = JSONArray(body)
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.optJSONObject(i) ?: continue
+                            parseNewsArticleJson(obj, "api_news_$i", isManual = false)?.let {
+                                if (!seenIds.contains(it.id) && !seenIds.contains(it.title)) {
+                                    seenIds.add(it.id)
+                                    resultList.add(it)
+                                }
+                            }
+                        }
+                    } else if (body.startsWith("{")) {
+                        val root = JSONObject(body)
+                        val arr = root.optJSONArray("articles")
+                            ?: root.optJSONArray("data")
+                            ?: root.optJSONArray("news")
+                            ?: root.optJSONArray("items")
+                            ?: root.optJSONArray("results")
+
+                        if (arr != null) {
+                            for (i in 0 until arr.length()) {
+                                val obj = arr.optJSONObject(i) ?: continue
+                                parseNewsArticleJson(obj, "api_news_$i", isManual = false)?.let {
+                                    if (!seenIds.contains(it.id) && !seenIds.contains(it.title)) {
+                                        seenIds.add(it.id)
+                                        resultList.add(it)
+                                    }
+                                }
+                            }
+                        } else {
+                            val keys = root.keys()
+                            var idx = 0
+                            while (keys.hasNext()) {
+                                val key = keys.next()
+                                val obj = root.optJSONObject(key) ?: continue
+                                parseNewsArticleJson(obj, "api_news_${idx++}", isManual = false)?.let {
+                                    if (!seenIds.contains(it.id) && !seenIds.contains(it.title)) {
+                                        seenIds.add(it.id)
+                                        resultList.add(it)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "External News API error for $apiUrl: ${e.message}")
+            }
+        }
+
+        // If no news returned from remote/api, add informative default SARIB news
+        if (resultList.isEmpty()) {
+            resultList.addAll(getDefaultNewsArticles())
+        }
+
+        resultList.sortedWith(compareByDescending<com.example.data.model.NewsArticle> { it.isBreaking }
+            .thenBy { it.sortOrder }
+            .thenByDescending { it.isManual })
+    }
+
+    private fun parseNewsArticleJson(obj: JSONObject, defaultId: String, isManual: Boolean): com.example.data.model.NewsArticle? {
+        val title = obj.optString("title", obj.optString("headline", obj.optString("name", "")))
+        if (title.isBlank()) return null
+
+        val id = obj.optString("id", defaultId)
+        val content = obj.optString("content", obj.optString("description", obj.optString("body", obj.optString("details", obj.optString("summary", "")))))
+        val image = obj.optString("imageUrl", obj.optString("image_url", obj.optString("image", obj.optString("urlToImage", obj.optString("thumbnail", obj.optString("poster", ""))))))
+        val category = obj.optString("category", obj.optString("tag", obj.optString("section", "أخبار عامة")))
+        val date = obj.optString("date", obj.optString("publishedAt", obj.optString("time", obj.optString("created_at", "اليوم"))))
+        
+        // Handle nested source object if present (common in news APIs)
+        var source = "SARIB NEWS"
+        val sourceObj = obj.optJSONObject("source")
+        if (sourceObj != null) {
+            source = sourceObj.optString("name", "SARIB NEWS")
+        } else {
+            source = obj.optString("source", obj.optString("sourceName", obj.optString("author", "SARIB NEWS")))
+        }
+
+        val sourceUrl = obj.optString("sourceUrl", obj.optString("source_url", obj.optString("url", obj.optString("link", ""))))
+        val isBreaking = obj.optBoolean("isBreaking", obj.optBoolean("is_breaking", false))
+        val views = obj.optInt("views", obj.optInt("viewsCount", (150..3500).random()))
+        val sortOrder = obj.optInt("sortOrder", obj.optInt("order", 0))
+
+        return com.example.data.model.NewsArticle(
+            id = id,
+            title = title,
+            content = content,
+            imageUrl = image,
+            category = category,
+            date = date,
+            source = source,
+            sourceUrl = sourceUrl,
+            isBreaking = isBreaking,
+            isManual = isManual,
+            viewsCount = views,
+            sortOrder = sortOrder
+        )
+    }
+
+    private fun getDefaultNewsArticles(): List<com.example.data.model.NewsArticle> {
+        return listOf(
+            com.example.data.model.NewsArticle(
+                id = "default_news_1",
+                title = "تغطية شاملة ومباشرة لقمة دوري أبطال أوروبا على قنوات SARIB TV VIP",
+                content = "استمتع بمشاهدة أحدث مباريات القمة العالمية بجودة عالية FHD وبدون تقطيع مع توفير 5 سيرفرات بث مباشر ومعلقين عرب متميزين.",
+                imageUrl = "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80",
+                category = "رياضة",
+                date = "اليوم",
+                source = "SARIB Sports",
+                isBreaking = true,
+                isManual = true,
+                viewsCount = 3840
+            ),
+            com.example.data.model.NewsArticle(
+                id = "default_news_2",
+                title = "إطلاق باقة أفلام ومسلسلات 2025 الحصرية مع سيرفرات متعددة عالية السرعة",
+                content = "تمت إضافة أحدث الأعمال السينمائية والمسلسلات العربية والأجنبية مع ترجمة احترافية ودعم جودات 4K و 1080p لتجربة مشاهدة سينمائية متكاملة.",
+                imageUrl = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&q=80",
+                category = "سينما ومسلسلات",
+                date = "منذ ساعات",
+                source = "SARIB Cinema",
+                isBreaking = false,
+                isManual = true,
+                viewsCount = 2190
+            ),
+            com.example.data.model.NewsArticle(
+                id = "default_news_3",
+                title = "تحديثات تقنية متقدمة للمشغل الداخلي لدعم البث المباشر وبث الشاشة اللاسلكي",
+                content = "تم تعزيز المشغل بميزات جديدة تشمل استقرار الاتصال، وخيارات السيرفرات البديلة، وميزة بث الشاشة على أجهزة التلفاز الذكية Smart TV بدون تقطيع.",
+                imageUrl = "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800&q=80",
+                category = "تقنية",
+                date = "اليوم",
+                source = "فريق الدعم الفني",
+                isBreaking = false,
+                isManual = true,
+                viewsCount = 1750
+            )
+        )
+    }
+
+    /**
+     * Fetches manual matches configured directly from Firebase (RTDB & Firestore).
+     */
+    suspend fun fetchManualMatches(): List<com.example.data.model.MatchItem> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<com.example.data.model.MatchItem>()
+        val seenIds = mutableSetOf<String>()
+
+        // 1. Try Firestore 'matches' and 'custom_matches'
+        if (isFirebaseAvailable()) {
+            val firestore = FirebaseFirestore.getInstance()
+            for (col in listOf("matches", "custom_matches")) {
+                try {
+                    val snapshot = firestore.collection(col).get().await()
+                    for (doc in snapshot.documents) {
+                        val id = doc.id
+                        if (seenIds.contains(id)) continue
+                        val homeTeam = doc.getString("home_team") ?: doc.getString("homeTeam") ?: doc.getString("team1").orEmpty()
+                        val awayTeam = doc.getString("away_team") ?: doc.getString("awayTeam") ?: doc.getString("team2").orEmpty()
+                        if (homeTeam.isBlank() && awayTeam.isBlank()) continue
+                        seenIds.add(id)
+
+                        val league = doc.getString("league_name") ?: doc.getString("leagueName") ?: doc.getString("league") ?: "مباريات اليوم"
+                        val leagueIcon = doc.getString("league_logo") ?: doc.getString("leagueIconUrl") ?: ""
+                        val homeLogo = doc.getString("home_logo") ?: doc.getString("homeLogoUrl") ?: ""
+                        val awayLogo = doc.getString("away_logo") ?: doc.getString("awayLogoUrl") ?: ""
+                        val time = doc.getString("match_time") ?: doc.getString("matchTime") ?: doc.getString("time") ?: "09:00 م"
+                        val date = doc.getString("match_date") ?: doc.getString("matchDate") ?: doc.getString("date") ?: "اليوم"
+                        val status = doc.getString("match_status") ?: doc.getString("status") ?: "لم تبدأ"
+                        val homeScore = doc.getLong("home_score")?.toInt() ?: doc.getLong("homeScore")?.toInt() ?: 0
+                        val awayScore = doc.getLong("away_score")?.toInt() ?: doc.getLong("awayScore")?.toInt() ?: 0
+                        val stadium = doc.getString("stadium") ?: "الملعب الرئيسي"
+                        val commentator = doc.getString("commentator") ?: "المعلق المعتمد"
+                        val channel = doc.getString("channel_name") ?: doc.getString("channel") ?: "SARIB Sports HD"
+
+                        val s1 = doc.getString("server1").orEmpty()
+                        val s2 = doc.getString("server2").orEmpty()
+                        val s3 = doc.getString("server3").orEmpty()
+                        val s4 = doc.getString("server4").orEmpty()
+                        val s5 = doc.getString("server5").orEmpty()
+                        val directStream = doc.getString("streamUrl") ?: doc.getString("stream_url") ?: ""
+                        val streamUrl = listOf(s1, directStream, s2, s3, s4, s5).firstOrNull { it.isNotBlank() } ?: ""
+
+                        val isLive = doc.getBoolean("isLive") ?: doc.getBoolean("is_live") ?: (status == "مباشر" || status == "شوط أول" || status == "شوط ثاني")
+
+                        list.add(
+                            com.example.data.model.MatchItem(
+                                id = "fb_match_$id",
+                                leagueName = league,
+                                leagueIconUrl = leagueIcon,
+                                homeTeam = homeTeam,
+                                homeLogoUrl = homeLogo,
+                                awayTeam = awayTeam,
+                                awayLogoUrl = awayLogo,
+                                matchTime = time,
+                                matchDate = date,
+                                status = status,
+                                homeScore = homeScore,
+                                awayScore = awayScore,
+                                streamUrl = streamUrl,
+                                isLive = isLive,
+                                isFavorite = false,
+                                stadium = stadium,
+                                commentator = commentator,
+                                channelName = channel,
+                                server1 = s1,
+                                server2 = s2,
+                                server3 = s3,
+                                server4 = s4,
+                                server5 = s5,
+                                isManual = true
+                            )
+                        )
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed reading manual matches from Firestore $col: ${e.message}")
+                }
+            }
+        }
+
+        // 2. Try RTDB '/matches.json' & '/custom_matches.json'
+        for (url in listOf("https://iptvpro-f5172-default-rtdb.firebaseio.com/matches.json", "https://iptvpro-f5172-default-rtdb.firebaseio.com/custom_matches.json")) {
+            try {
+                val request = Request.Builder().url(url).build()
+                val response = httpClient.newCall(request).execute()
+                val body = response.body?.string().orEmpty().trim()
+                if (body.isNotEmpty() && body != "null") {
+                    if (body.startsWith("[")) {
+                        val arr = JSONArray(body)
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.optJSONObject(i) ?: continue
+                            parseManualMatchJson(obj, "fb_match_$i")?.let {
+                                if (!seenIds.contains(it.id)) {
+                                    seenIds.add(it.id)
+                                    list.add(it)
+                                }
+                            }
+                        }
+                    } else if (body.startsWith("{")) {
+                        val jsonObj = JSONObject(body)
+                        val keys = jsonObj.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val obj = jsonObj.optJSONObject(key) ?: continue
+                            parseManualMatchJson(obj, "fb_match_$key")?.let {
+                                if (!seenIds.contains(it.id)) {
+                                    seenIds.add(it.id)
+                                    list.add(it)
+                                }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "RTDB manual matches error from $url: ${e.message}")
+            }
+        }
+
+        list
+    }
+
+    private fun parseManualMatchJson(obj: JSONObject, defaultId: String): com.example.data.model.MatchItem? {
+        val homeTeam = obj.optString("home_team", obj.optString("homeTeam", obj.optString("team1", "")))
+        val awayTeam = obj.optString("away_team", obj.optString("awayTeam", obj.optString("team2", "")))
+        if (homeTeam.isBlank() && awayTeam.isBlank()) return null
+
+        val id = obj.optString("id", defaultId)
+        val league = obj.optString("league_name", obj.optString("leagueName", obj.optString("league", "مباريات اليوم")))
+        val leagueIcon = obj.optString("league_logo", obj.optString("leagueLogoUrl", ""))
+        val homeLogo = obj.optString("home_logo", obj.optString("homeLogoUrl", obj.optString("team1_logo", "")))
+        val awayLogo = obj.optString("away_logo", obj.optString("awayLogoUrl", obj.optString("team2_logo", "")))
+        val time = obj.optString("match_time", obj.optString("matchTime", obj.optString("time", "09:00 م")))
+        val date = obj.optString("match_date", obj.optString("matchDate", obj.optString("date", "اليوم")))
+        val status = obj.optString("match_status", obj.optString("status", "لم تبدأ"))
+        val homeScore = obj.optInt("home_score", obj.optInt("homeScore", 0))
+        val awayScore = obj.optInt("away_score", obj.optInt("awayScore", 0))
+        val stadium = obj.optString("stadium", "الملعب الرئيسي")
+        val commentator = obj.optString("commentator", "المعلق المعتمد")
+        val channel = obj.optString("channel_name", obj.optString("channel", "SARIB Sports HD"))
+
+        val s1 = obj.optString("server1", "")
+        val s2 = obj.optString("server2", "")
+        val s3 = obj.optString("server3", "")
+        val s4 = obj.optString("server4", "")
+        val s5 = obj.optString("server5", "")
+        val directStream = obj.optString("streamUrl", obj.optString("stream_url", ""))
+        val streamUrl = listOf(s1, directStream, s2, s3, s4, s5).firstOrNull { it.isNotBlank() } ?: ""
+
+        val isLive = obj.optBoolean("isLive", obj.optBoolean("is_live", status == "مباشر" || status == "شوط أول" || status == "شوط ثاني"))
+
+        return com.example.data.model.MatchItem(
+            id = id,
+            leagueName = league,
+            leagueIconUrl = leagueIcon,
+            homeTeam = homeTeam,
+            homeLogoUrl = homeLogo,
+            awayTeam = awayTeam,
+            awayLogoUrl = awayLogo,
+            matchTime = time,
+            matchDate = date,
+            status = status,
+            homeScore = homeScore,
+            awayScore = awayScore,
+            streamUrl = streamUrl,
+            isLive = isLive,
+            isFavorite = false,
+            stadium = stadium,
+            commentator = commentator,
+            channelName = channel,
+            server1 = s1,
+            server2 = s2,
+            server3 = s3,
+            server4 = s4,
+            server5 = s5,
+            isManual = true
+        )
+    }
+
+    /**
+     * Fetches match stream overrides from Firebase to link manual stream URLs
+     * and servers (server1-5) to API matches by match index (1, 2, 3...), match ID, or team names.
+     */
+    suspend fun fetchMatchStreamOverrides(): List<com.example.data.model.MatchStreamOverride> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<com.example.data.model.MatchStreamOverride>()
+        val seenKeys = mutableSetOf<String>()
+
+        // 1. Try Firestore 'match_streams' and 'match_overrides'
+        if (isFirebaseAvailable()) {
+            val firestore = FirebaseFirestore.getInstance()
+            for (col in listOf("match_streams", "match_overrides", "match_stream_overrides")) {
+                try {
+                    val snapshot = firestore.collection(col).get().await()
+                    for (doc in snapshot.documents) {
+                        val key = doc.id
+                        if (seenKeys.contains(key)) continue
+                        seenKeys.add(key)
+
+                        val s1 = doc.getString("server1").orEmpty()
+                        val s2 = doc.getString("server2").orEmpty()
+                        val s3 = doc.getString("server3").orEmpty()
+                        val s4 = doc.getString("server4").orEmpty()
+                        val s5 = doc.getString("server5").orEmpty()
+                        val stream = doc.getString("streamUrl") ?: doc.getString("stream_url") ?: s1
+
+                        list.add(
+                            com.example.data.model.MatchStreamOverride(
+                                matchKey = key,
+                                streamUrl = stream,
+                                server1 = s1,
+                                server2 = s2,
+                                server3 = s3,
+                                server4 = s4,
+                                server5 = s5,
+                                commentator = doc.getString("commentator").orEmpty(),
+                                channelName = doc.getString("channel_name") ?: doc.getString("channel").orEmpty(),
+                                status = doc.getString("status").orEmpty(),
+                                isEnabled = doc.getBoolean("isEnabled") ?: doc.getBoolean("is_enabled") ?: true
+                            )
+                        )
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed reading stream overrides from Firestore $col: ${e.message}")
+                }
+            }
+        }
+
+        // 2. Try RTDB '/match_streams.json', '/match_stream_overrides.json', '/match_overrides.json'
+        val rtdbUrls = listOf(
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/match_streams.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/match_stream_overrides.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/match_overrides.json"
+        )
+        for (url in rtdbUrls) {
+            try {
+                val request = Request.Builder().url(url).build()
+                val response = httpClient.newCall(request).execute()
+                val body = response.body?.string().orEmpty().trim()
+                if (body.isNotEmpty() && body != "null") {
+                    if (body.startsWith("[")) {
+                        val arr = JSONArray(body)
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.optJSONObject(i) ?: continue
+                            val matchKey = obj.optString("matchKey", obj.optString("match_key", obj.optString("match", "match_${i + 1}")))
+                            if (!seenKeys.contains(matchKey)) {
+                                seenKeys.add(matchKey)
+                                parseMatchStreamOverrideJson(obj, matchKey)?.let { list.add(it) }
+                            }
+                        }
+                    } else if (body.startsWith("{")) {
+                        val jsonObj = JSONObject(body)
+                        val keys = jsonObj.keys()
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val obj = jsonObj.optJSONObject(key) ?: continue
+                            if (!seenKeys.contains(key)) {
+                                seenKeys.add(key)
+                                parseMatchStreamOverrideJson(obj, key)?.let { list.add(it) }
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "RTDB stream overrides error from $url: ${e.message}")
+            }
+        }
+
+        list
+    }
+
+    private fun parseMatchStreamOverrideJson(obj: JSONObject, key: String): com.example.data.model.MatchStreamOverride? {
+        val s1 = obj.optString("server1", obj.optString("server_1", ""))
+        val s2 = obj.optString("server2", obj.optString("server_2", ""))
+        val s3 = obj.optString("server3", obj.optString("server_3", ""))
+        val s4 = obj.optString("server4", obj.optString("server_4", ""))
+        val s5 = obj.optString("server5", obj.optString("server_5", ""))
+        val directStream = obj.optString("streamUrl", obj.optString("stream_url", obj.optString("url", "")))
+        val streamUrl = listOf(s1, directStream, s2, s3, s4, s5).firstOrNull { it.isNotBlank() } ?: ""
+
+        val isEnabled = obj.optBoolean("isEnabled", obj.optBoolean("is_enabled", obj.optBoolean("enabled", true)))
+
+        return com.example.data.model.MatchStreamOverride(
+            matchKey = key,
+            streamUrl = streamUrl,
+            server1 = s1,
+            server2 = s2,
+            server3 = s3,
+            server4 = s4,
+            server5 = s5,
+            commentator = obj.optString("commentator", ""),
+            channelName = obj.optString("channel_name", obj.optString("channel", "")),
+            status = obj.optString("status", ""),
+            isEnabled = isEnabled
         )
     }
 }

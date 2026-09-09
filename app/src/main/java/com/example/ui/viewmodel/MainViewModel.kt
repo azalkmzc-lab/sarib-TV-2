@@ -10,6 +10,7 @@ import com.example.data.model.ContentType
 import com.example.data.model.HeroBannerItem
 import com.example.data.model.MatchItem
 import com.example.data.model.MediaItem
+import com.example.data.model.NewsArticle
 import com.example.data.model.ViewMode
 import com.example.data.repository.SaribRepository
 import com.example.security.AppSecurityGuard
@@ -92,6 +93,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     val allMatches: StateFlow<List<MatchItem>> = repository.getAllMatches()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val newsList: StateFlow<List<NewsArticle>> = repository.newsList
 
     val featuredMovies: StateFlow<List<MediaItem>> = repository.getMediaByType(ContentType.MOVIE)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
@@ -355,6 +358,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _selectedMatchDate.value = date
         viewModelScope.launch {
             repository.fetchMatchesForDay(dayOffset)
+        }
+    }
+
+    fun refreshNews() {
+        viewModelScope.launch {
+            repository.fetchNews()
         }
     }
 

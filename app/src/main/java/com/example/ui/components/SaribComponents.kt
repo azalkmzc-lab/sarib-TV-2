@@ -36,6 +36,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -1097,16 +1098,17 @@ fun MainCategoriesRoundGrid(
 ) {
     val items = listOf(
         Triple("القنوات", Icons.Default.Tv, "channels"),
+        Triple("المباريات", Icons.Default.SportsSoccer, "matches"),
+        Triple("الأخبار", Icons.AutoMirrored.Filled.Article, "news"),
         Triple("الأفلام", Icons.Default.Movie, "movies"),
-        Triple("المسلسلات", Icons.Default.VideoLibrary, "series"),
-        Triple("الأنمي", Icons.Default.PlayArrow, "anime")
+        Triple("المسلسلات", Icons.Default.VideoLibrary, "series")
     )
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceAround,
+            .padding(horizontal = 8.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.SpaceEvenly,
         verticalAlignment = Alignment.CenterVertically
     ) {
         items.forEach { (title, icon, route) ->
@@ -1115,12 +1117,12 @@ fun MainCategoriesRoundGrid(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
                     .clickable { onCategoryClick(route) }
-                    .padding(4.dp)
+                    .padding(2.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(54.dp)
-                        .shadow(10.dp, CircleShape)
+                        .size(50.dp)
+                        .shadow(8.dp, CircleShape)
                         .clip(CircleShape)
                         .background(
                             Brush.linearGradient(
@@ -1132,7 +1134,7 @@ fun MainCategoriesRoundGrid(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(36.dp)
+                            .size(34.dp)
                             .clip(CircleShape)
                             .background(SaribElectricBlue.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
@@ -1141,16 +1143,16 @@ fun MainCategoriesRoundGrid(
                             imageVector = icon,
                             contentDescription = title,
                             tint = SaribCyanAccent,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(5.dp))
 
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.labelMedium.copy(
+                    style = MaterialTheme.typography.labelSmall.copy(
                         color = SaribTextPrimary,
                         fontWeight = FontWeight.Bold
                     )

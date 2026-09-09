@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -56,6 +57,8 @@ import com.example.ui.theme.SaribTextPrimary
 fun SaribDrawerContent(
     onNavigateToHome: () -> Unit,
     onNavigateToChannels: () -> Unit,
+    onNavigateToMatches: () -> Unit = {},
+    onNavigateToNews: () -> Unit = {},
     onNavigateToEntertainment: () -> Unit,
     onNavigateToFavorites: () -> Unit,
     onSettingsClick: () -> Unit,
@@ -123,7 +126,7 @@ fun SaribDrawerContent(
                         )
                     }
                     Text(
-                        text = "الإصدار 1.0.0 • PRO VIP",
+                        text = "الإصدار 2.0 • PRO VIP",
                         style = MaterialTheme.typography.labelSmall.copy(color = SaribTextMuted)
                     )
                 }
@@ -152,6 +155,22 @@ fun SaribDrawerContent(
                         title = tr("channels"),
                         tint = onSurfaceColor,
                         onClick = onNavigateToChannels
+                    )
+                }
+                item {
+                    DrawerItem(
+                        icon = Icons.Default.SportsSoccer,
+                        title = "جدول المباريات والبث",
+                        tint = onSurfaceColor,
+                        onClick = onNavigateToMatches
+                    )
+                }
+                item {
+                    DrawerItem(
+                        icon = Icons.AutoMirrored.Filled.Article,
+                        title = "الأخبار والتقارير",
+                        tint = onSurfaceColor,
+                        onClick = onNavigateToNews
                     )
                 }
                 item {

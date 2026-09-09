@@ -159,7 +159,37 @@ data class MatchItem(
     val server3: String = "",
     val server4: String = "",
     val server5: String = "",
-    val hasAlert: Boolean = false
+    val hasAlert: Boolean = false,
+    val isManual: Boolean = false
+)
+
+data class NewsArticle(
+    val id: String,
+    val title: String,
+    val content: String = "",
+    val imageUrl: String = "",
+    val category: String = "أخبار عامة",
+    val date: String = "اليوم",
+    val source: String = "SARIB TV NEWS",
+    val sourceUrl: String = "",
+    val isBreaking: Boolean = false,
+    val isManual: Boolean = false,
+    val viewsCount: Int = 0,
+    val sortOrder: Int = 0
+)
+
+data class MatchStreamOverride(
+    val matchKey: String = "", // match_1, match_2, id, or team names
+    val streamUrl: String = "",
+    val server1: String = "",
+    val server2: String = "",
+    val server3: String = "",
+    val server4: String = "",
+    val server5: String = "",
+    val commentator: String = "",
+    val channelName: String = "",
+    val status: String = "",
+    val isEnabled: Boolean = true
 )
 
 data class MediaItem(

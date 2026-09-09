@@ -45,6 +45,7 @@ import com.example.ui.screens.EntertainmentScreen
 import com.example.ui.screens.FavoritesScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MatchesScreen
+import com.example.ui.screens.NewsScreen
 import com.example.ui.screens.ChannelsScreen
 import com.example.ui.screens.MediaCategoryDetailScreen
 import com.example.ui.screens.PlayerScreen
@@ -77,6 +78,7 @@ fun SaribApp(
     val mostWatchedChannels by viewModel.mostWatchedChannels.collectAsState()
     val allChannels by viewModel.allChannels.collectAsState()
     val allMatches by viewModel.allMatches.collectAsState()
+    val newsArticles by viewModel.newsList.collectAsState()
     val featuredMovies by viewModel.featuredMovies.collectAsState()
     val featuredSeries by viewModel.featuredSeries.collectAsState()
     val animePicks by viewModel.animePicks.collectAsState()
@@ -87,6 +89,7 @@ fun SaribApp(
     val homeListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     val channelsListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     val matchesListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
+    val newsListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     val entertainmentListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
     val favoritesListState = rememberSaveable(saver = LazyListState.Saver) { LazyListState() }
 
@@ -216,6 +219,14 @@ fun SaribApp(
                         scope.launch { drawerState.close() }
                         viewModel.selectTab("channels")
                     },
+                    onNavigateToMatches = {
+                        scope.launch { drawerState.close() }
+                        viewModel.selectTab("matches")
+                    },
+                    onNavigateToNews = {
+                        scope.launch { drawerState.close() }
+                        viewModel.selectTab("news")
+                    },
                     onNavigateToEntertainment = {
                         scope.launch { drawerState.close() }
                         viewModel.selectTab("entertainment")
@@ -290,6 +301,8 @@ fun SaribApp(
                                         onCategoryClick = { route ->
                                             when (route) {
                                                 "channels" -> viewModel.selectTab("channels")
+                                                "matches" -> viewModel.selectTab("matches")
+                                                "news" -> viewModel.selectTab("news")
                                                 "movies", "series", "anime" -> viewModel.selectTab("entertainment")
                                                 else -> viewModel.selectTab("channels")
                                             }
@@ -448,6 +461,18 @@ fun SaribApp(
                                         onTabSelected = { viewModel.selectTab(it) },
                                         listState = favoritesListState,
                                         showBars = false
+                                    )
+                                }
+
+                                "news" -> {
+                                    NewsScreen(
+                                        newsArticles = newsArticles,
+                                        onRefresh = { viewModel.refreshNews() },
+                                        onMenuClick = { scope.launch { drawerState.open() } },
+                                        onTelegramClick = openTelegram,
+                                        onFavoritesClick = { viewModel.selectTab("favorites") },
+                                        onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
+                                        listState = newsListState
                                     )
                                 }
                             }

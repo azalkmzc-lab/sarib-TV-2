@@ -77,6 +77,9 @@ interface SaribDao {
     @Query("SELECT * FROM matches ORDER BY matchDate ASC, matchTime ASC")
     fun getAllMatches(): Flow<List<MatchEntity>>
 
+    @Query("SELECT * FROM matches ORDER BY matchDate ASC, matchTime ASC")
+    suspend fun getAllMatchesList(): List<MatchEntity>
+
     @Query("SELECT * FROM matches WHERE matchDate = :date ORDER BY matchTime ASC")
     fun getMatchesByDate(date: String): Flow<List<MatchEntity>>
 
