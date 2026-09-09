@@ -40,6 +40,15 @@ data class RemoteStreamConfig(
         password = "755246419856",
         name = "حساب الأفلام"
     ),
+    val liveXtreamAccount: XtreamAccount = XtreamAccount(
+        serverHost = "http://cliccck52258.club:2082",
+        username = "khaledsliman",
+        password = "755246419856",
+        name = "حساب القنوات المباشرة"
+    ),
+    val isLiveXtreamEnabled: Boolean = false,
+    val channelsApiUrl: String = "",
+    val isChannelsApiEnabled: Boolean = false,
     val seriesCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
     val vodCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
     val matchesApiUrl: String = "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
@@ -126,12 +135,31 @@ class FirebaseStreamManager(private val context: Context) {
                     val vodUser = docSnapshot.getString("vod_username") ?: docSnapshot.getString("movies_username") ?: username
                     val vodPass = docSnapshot.getString("vod_password") ?: docSnapshot.getString("movies_password") ?: password
 
+                    val liveHost = docSnapshot.getString("channels_server_host") ?: docSnapshot.getString("live_server_host") ?: docSnapshot.getString("live_host") ?: serverHost
+                    val liveUser = docSnapshot.getString("channels_username") ?: docSnapshot.getString("live_username") ?: docSnapshot.getString("live_user") ?: username
+                    val livePass = docSnapshot.getString("channels_password") ?: docSnapshot.getString("live_password") ?: docSnapshot.getString("live_pass") ?: password
+                    val isLiveXtreamEnabled = docSnapshot.getBoolean("channels_xtream_enabled") 
+                        ?: docSnapshot.getBoolean("live_xtream_enabled") 
+                        ?: (docSnapshot.getString("channels_xtream_enabled") == "true")
+                        ?: (docSnapshot.getString("live_xtream_enabled") == "true")
+                        ?: false
+
+                    val channelsApiUrl = docSnapshot.getString("channels_api_url") ?: docSnapshot.getString("channels_api") ?: ""
+                    val isChannelsApiEnabled = docSnapshot.getBoolean("channels_api_enabled") 
+                        ?: docSnapshot.getBoolean("is_channels_api_enabled") 
+                        ?: (docSnapshot.getString("channels_api_enabled") == "true")
+                        ?: channelsApiUrl.isNotBlank()
+
                     baseConfig = RemoteStreamConfig(
                         serverHost = serverHost,
                         username = username,
                         password = password,
                         seriesAccount = XtreamAccount(serverHost = seriesHost, username = seriesUser, password = seriesPass, name = "سيرفر المسلسلات"),
                         vodAccount = XtreamAccount(serverHost = vodHost, username = vodUser, password = vodPass, name = "سيرفر الأفلام"),
+                        liveXtreamAccount = XtreamAccount(serverHost = liveHost, username = liveUser, password = livePass, name = "سيرفر القنوات المباشرة"),
+                        isLiveXtreamEnabled = isLiveXtreamEnabled,
+                        channelsApiUrl = channelsApiUrl,
+                        isChannelsApiEnabled = isChannelsApiEnabled,
                         matchesApiUrl = docSnapshot.getString("matches_api_url") ?: "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
                         m3uPlaylistUrl = docSnapshot.getString("m3u_playlist_url") 
                             ?: docSnapshot.getString("m3u_url") 
@@ -170,7 +198,7 @@ class FirebaseStreamManager(private val context: Context) {
                         json
                     }
 
-                    if (targetObj.has("server_host") || targetObj.has("username")) {
+                    if (targetObj.has("server_host") || targetObj.has("username") || targetObj.has("channels_api_url") || targetObj.has("live_server_host")) {
                         Log.i(TAG, "Loaded stream configuration from Firebase Realtime Database.")
                         val serverHost = targetObj.optString("server_host", baseConfig.serverHost)
                         val username = targetObj.optString("username", baseConfig.username)
@@ -184,12 +212,24 @@ class FirebaseStreamManager(private val context: Context) {
                         val vodUser = targetObj.optString("vod_username", targetObj.optString("movies_username", username))
                         val vodPass = targetObj.optString("vod_password", targetObj.optString("movies_password", password))
 
+                        val liveHost = targetObj.optString("channels_server_host", targetObj.optString("live_server_host", targetObj.optString("live_host", serverHost)))
+                        val liveUser = targetObj.optString("channels_username", targetObj.optString("live_username", targetObj.optString("live_user", username)))
+                        val livePass = targetObj.optString("channels_password", targetObj.optString("live_password", targetObj.optString("live_pass", password)))
+                        val isLiveXtreamEnabled = targetObj.optBoolean("channels_xtream_enabled", targetObj.optBoolean("live_xtream_enabled", baseConfig.isLiveXtreamEnabled))
+
+                        val channelsApiUrl = targetObj.optString("channels_api_url", targetObj.optString("channels_api", baseConfig.channelsApiUrl))
+                        val isChannelsApiEnabled = targetObj.optBoolean("channels_api_enabled", targetObj.optBoolean("is_channels_api_enabled", channelsApiUrl.isNotBlank()))
+
                         baseConfig = RemoteStreamConfig(
                             serverHost = serverHost,
                             username = username,
                             password = password,
                             seriesAccount = XtreamAccount(serverHost = seriesHost, username = seriesUser, password = seriesPass, name = "سيرفر المسلسلات"),
                             vodAccount = XtreamAccount(serverHost = vodHost, username = vodUser, password = vodPass, name = "سيرفر الأفلام"),
+                            liveXtreamAccount = XtreamAccount(serverHost = liveHost, username = liveUser, password = livePass, name = "سيرفر القنوات المباشرة"),
+                            isLiveXtreamEnabled = isLiveXtreamEnabled,
+                            channelsApiUrl = channelsApiUrl,
+                            isChannelsApiEnabled = isChannelsApiEnabled,
                             matchesApiUrl = targetObj.optString("matches_api_url", baseConfig.matchesApiUrl),
                             m3uPlaylistUrl = targetObj.optString("m3u_playlist_url", targetObj.optString("m3u_url", baseConfig.m3uPlaylistUrl)),
                             m3uMoviesUrl = targetObj.optString("m3u_movies_url", targetObj.optString("movies_m3u_url", baseConfig.m3uMoviesUrl)),
@@ -1057,6 +1097,91 @@ class FirebaseStreamManager(private val context: Context) {
             channels = emptyList(),
             movieCategories = aggregatedCategories.distinctBy { it.id },
             movies = aggregatedMovies.distinctBy { it.id }
+        )
+    }
+
+    /**
+     * Fetches custom channels dynamically from an external Channels API endpoint.
+     * Path configured via 'channels_api_url' in Firebase with 'channels_api_enabled' toggle.
+     */
+    suspend fun fetchChannelsFromApi(apiUrl: String): List<com.example.data.model.ChannelItem> = withContext(Dispatchers.IO) {
+        val list = mutableListOf<com.example.data.model.ChannelItem>()
+        if (apiUrl.isBlank()) return@withContext list
+
+        try {
+            val request = Request.Builder().url(apiUrl).build()
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null") {
+                if (body.startsWith("[")) {
+                    val arr = JSONArray(body)
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.optJSONObject(i) ?: continue
+                        parseChannelFromJson(obj, "api_ch_$i", i + 1)?.let { list.add(it) }
+                    }
+                } else if (body.startsWith("{")) {
+                    val jsonObj = JSONObject(body)
+                    val targetObj = if (jsonObj.has("channels") && jsonObj.optJSONObject("channels") != null) {
+                        jsonObj.getJSONObject("channels")
+                    } else if (jsonObj.has("data") && jsonObj.optJSONArray("data") != null) {
+                        val arr = jsonObj.getJSONArray("data")
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.optJSONObject(i) ?: continue
+                            parseChannelFromJson(obj, "api_ch_$i", i + 1)?.let { list.add(it) }
+                        }
+                        return@withContext list
+                    } else {
+                        jsonObj
+                    }
+
+                    val keys = targetObj.keys()
+                    var sort = 1
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        val obj = targetObj.optJSONObject(key) ?: continue
+                        parseChannelFromJson(obj, "api_ch_$key", sort++)?.let { list.add(it) }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Channels API fetch error from $apiUrl: ${e.message}")
+        }
+        list
+    }
+
+    private fun parseChannelFromJson(obj: JSONObject, defaultId: String, sortOrder: Int): com.example.data.model.ChannelItem? {
+        val name = obj.optString("name", obj.optString("title", obj.optString("channel_name", "")))
+        if (name.isBlank()) return null
+
+        val id = obj.optString("id", obj.optString("stream_id", defaultId))
+        val catId = obj.optString("categoryId", obj.optString("category_id", obj.optString("category", "api_channels")))
+        val catName = obj.optString("categoryName", obj.optString("category_name", "باقة القنوات المباشرة API"))
+        val logo = obj.optString("logo", obj.optString("logoUrl", obj.optString("logo_url", obj.optString("stream_icon", obj.optString("icon", "")))))
+        val s1 = obj.optString("server1", obj.optString("server_1", ""))
+        val s2 = obj.optString("server2", obj.optString("server_2", ""))
+        val s3 = obj.optString("server3", obj.optString("server_3", ""))
+        val s4 = obj.optString("server4", obj.optString("server_4", ""))
+        val s5 = obj.optString("server5", obj.optString("server_5", ""))
+        val directUrl = obj.optString("url", obj.optString("streamUrl", obj.optString("stream_url", obj.optString("m3u8", ""))))
+        val mpd = obj.optString("mpd", "")
+
+        val streamUrl = listOf(s1, directUrl, s2, s3, mpd, s4, s5).firstOrNull { it.isNotBlank() } ?: return null
+        val backupUrl = listOf(s2, s3, directUrl).firstOrNull { it.isNotBlank() && it != streamUrl } ?: ""
+
+        return com.example.data.model.ChannelItem(
+            id = id,
+            name = name,
+            categoryId = catId,
+            categoryName = catName,
+            logoUrl = logo,
+            streamUrl = streamUrl,
+            backupUrl = backupUrl,
+            country = obj.optString("country", "سحابي Cloud"),
+            language = obj.optString("language", "العربية"),
+            isFavorite = false,
+            isEnabled = true,
+            sortOrder = sortOrder,
+            viewsCount = (500..5000).random()
         )
     }
 }

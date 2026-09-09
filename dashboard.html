@@ -65,6 +65,35 @@
                 </div>
             </div>
 
+            <div class="sub-box" style="border-color: rgba(0, 229, 255, 0.4);">
+                <div class="sub-box-title" style="color: #00e5ff; display: flex; justify-content: space-between; align-items: center;">
+                    <span>📡 حساب Xtream المخصص للقنوات المباشرة (Live Channels Xtream Server)</span>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 13px;">
+                        <input type="checkbox" id="stream-live-xtream-enabled" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>تفعيل سحب قنوات Xtream</span>
+                    </label>
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                    <div class="form-group"><label>🌐 خادم قنوات Xtream:</label><input type="text" id="stream-live-xtream-host" placeholder="http://live-server.com:2082"></div>
+                    <div class="form-group"><label>👤 يوزر قنوات Xtream:</label><input type="text" id="stream-live-xtream-username" placeholder="live_user"></div>
+                    <div class="form-group"><label>🔑 باسورد قنوات Xtream:</label><input type="text" id="stream-live-xtream-password" placeholder="live_pass"></div>
+                </div>
+            </div>
+
+            <div class="sub-box" style="border-color: rgba(255, 235, 59, 0.4);">
+                <div class="sub-box-title" style="color: #ffeb3b; display: flex; justify-content: space-between; align-items: center;">
+                    <span>🌐 سحب القنوات عبر رابط API سحابي خارجي (Channels API URL)</span>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #fff; font-size: 13px;">
+                        <input type="checkbox" id="stream-channels-api-enabled" style="width: 18px; height: 18px; cursor: pointer;">
+                        <span>تفعيل سحب القنوات من API</span>
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label>🔗 رابط API القنوات (JSON Endpoint):</label>
+                    <input type="text" id="stream-channels-api-url" placeholder="https://api.example.com/channels.json">
+                </div>
+            </div>
+
             <div class="sub-box" style="border-color: rgba(179, 136, 255, 0.4);">
                 <div class="sub-box-title" style="color: #b388ff;">📺 حساب Xtream المخصص للمسلسلات (Series Server)</div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
@@ -412,6 +441,12 @@
                 server_host: document.getElementById('stream-server-host').value.trim(),
                 username: document.getElementById('stream-username').value.trim(),
                 password: document.getElementById('stream-password').value.trim(),
+                is_live_xtream_enabled: document.getElementById('stream-live-xtream-enabled').checked,
+                live_xtream_server_host: document.getElementById('stream-live-xtream-host').value.trim(),
+                live_xtream_username: document.getElementById('stream-live-xtream-username').value.trim(),
+                live_xtream_password: document.getElementById('stream-live-xtream-password').value.trim(),
+                is_channels_api_enabled: document.getElementById('stream-channels-api-enabled').checked,
+                channels_api_url: document.getElementById('stream-channels-api-url').value.trim(),
                 series_server_host: document.getElementById('stream-series-host').value.trim(),
                 series_username: document.getElementById('stream-series-username').value.trim(),
                 series_password: document.getElementById('stream-series-password').value.trim(),
@@ -434,6 +469,15 @@
             document.getElementById('stream-server-host').value = d.server_host || d.serverHost || '';
             document.getElementById('stream-username').value = d.username || d.user || '';
             document.getElementById('stream-password').value = d.password || d.pass || '';
+            
+            document.getElementById('stream-live-xtream-enabled').checked = (d.is_live_xtream_enabled !== undefined) ? d.is_live_xtream_enabled : (d.isLiveXtreamEnabled !== undefined ? d.isLiveXtreamEnabled : true);
+            document.getElementById('stream-live-xtream-host').value = d.live_xtream_server_host || d.liveXtreamServerHost || (d.liveXtreamAccount && d.liveXtreamAccount.serverHost) || '';
+            document.getElementById('stream-live-xtream-username').value = d.live_xtream_username || d.liveXtreamUsername || (d.liveXtreamAccount && d.liveXtreamAccount.username) || '';
+            document.getElementById('stream-live-xtream-password').value = d.live_xtream_password || d.liveXtreamPassword || (d.liveXtreamAccount && d.liveXtreamAccount.password) || '';
+
+            document.getElementById('stream-channels-api-enabled').checked = (d.is_channels_api_enabled !== undefined) ? d.is_channels_api_enabled : (d.isChannelsApiEnabled !== undefined ? d.isChannelsApiEnabled : true);
+            document.getElementById('stream-channels-api-url').value = d.channels_api_url || d.channelsApiUrl || '';
+
             document.getElementById('stream-series-host').value = d.series_server_host || d.seriesServerHost || '';
             document.getElementById('stream-series-username').value = d.series_username || d.seriesUsername || '';
             document.getElementById('stream-series-password').value = d.series_password || d.seriesPassword || '';

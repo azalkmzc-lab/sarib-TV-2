@@ -53,6 +53,11 @@ class SaribRepository(private val context: Context) {
         username = currentRemoteConfig.vodAccount.username,
         password = currentRemoteConfig.vodAccount.password
     )
+    private val liveXtreamClient = XtreamApiClient(
+        serverHost = currentRemoteConfig.liveXtreamAccount.serverHost,
+        username = currentRemoteConfig.liveXtreamAccount.username,
+        password = currentRemoteConfig.liveXtreamAccount.password
+    )
     private val categorySeriesClients = mutableMapOf<String, XtreamApiClient>()
     private val categoryVodClients = mutableMapOf<String, XtreamApiClient>()
 
@@ -121,6 +126,11 @@ class SaribRepository(private val context: Context) {
                     user = firebaseConfig.vodAccount.username,
                     pass = firebaseConfig.vodAccount.password
                 )
+                liveXtreamClient.updateCredentials(
+                    host = firebaseConfig.liveXtreamAccount.serverHost,
+                    user = firebaseConfig.liveXtreamAccount.username,
+                    pass = firebaseConfig.liveXtreamAccount.password
+                )
                 categorySeriesClients.clear()
                 firebaseConfig.seriesCategoriesAccounts.forEach { (catId, acc) ->
                     categorySeriesClients[catId] = XtreamApiClient(acc.serverHost, acc.username, acc.password)
@@ -131,7 +141,7 @@ class SaribRepository(private val context: Context) {
                 }
 
                 matchesClient.apiUrlBase = firebaseConfig.matchesApiUrl
-                Log.d("SaribRepository", "Applied remote config from Firebase: host=${firebaseConfig.serverHost}, seriesHost=${firebaseConfig.seriesAccount.serverHost}, seriesCats=${firebaseConfig.seriesCategoriesAccounts.size}")
+                Log.d("SaribRepository", "Applied remote config from Firebase: host=${firebaseConfig.serverHost}, seriesHost=${firebaseConfig.seriesAccount.serverHost}, liveXtream=${firebaseConfig.isLiveXtreamEnabled}, channelsApi=${firebaseConfig.isChannelsApiEnabled}")
             } catch (e: Exception) {
                 Log.w("SaribRepository", "Could not load Firebase config: ${e.message}")
             }
@@ -147,11 +157,26 @@ class SaribRepository(private val context: Context) {
                 Log.w("SaribRepository", "Could not load Firebase sliders: ${e.message}")
             }
 
-            // 4. Ultra-Fast Startup: Channels exclusively from Firebase, Xtream exclusively for VOD Movies & Series
+            // 4. Ultra-Fast Startup & Multi-Source Sync
             val syncResult = coroutineScope {
-                // Firebase & M3U: Channels, Categories, Custom Movies, Matches
+                // Firebase & M3U & API: Channels, Categories, Custom Movies, Matches
                 val customCatsDeferred = async { firebaseStreamManager.fetchCustomCategories() }
                 val customChannelsDeferred = async { firebaseStreamManager.fetchCustomChannels() }
+                val channelsApiDeferred = async {
+                    if (currentRemoteConfig.isChannelsApiEnabled && currentRemoteConfig.channelsApiUrl.isNotBlank()) {
+                        firebaseStreamManager.fetchChannelsFromApi(currentRemoteConfig.channelsApiUrl)
+                    } else emptyList()
+                }
+                val liveXtreamCatsDeferred = async {
+                    if (currentRemoteConfig.isLiveXtreamEnabled && currentRemoteConfig.liveXtreamAccount.serverHost.isNotBlank()) {
+                        liveXtreamClient.fetchLiveCategories()
+                    } else emptyList()
+                }
+                val liveXtreamChannelsDeferred = async {
+                    if (currentRemoteConfig.isLiveXtreamEnabled && currentRemoteConfig.liveXtreamAccount.serverHost.isNotBlank()) {
+                        liveXtreamClient.fetchLiveStreams(limit = 100)
+                    } else emptyList()
+                }
                 val m3uResultDeferred = async {
                     val m3uSources = firebaseStreamManager.fetchM3uSources()
                     val sourcesToFetch = mutableListOf<Pair<String, String>>()
@@ -211,6 +236,9 @@ class SaribRepository(private val context: Context) {
 
                 val customCats = customCatsDeferred.await()
                 val customChannels = customChannelsDeferred.await()
+                val channelsApiChannels = channelsApiDeferred.await()
+                val liveXtreamCats = liveXtreamCatsDeferred.await()
+                val liveXtreamChannels = liveXtreamChannelsDeferred.await()
                 val m3uResult = m3uResultDeferred.await()
                 val customMovies = customMoviesDeferred.await()
                 val customMovieCategories = customMovieCategoriesDeferred.await()
@@ -221,10 +249,10 @@ class SaribRepository(private val context: Context) {
                 val topMovies = topMoviesDeferred.await()
                 val topSeries = topSeriesDeferred.await()
 
-                val combinedChannels = (customChannels + m3uResult.channels).distinctBy { it.id }
+                val combinedChannels = (customChannels + channelsApiChannels + liveXtreamChannels + m3uResult.channels).distinctBy { it.id }
                 val m3uParsedMovies = (m3uResult.movies + m3uMoviesResult.movies).distinctBy { it.id }
                 val m3uParsedMovieCategories = (m3uResult.movieCategories + m3uMoviesResult.movieCategories).distinctBy { it.id }
-                val allCats = (customCats + m3uResult.categories + vodCategories + seriesCategories + customMovieCategories + m3uParsedMovieCategories).distinctBy { it.id }
+                val allCats = (customCats + liveXtreamCats + m3uResult.categories + vodCategories + seriesCategories + customMovieCategories + m3uParsedMovieCategories).distinctBy { it.id }
                 val allMovs = (customMovies + m3uParsedMovies + topMovies).distinctBy { it.id }
 
                 // Update local Room database with fresh items
@@ -353,7 +381,7 @@ class SaribRepository(private val context: Context) {
                     }
                 }
 
-                val hasRemoteData = customCats.isNotEmpty() || customChannels.isNotEmpty() || allMovs.isNotEmpty() || topSeries.isNotEmpty()
+                val hasRemoteData = customCats.isNotEmpty() || customChannels.isNotEmpty() || channelsApiChannels.isNotEmpty() || liveXtreamChannels.isNotEmpty() || allMovs.isNotEmpty() || topSeries.isNotEmpty()
                 hasRemoteData
             }
 
@@ -369,8 +397,13 @@ class SaribRepository(private val context: Context) {
             }
         } catch (e: Exception) {
             Log.e("SaribRepository", "Init backend sync error: ${e.message}", e)
-            val msg = e.message ?: "لم يتصل بالسيرفر. يرجى التحقق من اتصال الإنترنت."
-            Result.failure(Exception(msg))
+            val cachedCount = try { dao.getChannelsCount() } catch (ex: Exception) { 0 }
+            if (cachedCount > 0) {
+                Result.success(true)
+            } else {
+                val msg = e.message ?: "لم يتصل بالسيرفر. يرجى التحقق من اتصال الإنترنت."
+                Result.failure(Exception(msg))
+            }
         }
     }
 
@@ -397,10 +430,24 @@ class SaribRepository(private val context: Context) {
 
             val categoryChannels = dao.getChannelsListByCategory(categoryId)
             if (categoryChannels.isNotEmpty()) {
-                categoryChannels.map { it.toModel() }
-            } else {
-                dao.getAllChannelsList().map { it.toModel() }
+                return@withContext categoryChannels.map { it.toModel() }
             }
+
+            // On-Demand fetch from Xtream Live if category is from Live Xtream
+            val isXtreamCategory = !categoryId.startsWith("m3u_") && !categoryId.startsWith("fb_") && !categoryId.startsWith("api_")
+            if (isXtreamCategory && currentRemoteConfig.isLiveXtreamEnabled && currentRemoteConfig.liveXtreamAccount.serverHost.isNotBlank()) {
+                try {
+                    val remoteChannels = liveXtreamClient.fetchLiveStreams(categoryId = categoryId)
+                    if (remoteChannels.isNotEmpty()) {
+                        dao.insertChannels(remoteChannels.map { it.toEntity() })
+                        return@withContext remoteChannels
+                    }
+                } catch (e: Exception) {
+                    Log.w("SaribRepository", "Xtream Live channels fetch fallback: ${e.message}")
+                }
+            }
+
+            dao.getAllChannelsList().map { it.toModel() }
         } catch (e: Exception) {
             Log.e("SaribRepository", "Error fetching channels for category $categoryId: ${e.message}", e)
             dao.getAllChannelsList().map { it.toModel() }

@@ -70,25 +70,35 @@ fun SplashScreen(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "splash_motion")
     
-    // Smooth cinematic poster scrolling offsets
+    // Smooth cinematic poster scrolling offsets across 3 columns
     val colOffset1 by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = -300f,
+        targetValue = -600f,
         animationSpec = infiniteRepeatable(
-            animation = tween(12000, easing = LinearEasing),
+            animation = tween(16000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "col1"
     )
 
     val colOffset2 by infiniteTransition.animateFloat(
-        initialValue = -300f,
+        initialValue = -600f,
         targetValue = 0f,
         animationSpec = infiniteRepeatable(
-            animation = tween(14000, easing = LinearEasing),
+            animation = tween(18000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
         label = "col2"
+    )
+
+    val colOffset3 by infiniteTransition.animateFloat(
+        initialValue = -200f,
+        targetValue = -800f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(20000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "col3"
     )
 
     val pulseScale by infiniteTransition.animateFloat(
@@ -106,48 +116,97 @@ fun SplashScreen(
             .fillMaxSize()
             .background(SaribDarkBackground)
     ) {
-        // Animated Angled Posters Wallpaper Background
+        // Fullscreen Animated Posters Wallpaper (Covering 100% of the screen)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .rotate(-8f)
-                .scale(1.25f)
+                .scale(1.15f)
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                // Column 1
-                Box(modifier = Modifier.weight(1f).offset(y = colOffset1.dp)) {
-                    Image(
-                        painter = painterResource(id = R.drawable.splash_posters_bg),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                // Column 1 (Left)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .offset(y = colOffset1.dp)
+                ) {
+                    repeat(4) {
+                        Image(
+                            painter = painterResource(id = R.drawable.splash_posters_bg),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(520.dp)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
                 }
-                // Column 2
-                Box(modifier = Modifier.weight(1f).offset(y = colOffset2.dp)) {
-                    Image(
-                        painter = painterResource(id = R.drawable.splash_posters_bg),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                // Column 2 (Center)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .offset(y = colOffset2.dp)
+                ) {
+                    repeat(4) {
+                        Image(
+                            painter = painterResource(id = R.drawable.splash_posters_bg),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(520.dp)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
+                // Column 3 (Right)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .offset(y = colOffset3.dp)
+                ) {
+                    repeat(4) {
+                        Image(
+                            painter = painterResource(id = R.drawable.splash_posters_bg),
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(520.dp)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
                 }
             }
         }
 
-        // Dark Vignette & Gradient Overlay
+        // Cinematic Translucent Glassmorphism Vignette (Allows posters to shine through the entire screen)
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0xDD070C14),
-                            Color(0xFA070C14),
-                            Color(0xFF070C14)
+                            Color(0x99070C14),
+                            Color(0xBB070C14),
+                            Color(0xEE070C14)
+                        )
+                    )
+                )
+        )
+
+        // Subtle Radial Cyan Ambient Glow in Center
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            SaribCyanAccent.copy(alpha = 0.12f),
+                            Color.Transparent
                         )
                     )
                 )
@@ -160,30 +219,30 @@ fun SplashScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Main SARIB TV Center Card
+            // Main SARIB TV Frosted Glass Card
             Surface(
                 modifier = Modifier
                     .fillMaxWidth(0.88f)
                     .scale(pulseScale)
-                    .shadow(32.dp, RoundedCornerShape(28.dp))
+                    .shadow(36.dp, RoundedCornerShape(28.dp))
                     .clip(RoundedCornerShape(28.dp))
                     .border(
                         1.5.dp,
                         Brush.verticalGradient(
-                            listOf(SaribCyanAccent.copy(alpha = 0.7f), SaribCardBorder)
+                            listOf(SaribCyanAccent.copy(alpha = 0.8f), SaribCardBorder.copy(alpha = 0.4f))
                         ),
                         RoundedCornerShape(28.dp)
                     ),
-                color = SaribCardBg
+                color = SaribCardBg.copy(alpha = 0.85f)
             ) {
                 Box(
                     modifier = Modifier
                         .background(
                             Brush.verticalGradient(
-                                listOf(SaribCardBgSecondary, SaribCardBg)
+                                listOf(SaribCardBgSecondary.copy(alpha = 0.88f), SaribCardBg.copy(alpha = 0.92f))
                             )
                         )
-                        .padding(vertical = 36.dp, horizontal = 22.dp),
+                        .padding(vertical = 32.dp, horizontal = 20.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -193,7 +252,7 @@ fun SplashScreen(
                         Box(
                             modifier = Modifier
                                 .size(92.dp)
-                                .shadow(20.dp, CircleShape)
+                                .shadow(24.dp, CircleShape)
                                 .clip(CircleShape)
                                 .background(Color(0xFF060B12))
                                 .border(2.5.dp, SaribCyanAccent, CircleShape),
@@ -236,40 +295,41 @@ fun SplashScreen(
                         Text(
                             text = "منصة البث المباشر والترفيه الرقمي",
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                color = SaribTextSecondary
+                                color = SaribTextSecondary,
+                                fontWeight = FontWeight.Medium
                             )
                         )
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(30.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             // Loading / Status Card
             if (errorMessage == null) {
                 Surface(
                     modifier = Modifier
-                        .fillMaxWidth(0.82f)
+                        .fillMaxWidth(0.78f)
                         .clip(RoundedCornerShape(20.dp))
-                        .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(20.dp)),
-                    color = SaribCardBg
+                        .border(1.dp, SaribCyanAccent.copy(alpha = 0.5f), RoundedCornerShape(20.dp)),
+                    color = SaribCardBg.copy(alpha = 0.88f)
                 ) {
                     Row(
                         modifier = Modifier
-                            .background(SaribCardBg)
+                            .background(SaribCardBg.copy(alpha = 0.88f))
                             .padding(horizontal = 20.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.Center
                     ) {
                         SaribLoadingIndicator(
-                            size = 28.dp
+                            size = 26.dp
                         )
                         Spacer(modifier = Modifier.width(14.dp))
                         Text(
                             text = tr("connecting"),
                             style = MaterialTheme.typography.labelLarge.copy(
                                 color = SaribTextPrimary,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.Bold
                             )
                         )
                     }
@@ -280,8 +340,8 @@ fun SplashScreen(
                     modifier = Modifier
                         .fillMaxWidth(0.88f)
                         .clip(RoundedCornerShape(20.dp))
-                        .border(1.dp, SaribLiveRed.copy(alpha = 0.6f), RoundedCornerShape(20.dp)),
-                    color = SaribCardBg
+                        .border(1.dp, SaribLiveRed.copy(alpha = 0.7f), RoundedCornerShape(20.dp)),
+                    color = SaribCardBg.copy(alpha = 0.9f)
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),
