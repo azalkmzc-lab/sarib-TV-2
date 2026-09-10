@@ -1,9 +1,13 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,9 +29,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideoLibrary
 import androidx.compose.material3.Card
@@ -45,9 +51,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -65,10 +79,14 @@ import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribTopHeader
 import com.example.ui.components.SectionHeader
 import com.example.ui.theme.SaribCardBg
+import com.example.ui.theme.SaribCardBgSecondary
 import com.example.ui.theme.SaribCardBorder
+import com.example.ui.theme.SaribCardBorderSubtle
 import com.example.ui.theme.SaribCyanAccent
 import com.example.ui.theme.SaribDarkBackground
 import com.example.ui.theme.SaribElectricBlue
+import com.example.ui.theme.SaribGoldRating
+import com.example.ui.theme.SaribLiveRed
 import com.example.ui.theme.SaribTextMuted
 import com.example.ui.theme.SaribTextPrimary
 import com.example.ui.theme.SaribTextSecondary
@@ -101,6 +119,11 @@ fun EntertainmentScreen(
     var selectedFilterIndex by rememberSaveable { mutableStateOf(0) }
     val filterTabs = listOf("الكل", "الأفلام", "المسلسلات", "تصنيفات الترفيه")
 
+    // Featured Spotlight item (Top movie or series)
+    val spotlightItem = remember(movies, series) {
+        movies.firstOrNull() ?: series.firstOrNull()
+    }
+
     val content: @Composable (Modifier) -> Unit = { paddingModifier ->
         LazyColumn(
             state = listState,
@@ -108,11 +131,11 @@ fun EntertainmentScreen(
                 .fillMaxSize()
                 .then(paddingModifier)
                 .background(MaterialTheme.colorScheme.background),
-            contentPadding = PaddingValues(bottom = if (showBars) 24.dp else 12.dp)
+            contentPadding = PaddingValues(bottom = if (showBars) 28.dp else 12.dp)
         ) {
-            // Action Navigation Shortcut Cards
+            // Action Navigation Shortcut Cards (البحث, الأفلام, المسلسلات)
             item {
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -128,20 +151,33 @@ fun EntertainmentScreen(
                     ActionButtonCard(
                         title = tr("movies"),
                         icon = Icons.Default.Movie,
+                        isActive = selectedFilterIndex == 1,
                         onClick = { selectedFilterIndex = 1 },
                         modifier = Modifier.weight(1f)
                     )
                     ActionButtonCard(
                         title = tr("series"),
                         icon = Icons.Default.Tv,
+                        isActive = selectedFilterIndex == 2,
                         onClick = { selectedFilterIndex = 2 },
                         modifier = Modifier.weight(1f)
                     )
                 }
-                Spacer(modifier = Modifier.height(14.dp))
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Watch History Section (سجل المشاهدة / متابعة المشاهدة)
+            // Featured Hero Spotlight Banner (In 'All' Tab)
+            if (selectedFilterIndex == 0 && spotlightItem != null) {
+                item {
+                    EntertainmentHeroSpotlight(
+                        item = spotlightItem,
+                        onClick = { onMediaClick(spotlightItem) }
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+            }
+
+            // Watch History Section (سجل المشاهدة / استئناف المتابعة)
             if (watchHistory.isNotEmpty()) {
                 item {
                     Row(
@@ -160,7 +196,7 @@ fun EntertainmentScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "سجل المشاهدة",
+                                text = "متابعة المشاهدة",
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     color = SaribTextPrimary
@@ -183,7 +219,7 @@ fun EntertainmentScreen(
                     LazyRow(
                         modifier = Modifier.fillMaxWidth(),
                         contentPadding = PaddingValues(horizontal = 14.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         items(watchHistory, key = { it.id }, contentType = { "watch_history" }) { item ->
                             WatchHistoryCardItem(
@@ -197,7 +233,7 @@ fun EntertainmentScreen(
                 }
             }
 
-            // Dynamic filter tabs
+            // Category Filter Chips
             item {
                 CategoryChipsRow(
                     categories = filterTabs,
@@ -211,7 +247,7 @@ fun EntertainmentScreen(
 
             // FILTER: ALL (الكل)
             if (selectedFilterIndex == 0) {
-                // Movie Section with View All
+                // Movies Horizontal Carousel
                 item {
                     val firstVodCat = vodCategories.firstOrNull() ?: ChannelCategory(
                         id = "all_movies",
@@ -220,7 +256,7 @@ fun EntertainmentScreen(
                         categoryType = "movies"
                     )
                     SectionHeader(
-                        title = "مكتبة الأفلام الحديثة",
+                        title = "أحدث الأفلام والسينما",
                         onViewAllClick = { onCategoryClick(firstVodCat) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -240,14 +276,14 @@ fun EntertainmentScreen(
                         }
                     } else {
                         EmptyPreviewPlaceholder(
-                            title = "جاري تحميل أحدث الأفلام...",
+                            title = "جاري سحب الأفلام من السيرفر...",
                             onClick = { onCategoryClick(firstVodCat) }
                         )
                     }
                     Spacer(modifier = Modifier.height(18.dp))
                 }
 
-                // Series Section with View All
+                // Series Horizontal Carousel
                 item {
                     val firstSeriesCat = seriesCategories.firstOrNull() ?: ChannelCategory(
                         id = "all_series",
@@ -276,7 +312,7 @@ fun EntertainmentScreen(
                         }
                     } else {
                         EmptyPreviewPlaceholder(
-                            title = "جاري تحميل أحدث المسلسلات...",
+                            title = "جاري سحب المسلسلات من السيرفر...",
                             onClick = { onCategoryClick(firstSeriesCat) }
                         )
                     }
@@ -323,7 +359,7 @@ fun EntertainmentScreen(
                     item { Spacer(modifier = Modifier.height(16.dp)) }
                 }
 
-                // Anime / Additional picks if present
+                // Anime Section
                 if (anime.isNotEmpty()) {
                     item {
                         SectionHeader(
@@ -510,6 +546,210 @@ fun EntertainmentScreen(
     }
 }
 
+/**
+ * Premium Hero Spotlight Component for EntertainmentScreen
+ */
+@Composable
+private fun EntertainmentHeroSpotlight(
+    item: MediaItem,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.02f else 1.0f,
+        animationSpec = tween(150),
+        label = "spotlightScale"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isFocused) SaribCyanAccent else SaribCardBorder,
+        animationSpec = tween(150),
+        label = "spotlightBorder"
+    )
+
+    val displayBackdrop = item.backdropUrl.ifBlank { item.posterUrl }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp)
+            .height(200.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(22.dp))
+            .border(if (isFocused) 2.dp else 1.dp, borderColor, RoundedCornerShape(22.dp))
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyUp && (
+                    keyEvent.key == Key.DirectionCenter ||
+                    keyEvent.key == Key.Enter ||
+                    keyEvent.key == Key.NumPadEnter ||
+                    keyEvent.key == Key.ButtonA
+                )) {
+                    onClick()
+                    true
+                } else false
+            }
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(containerColor = SaribCardBg)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (displayBackdrop.isNotBlank()) {
+                AsyncImage(
+                    model = displayBackdrop,
+                    contentDescription = item.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.linearGradient(listOf(Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)))
+                        )
+                )
+            }
+
+            // Cinematic gradient protection
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(
+                                Color.Transparent,
+                                Color(0x99000000),
+                                Color(0xF2070C14)
+                            )
+                        )
+                    )
+            )
+
+            // Top VIP Badge
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SaribElectricBlue.copy(alpha = 0.85f))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.LocalFireDepartment,
+                        contentDescription = null,
+                        tint = Color(0xFFFF9500),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = "عمل مقترح",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold
+                        )
+                    )
+                }
+
+                if (item.rating.isNotBlank()) {
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0xCC000000))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = SaribGoldRating,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = item.rating,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = SaribGoldRating,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
+            }
+
+            // Bottom Content info + Play button
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomStart)
+                    .padding(14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Bottom
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.title,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = Color.White,
+                            fontWeight = FontWeight.Black
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "${item.year.ifBlank { "2024" }} • ${item.genre.ifBlank { "VIP" }}",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = SaribCyanAccent,
+                            fontWeight = FontWeight.Medium
+                        )
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(SaribElectricBlue, SaribCyanAccent)
+                            )
+                        )
+                        .padding(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "مشاهدة",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun EmptyPreviewPlaceholder(
     title: String,
@@ -555,11 +795,23 @@ private fun WatchHistoryCardItem(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.05f else 1.0f,
+        animationSpec = tween(150),
+        label = "watchCardScale"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isFocused) SaribCyanAccent else SaribCardBorder,
+        animationSpec = tween(150),
+        label = "watchCardBorder"
+    )
+
     val progressRatio = remember(item.progressMs, item.durationMs) {
         if (item.durationMs > 0L) {
             (item.progressMs.toFloat() / item.durationMs.toFloat()).coerceIn(0f, 1f)
         } else if (item.progressMs > 0L) {
-            0.5f // Default indicator when total duration unknown
+            0.5f
         } else {
             0f
         }
@@ -586,8 +838,25 @@ private fun WatchHistoryCardItem(
         modifier = modifier
             .width(185.dp)
             .height(118.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(14.dp))
-            .border(1.dp, SaribCardBorder, RoundedCornerShape(14.dp))
+            .border(if (isFocused) 2.dp else 1.dp, borderColor, RoundedCornerShape(14.dp))
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyUp && (
+                    keyEvent.key == Key.DirectionCenter ||
+                    keyEvent.key == Key.Enter ||
+                    keyEvent.key == Key.NumPadEnter ||
+                    keyEvent.key == Key.ButtonA
+                )) {
+                    onClick()
+                    true
+                } else false
+            }
             .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = SaribCardBg)
     ) {
@@ -605,7 +874,7 @@ private fun WatchHistoryCardItem(
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
-                                colors = listOf(Color(0xFF1E293B), Color(0xFF0F172A))
+                                listOf(Color(0xFF1E293B), Color(0xFF0F172A))
                             )
                         ),
                     contentAlignment = Alignment.Center
@@ -625,7 +894,7 @@ private fun WatchHistoryCardItem(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(
+                            listOf(
                                 Color.Black.copy(alpha = 0.3f),
                                 Color.Black.copy(alpha = 0.88f)
                             )

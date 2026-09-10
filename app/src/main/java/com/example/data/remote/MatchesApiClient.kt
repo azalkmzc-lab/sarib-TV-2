@@ -4,6 +4,7 @@ import android.util.Log
 import com.example.data.model.MatchEventItem
 import com.example.data.model.MatchItem
 import com.example.data.model.MatchPlayer
+import com.example.data.model.MatchStatisticItem
 import com.example.data.model.TeamLineup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -190,6 +191,98 @@ class MatchesApiClient(
             eventsList
         } catch (e: Exception) {
             Log.e("MatchesApiClient", "Error fetching events for $fixtureId: ${e.message}")
+            emptyList()
+        }
+    }
+
+    suspend fun fetchStatistics(fixtureId: String): List<MatchStatisticItem> = withContext(Dispatchers.IO) {
+        try {
+            val numId = fixtureId.filter { it.isDigit() }
+            if (numId.isBlank()) return@withContext emptyList()
+
+            val url = "https://v3.football.api-sports.io/fixtures/statistics?fixture=$numId"
+            val request = Request.Builder()
+                .url(url)
+                .addHeader("x-apisports-key", apiFootballKey)
+                .addHeader("x-rapidapi-key", apiFootballKey)
+                .addHeader("Accept", "application/json")
+                .build()
+
+            val response = client.newCall(request).execute()
+            val jsonStr = response.body?.string().orEmpty()
+            if (jsonStr.isBlank()) return@withContext emptyList()
+
+            val rootObj = JSONObject(jsonStr)
+            val responseArray = rootObj.optJSONArray("response") ?: return@withContext emptyList()
+            if (responseArray.length() < 2) return@withContext emptyList()
+
+            val homeObj = responseArray.optJSONObject(0)
+            val awayObj = responseArray.optJSONObject(1)
+
+            val homeStatsArray = homeObj?.optJSONArray("statistics") ?: return@withContext emptyList()
+            val awayStatsArray = awayObj?.optJSONArray("statistics") ?: return@withContext emptyList()
+
+            val awayStatsMap = mutableMapOf<String, String>()
+            for (i in 0 until awayStatsArray.length()) {
+                val item = awayStatsArray.optJSONObject(i) ?: continue
+                val type = item.optString("type", "")
+                val value = item.opt("value")?.toString()?.replace("null", "0") ?: "0"
+                if (type.isNotBlank()) {
+                    awayStatsMap[type.lowercase()] = value
+                }
+            }
+
+            val statsList = mutableListOf<MatchStatisticItem>()
+            for (i in 0 until homeStatsArray.length()) {
+                val item = homeStatsArray.optJSONObject(i) ?: continue
+                val type = item.optString("type", "")
+                if (type.isBlank()) continue
+
+                val homeValStr = item.opt("value")?.toString()?.replace("null", "0") ?: "0"
+                val awayValStr = awayStatsMap[type.lowercase()] ?: "0"
+
+                val arabicName = when (type.lowercase()) {
+                    "ball possession" -> "الاستحواذ على الكرة"
+                    "total shots" -> "إجمالي التسديدات"
+                    "shots on goal" -> "التسديدات على المرمى"
+                    "shots off goal" -> "التسديدات خارج المرمى"
+                    "blocked shots" -> "تسديدات تصدى لها الدفاع"
+                    "shots insidebox" -> "تسديدات من داخل المنطقة"
+                    "shots outsidebox" -> "تسديدات من خارج المنطقة"
+                    "corner kicks" -> "الضربات الركنية"
+                    "offsides" -> "حالات التسلل"
+                    "fouls" -> "الأخطاء المرتكبة"
+                    "yellow cards" -> "البطاقات الصفراء"
+                    "red cards" -> "البطاقات الحمراء"
+                    "goalkeeper saves" -> "تصديات حارس المرمى"
+                    "total passes" -> "إجمالي التمريرات"
+                    "passes accurate" -> "التمريرات الناجحة"
+                    "passes %" -> "دقة التمرير"
+                    "expected_goals" -> "الأهداف المتوقعة (xG)"
+                    else -> type
+                }
+
+                val homeNum = homeValStr.replace("%", "").trim().toFloatOrNull() ?: 0f
+                val awayNum = awayValStr.replace("%", "").trim().toFloatOrNull() ?: 0f
+                val total = homeNum + awayNum
+
+                val homePct = if (total > 0f) (homeNum / total).coerceIn(0f, 1f) else 0.5f
+                val awayPct = if (total > 0f) (awayNum / total).coerceIn(0f, 1f) else 0.5f
+
+                statsList.add(
+                    MatchStatisticItem(
+                        type = type,
+                        typeArabic = arabicName,
+                        homeValue = homeValStr,
+                        awayValue = awayValStr,
+                        homePercent = homePct,
+                        awayPercent = awayPct
+                    )
+                )
+            }
+            statsList
+        } catch (e: Exception) {
+            Log.e("MatchesApiClient", "Error fetching statistics for $fixtureId: ${e.message}")
             emptyList()
         }
     }

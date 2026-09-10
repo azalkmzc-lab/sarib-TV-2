@@ -83,7 +83,7 @@ import com.example.ui.theme.SaribTextSecondary
 fun MatchDetailsDialog(
     match: MatchItem,
     onDismissRequest: () -> Unit,
-    onWatchMatch: (MatchItem, String) -> Unit,
+    onWatchMatch: ((MatchItem, String) -> Unit)? = null,
     onFetchLineups: suspend (String) -> Pair<TeamLineup?, TeamLineup?> = { _ -> Pair(null, null) },
     onFetchEvents: suspend (String) -> List<MatchEventItem> = { _ -> emptyList() },
     modifier: Modifier = Modifier
@@ -112,24 +112,6 @@ fun MatchDetailsDialog(
             isLoadingDetails = false
         }
     }
-
-    val serverList = remember(match) {
-        val list = mutableListOf<Pair<String, String>>()
-        if (match.streamUrl.isNotBlank()) list.add("سيرفر 1 (الرئيسي FHD)" to match.streamUrl)
-        if (match.server1.isNotBlank() && match.server1 != match.streamUrl) list.add("سيرفر 1 (FHD)" to match.server1)
-        if (match.server2.isNotBlank()) list.add("سيرفر 2 (HD)" to match.server2)
-        if (match.server3.isNotBlank()) list.add("سيرفر 3 (سريع CDN)" to match.server3)
-        if (match.server4.isNotBlank()) list.add("سيرفر 4 (جودة متوسطة)" to match.server4)
-        if (match.server5.isNotBlank()) list.add("سيرفر 5 (بث مباشر M3U8)" to match.server5)
-
-        if (list.isEmpty()) {
-            list.add("سيرفر 1 (البث السحابي)" to match.streamUrl)
-            list.add("سيرفر 2 (احتياطي)" to match.streamUrl)
-        }
-        list
-    }
-
-    var selectedServerIndex by remember { mutableIntStateOf(0) }
 
     Dialog(onDismissRequest = onDismissRequest) {
         Surface(
@@ -169,7 +151,7 @@ fun MatchDetailsDialog(
                             Spacer(modifier = Modifier.width(8.dp))
                         }
                         Text(
-                            text = match.leagueName.ifBlank { "مباريات اليوم" },
+                            text = match.leagueName.ifBlank { "تفاصيل المباراة" },
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = SaribCyanAccent
@@ -375,8 +357,8 @@ fun MatchDetailsDialog(
 
                 Spacer(modifier = Modifier.height(14.dp))
 
-                // Modern 4-Tab Navigation: [سيرفرات البث | التشكيلة الحقيقية | أحداث المباراة | تفاصيل اللقاء]
-                val tabs = listOf("سيرفرات البث", "التشكيلة", "الأحداث", "المعلومات")
+                // Modern 3-Tab Navigation: [التشكيلة | الأحداث | تفاصيل اللقاء]
+                val tabs = listOf("التشكيلة", "الأحداث", "المعلومات")
                 TabRow(
                     selectedTabIndex = selectedTabIndex,
                     containerColor = SaribCardBg,
@@ -403,7 +385,7 @@ fun MatchDetailsDialog(
                                     text = label,
                                     style = MaterialTheme.typography.labelMedium.copy(
                                         fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Medium,
-                                        fontSize = 12.sp
+                                        fontSize = 13.sp
                                     ),
                                     color = if (selectedTabIndex == index) SaribCyanAccent else SaribTextMuted
                                 )
@@ -415,96 +397,8 @@ fun MatchDetailsDialog(
                 Spacer(modifier = Modifier.height(14.dp))
 
                 when (selectedTabIndex) {
-                    // TAB 0: SERVERS & LIVE PLAYBACK
+                    // TAB 0: REAL LINEUPS (التشكيلة الحقيقية من API Football)
                     0 -> {
-                        Column(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = "اختر سيرفر البث المباشر:",
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = SaribCyanAccent
-                                )
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            serverList.forEachIndexed { index, (name, _) ->
-                                val isSelected = selectedServerIndex == index
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(if (isSelected) SaribElectricBlue.copy(alpha = 0.25f) else SaribCardBg)
-                                        .border(
-                                            1.dp,
-                                            if (isSelected) SaribCyanAccent else SaribCardBorderSubtle,
-                                            RoundedCornerShape(12.dp)
-                                        )
-                                        .clickable { selectedServerIndex = index }
-                                        .padding(horizontal = 14.dp, vertical = 10.dp)
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                imageVector = Icons.Default.Sensors,
-                                                contentDescription = null,
-                                                tint = if (isSelected) SaribCyanAccent else SaribTextMuted,
-                                                modifier = Modifier.size(18.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(10.dp))
-                                            Text(
-                                                text = name,
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    color = if (isSelected) SaribCyanAccent else SaribTextPrimary,
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                                )
-                                            )
-                                        }
-
-                                        if (isSelected) {
-                                            Text(
-                                                text = "جاهز للبث",
-                                                style = MaterialTheme.typography.labelSmall.copy(color = SaribCyanAccent, fontWeight = FontWeight.Bold)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Watch Button
-                            Button(
-                                onClick = {
-                                    val chosenUrl = serverList.getOrNull(selectedServerIndex)?.second ?: match.streamUrl
-                                    onWatchMatch(match, chosenUrl)
-                                    onDismissRequest()
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = SaribElectricBlue)
-                            ) {
-                                Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = tr("watch_now"),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                )
-                            }
-                        }
-                    }
-
-                    // TAB 1: REAL LINEUPS (التشكيلة الحقيقية من API Football)
-                    1 -> {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             if (homeLineup == null && awayLineup == null) {
                                 Box(
@@ -537,8 +431,8 @@ fun MatchDetailsDialog(
                         }
                     }
 
-                    // TAB 2: REAL MATCH EVENTS TIMELINE (أحداث اللقاء)
-                    2 -> {
+                    // TAB 1: REAL MATCH EVENTS TIMELINE (أحداث اللقاء)
+                    1 -> {
                         Column(modifier = Modifier.fillMaxWidth()) {
                             if (matchEvents.isEmpty()) {
                                 Box(
@@ -566,8 +460,8 @@ fun MatchDetailsDialog(
                         }
                     }
 
-                    // TAB 3: MATCH INFO
-                    3 -> {
+                    // TAB 2: MATCH INFO
+                    2 -> {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()

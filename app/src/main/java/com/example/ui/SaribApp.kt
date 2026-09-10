@@ -45,6 +45,7 @@ import com.example.ui.screens.EntertainmentScreen
 import com.example.ui.screens.FavoritesScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.MatchesScreen
+import com.example.ui.screens.MatchDetailScreen
 import com.example.ui.screens.NewsScreen
 import com.example.ui.screens.ChannelsScreen
 import com.example.ui.screens.MediaCategoryDetailScreen
@@ -387,7 +388,7 @@ fun SaribApp(
                                         selectedDate = selectedMatchDate,
                                         onDateSelected = { date, offset -> viewModel.selectMatchDate(date, offset) },
                                         onMatchClick = { match ->
-                                            selectedMatchForDetails = match
+                                            viewModel.openMatchDetail(match)
                                         },
                                         onMenuClick = { scope.launch { drawerState.open() } },
                                         onTelegramClick = openTelegram,
@@ -576,6 +577,25 @@ fun SaribApp(
                                 servers = directServers
                             )
                         }
+                    )
+                }
+
+                is AppScreen.MatchDetail -> {
+                    MatchDetailScreen(
+                        match = screen.match,
+                        onBackClick = { viewModel.popBack() },
+                        onWatchMatch = { match, streamUrl ->
+                            viewModel.playMedia(
+                                title = "${match.homeTeam} vs ${match.awayTeam}",
+                                subtitle = "${match.leagueName} • ${match.commentator.ifEmpty { "بث مباشر" }}",
+                                streamUrl = streamUrl,
+                                isLive = match.isLive,
+                                servers = match.getActiveServers()
+                            )
+                        },
+                        onFetchLineups = { id -> viewModel.getMatchLineups(id) },
+                        onFetchEvents = { id -> viewModel.getMatchEvents(id) },
+                        onFetchStatistics = { id -> viewModel.getMatchStatistics(id) }
                     )
                 }
 

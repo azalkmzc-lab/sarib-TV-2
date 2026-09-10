@@ -1,11 +1,15 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,8 +50,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,6 +71,7 @@ import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribTopHeader
 import com.example.ui.components.SectionHeader
 import com.example.ui.theme.SaribCardBg
+import com.example.ui.theme.SaribCardBgSecondary
 import com.example.ui.theme.SaribCardBorder
 import com.example.ui.theme.SaribCardBorderSubtle
 import com.example.ui.theme.SaribCyanAccent
@@ -185,6 +198,7 @@ fun MatchesScreen(
                         IconButton(
                             onClick = { showSearchBar = !showSearchBar },
                             modifier = Modifier
+                                .testTag("match_search_toggle")
                                 .size(36.dp)
                                 .clip(CircleShape)
                                 .background(Color(0x33FFFFFF))
@@ -210,7 +224,7 @@ fun MatchesScreen(
                             onValueChange = { matchSearchQuery = it },
                             placeholder = { Text("ابحث عن فريق، دوري، معلق، أو قناة...", color = SaribTextMuted, fontSize = 13.sp) },
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().testTag("match_search_input"),
                             shape = RoundedCornerShape(14.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = SaribCyanAccent,
@@ -263,16 +277,17 @@ fun MatchesScreen(
                     }
 
                     Text(
-                        text = "تحديث لحظي من API-Football",
+                        text = "تحديث فوري",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = SaribCyanAccent
+                            color = SaribCyanAccent,
+                            fontWeight = FontWeight.Bold
                         )
                     )
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Date Pills
+                // Date Pills with TV Focus
                 LazyRow(
                     modifier = Modifier.fillMaxWidth(),
                     contentPadding = PaddingValues(horizontal = 14.dp),
@@ -280,15 +295,45 @@ fun MatchesScreen(
                 ) {
                     items(dateFilters, key = { it.dayName + it.dateLabel }, contentType = { "date_filter" }) { filter ->
                         val isSelected = filter.dayName == selectedDate || filter.dateLabel == selectedDate
+                        var isDateFocused by remember { mutableStateOf(false) }
+
+                        val scale by animateFloatAsState(
+                            targetValue = if (isDateFocused) 1.05f else 1.0f,
+                            animationSpec = tween(150),
+                            label = "datePillScale"
+                        )
+                        val borderColor by animateColorAsState(
+                            targetValue = if (isDateFocused) SaribCyanAccent else if (isSelected) SaribCyanAccent else SaribCardBorderSubtle,
+                            animationSpec = tween(150),
+                            label = "datePillBorder"
+                        )
+
                         Box(
                             modifier = Modifier
+                                .graphicsLayer {
+                                    scaleX = scale
+                                    scaleY = scale
+                                }
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(if (isSelected) SaribElectricBlue else SaribCardBg)
                                 .border(
-                                    1.dp,
-                                    if (isSelected) SaribCyanAccent else SaribCardBorderSubtle,
+                                    if (isDateFocused) 2.dp else 1.dp,
+                                    borderColor,
                                     RoundedCornerShape(16.dp)
                                 )
+                                .onFocusChanged { isDateFocused = it.isFocused }
+                                .focusable()
+                                .onKeyEvent { keyEvent ->
+                                    if (keyEvent.type == KeyEventType.KeyUp && (
+                                        keyEvent.key == Key.DirectionCenter ||
+                                        keyEvent.key == Key.Enter ||
+                                        keyEvent.key == Key.NumPadEnter ||
+                                        keyEvent.key == Key.ButtonA
+                                    )) {
+                                        onDateSelected(filter.dayName, filter.offset)
+                                        true
+                                    } else false
+                                }
                                 .clickable { onDateSelected(filter.dayName, filter.offset) }
                                 .padding(horizontal = 18.dp, vertical = 8.dp),
                             contentAlignment = Alignment.Center
@@ -324,22 +369,37 @@ fun MatchesScreen(
                     ) {
                         items(availableLeagues, key = { "league_$it" }) { league ->
                             val isSelected = selectedLeagueFilter == league
+                            var isLeagueFocused by remember { mutableStateOf(false) }
+
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(20.dp))
                                     .background(if (isSelected) SaribCyanAccent.copy(alpha = 0.2f) else SaribCardBg)
                                     .border(
-                                        1.dp,
-                                        if (isSelected) SaribCyanAccent else Color.Transparent,
+                                        if (isLeagueFocused) 2.dp else 1.dp,
+                                        if (isLeagueFocused) SaribCyanAccent else if (isSelected) SaribCyanAccent else Color.Transparent,
                                         RoundedCornerShape(20.dp)
                                     )
+                                    .onFocusChanged { isLeagueFocused = it.isFocused }
+                                    .focusable()
+                                    .onKeyEvent { keyEvent ->
+                                        if (keyEvent.type == KeyEventType.KeyUp && (
+                                            keyEvent.key == Key.DirectionCenter ||
+                                            keyEvent.key == Key.Enter ||
+                                            keyEvent.key == Key.NumPadEnter ||
+                                            keyEvent.key == Key.ButtonA
+                                        )) {
+                                            selectedLeagueFilter = league
+                                            true
+                                        } else false
+                                    }
                                     .clickable { selectedLeagueFilter = league }
                                     .padding(horizontal = 14.dp, vertical = 6.dp)
                             ) {
                                 Text(
                                     text = league,
                                     style = MaterialTheme.typography.labelMedium.copy(
-                                        color = if (isSelected) SaribCyanAccent else SaribTextMuted,
+                                        color = if (isSelected || isLeagueFocused) SaribCyanAccent else SaribTextMuted,
                                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
                                     )
                                 )
@@ -420,3 +480,4 @@ fun MatchesScreen(
         content(Modifier)
     }
 }
+

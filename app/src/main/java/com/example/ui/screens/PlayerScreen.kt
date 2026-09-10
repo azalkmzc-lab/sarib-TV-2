@@ -27,6 +27,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
@@ -51,6 +52,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AspectRatio
@@ -610,11 +618,74 @@ fun PlayerScreen(
         }
     }
 
-    // MAIN CONTAINER
+    val playerFocusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        try {
+            playerFocusRequester.requestFocus()
+        } catch (_: Exception) {}
+    }
+
+    // MAIN CONTAINER WITH TV REMOTE CONTROL SUPPORT
     Box(
         modifier = modifier
             .fillMaxSize()
             .background(Color.Black)
+            .focusRequester(playerFocusRequester)
+            .focusable()
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyUp) {
+                    when (keyEvent.key) {
+                        Key.DirectionCenter, Key.Enter, Key.NumPadEnter, Key.ButtonA -> {
+                            if (!isControlsLocked) {
+                                areControlsVisible = !areControlsVisible
+                            }
+                            true
+                        }
+                        Key.MediaPlayPause -> {
+                            if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
+                            true
+                        }
+                        Key.MediaPlay -> {
+                            exoPlayer.play()
+                            true
+                        }
+                        Key.MediaPause -> {
+                            exoPlayer.pause()
+                            true
+                        }
+                        Key.DirectionLeft, Key.MediaFastForward -> {
+                            if (!isLive) {
+                                val newPos = (exoPlayer.currentPosition + 10000L).coerceAtMost(exoPlayer.duration)
+                                exoPlayer.seekTo(newPos)
+                                areControlsVisible = true
+                            }
+                            true
+                        }
+                        Key.DirectionRight, Key.MediaRewind -> {
+                            if (!isLive) {
+                                val newPos = (exoPlayer.currentPosition - 10000L).coerceAtLeast(0L)
+                                exoPlayer.seekTo(newPos)
+                                areControlsVisible = true
+                            }
+                            true
+                        }
+                        Key.DirectionUp, Key.DirectionDown -> {
+                            areControlsVisible = true
+                            true
+                        }
+                        Key.Back, Key.Escape -> {
+                            if (areControlsVisible) {
+                                areControlsVisible = false
+                                true
+                            } else {
+                                onBackClick()
+                                true
+                            }
+                        }
+                        else -> false
+                    }
+                } else false
+            }
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null
@@ -1460,20 +1531,6 @@ fun PlayerScreen(
                         shape = RoundedCornerShape(10.dp)
                     ) {
                         Text("فتح إعدادات البث على التلفاز (Cast)", color = Color.White, fontWeight = FontWeight.Bold)
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(
-                        onClick = {
-                            val clip = ClipData.newPlainText("Stream URL", currentActiveUrl)
-                            val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
-                            cm?.setPrimaryClip(clip)
-                            Toast.makeText(context, "تم نسخ رابط البث المباشر", Toast.LENGTH_SHORT).show()
-                            showCastDialog = false
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp)
-                    ) {
-                        Text("نسخ رابط البث المباشر", color = SaribCyanAccent)
                     }
                 }
             }

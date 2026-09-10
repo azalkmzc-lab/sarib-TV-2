@@ -135,6 +135,7 @@ import com.example.ui.theme.SaribElectricBlue
 import com.example.ui.theme.SaribHeaderGradientEnd
 import com.example.ui.theme.SaribHeaderGradientStart
 import com.example.ui.theme.SaribLiveRed
+import com.example.ui.theme.SaribGoldRating
 import com.example.ui.theme.SaribSuccessGreen
 import com.example.ui.theme.SaribTextMuted
 import com.example.ui.theme.SaribTextPrimary
@@ -1379,199 +1380,340 @@ fun MatchCardItem(
     onClick: (MatchItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.02f else 1.0f,
+        animationSpec = tween(durationMillis = 150),
+        label = "matchCardScale"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isFocused) SaribCyanAccent else if (match.isLive) SaribLiveRed.copy(alpha = 0.5f) else SaribCardBorder,
+        animationSpec = tween(durationMillis = 150),
+        label = "matchCardBorder"
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, SaribCardBorder, RoundedCornerShape(20.dp))
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(RoundedCornerShape(22.dp))
+            .border(if (isFocused || match.isLive) 1.5.dp else 1.dp, borderColor, RoundedCornerShape(22.dp))
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyUp && (
+                    keyEvent.key == Key.DirectionCenter ||
+                    keyEvent.key == Key.Enter ||
+                    keyEvent.key == Key.NumPadEnter ||
+                    keyEvent.key == Key.ButtonA
+                )) {
+                    onClick(match)
+                    true
+                } else false
+            }
             .clickable { onClick(match) },
-        colors = CardDefaults.cardColors(containerColor = SaribCardBg)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFocused) SaribCardBgSecondary else SaribCardBg
+        )
     ) {
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
                     Brush.verticalGradient(
-                        listOf(SaribCardBgSecondary, SaribCardBg)
+                        listOf(
+                            if (match.isLive) Color(0xFF16243A) else Color(0xFF131D2E),
+                            Color(0xFF0C1322)
+                        )
                     )
                 )
                 .padding(14.dp)
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth()
+            // Header Row: Tournament badge + Status badge
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Header: League Badge & Live Status
+                // League Name & Icon
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f, fill = false)
                 ) {
-                    // League Name & Icon
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (match.leagueIconUrl.isNotBlank()) {
-                            AsyncImage(
-                                model = match.leagueIconUrl,
-                                contentDescription = match.leagueName,
-                                modifier = Modifier.size(16.dp),
-                                contentScale = ContentScale.Fit
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .clip(CircleShape)
-                                    .background(SaribCyanAccent)
-                            )
-                        }
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = match.leagueName,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = SaribCyanAccent,
-                                fontWeight = FontWeight.Bold
-                            )
+                    if (match.leagueIconUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = match.leagueIconUrl,
+                            contentDescription = match.leagueName,
+                            modifier = Modifier.size(18.dp),
+                            contentScale = ContentScale.Fit
                         )
-                    }
-
-                    // Status Pill
-                    if (match.isLive) {
+                    } else {
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(SaribLiveRed.copy(alpha = 0.2f))
-                                .border(1.dp, SaribLiveRed, RoundedCornerShape(10.dp))
-                                .padding(horizontal = 8.dp, vertical = 2.dp)
-                        ) {
+                                .size(8.dp)
+                                .clip(CircleShape)
+                                .background(SaribCyanAccent)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = match.leagueName.ifBlank { "مباريات اليوم" },
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = SaribCyanAccent,
+                            fontWeight = FontWeight.Bold
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Match Status Pill
+                if (match.isLive) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(SaribLiveRed.copy(alpha = 0.25f))
+                            .border(1.dp, SaribLiveRed, RoundedCornerShape(12.dp))
+                            .padding(horizontal = 9.dp, vertical = 3.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(6.dp)
+                                    .clip(CircleShape)
+                                    .background(SaribLiveRed)
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = "مباشر",
+                                text = "مباشر LIVE",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     color = SaribLiveRed,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.Black,
+                                    fontSize = 10.sp
                                 )
                             )
                         }
-                    } else {
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Color(0x33000000))
+                            .border(0.5.dp, Color(0x33FFFFFF), RoundedCornerShape(10.dp))
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                    ) {
                         Text(
-                            text = match.matchDate,
+                            text = if (match.status.isNotBlank() && !match.status.contains("-")) match.status else match.matchDate.ifBlank { "لم تبدأ بعد" },
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = SaribTextMuted
+                                color = SaribTextMuted,
+                                fontSize = 10.sp
                             )
                         )
                     }
                 }
+            }
 
-                Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-                // Teams & Score
+            // Teams & Score Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Home Team
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    if (match.homeLogoUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = match.homeLogoUrl,
+                            contentDescription = match.homeTeam,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1B263B)),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1B263B)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = match.homeTeam.take(1),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    color = SaribCyanAccent,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Text(
+                        text = match.homeTeam,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = SaribTextPrimary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+
+                // Middle Score / Time Capsule
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(Color(0xFF182338), Color(0xFF0F1829))
+                            )
+                        )
+                        .border(1.dp, if (match.isLive) SaribCyanAccent.copy(alpha = 0.5f) else SaribCardBorderSubtle, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    val scoreOrTime = if (match.isLive || match.status.contains("-") || match.homeScore > 0 || match.awayScore > 0) {
+                        if (match.status.contains("-")) match.status else "${match.homeScore} - ${match.awayScore}"
+                    } else {
+                        match.matchTime.ifBlank { "VS" }
+                    }
+
+                    Text(
+                        text = scoreOrTime,
+                        style = MaterialTheme.typography.labelLarge.copy(
+                            color = if (match.isLive) SaribCyanAccent else Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 14.sp
+                        )
+                    )
+                }
+
+                // Away Team
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = match.awayTeam,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = SaribTextPrimary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    if (match.awayLogoUrl.isNotBlank()) {
+                        AsyncImage(
+                            model = match.awayLogoUrl,
+                            contentDescription = match.awayTeam,
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1B263B)),
+                            contentScale = ContentScale.Fit
+                        )
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF1B263B)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = match.awayTeam.take(1),
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    color = SaribElectricBlue,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Bottom Metadata: Stadium, Channel, Commentator
+            if (match.channelName.isNotBlank() || match.commentator.isNotBlank() || match.stadium.isNotBlank()) {
+                Spacer(modifier = Modifier.height(10.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color(0x22000000))
+                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                    horizontalArrangement = Arrangement.SpaceAround,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Home Team
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        if (match.homeLogoUrl.isNotBlank()) {
-                            AsyncImage(
-                                model = match.homeLogoUrl,
-                                contentDescription = match.homeTeam,
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF1B263B)),
-                                contentScale = ContentScale.Fit
+                    if (match.channelName.isNotBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Tv,
+                                contentDescription = null,
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(13.dp)
                             )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF1B263B)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = match.homeTeam.take(1),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        color = SaribCyanAccent,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = match.channelName,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = SaribTextSecondary,
+                                    fontSize = 11.sp
+                                ),
+                                maxLines = 1
+                            )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = match.homeTeam,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = SaribTextPrimary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
                     }
 
-                    // Middle Score or Time Badge
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(SaribDarkBackground)
-                            .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 14.dp, vertical = 6.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (match.isLive || match.status.contains("-")) match.status else match.matchTime,
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = if (match.isLive) SaribCyanAccent else SaribTextSecondary,
-                                fontWeight = FontWeight.Black
+                    if (match.commentator.isNotBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.VolumeUp,
+                                contentDescription = null,
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(13.dp)
                             )
-                        )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = match.commentator,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = SaribTextSecondary,
+                                    fontSize = 11.sp
+                                ),
+                                maxLines = 1
+                            )
+                        }
                     }
 
-                    // Away Team
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            text = match.awayTeam,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = SaribTextPrimary
-                            ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        if (match.awayLogoUrl.isNotBlank()) {
-                            AsyncImage(
-                                model = match.awayLogoUrl,
-                                contentDescription = match.awayTeam,
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF1B263B)),
-                                contentScale = ContentScale.Fit
+                    if (match.stadium.isNotBlank()) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.SportsSoccer,
+                                contentDescription = null,
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(13.dp)
                             )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFF1B263B)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = match.awayTeam.take(1),
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        color = SaribElectricBlue,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = match.stadium,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = SaribTextMuted,
+                                    fontSize = 10.sp
+                                ),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }
@@ -1632,7 +1774,7 @@ fun MediaCardItem(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .height(185.dp)
                     .background(Color(0xFF111E30))
             ) {
                 if (displayImageUrl.isNotBlank()) {
@@ -1651,7 +1793,7 @@ fun MediaCardItem(
                     )
                 }
 
-                // Top Badge if Top ranked
+                // Top Badges (Rank or Quality)
                 if (item.isTop) {
                     val badgeColor = when (item.topRank) {
                         "01" -> SaribTop01
@@ -1661,18 +1803,41 @@ fun MediaCardItem(
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(8.dp)
-                            .clip(RoundedCornerShape(8.dp))
+                            .padding(6.dp)
+                            .clip(RoundedCornerShape(6.dp))
                             .background(badgeColor)
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
                             text = "TOP ${item.topRank}",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = Color.White,
-                                fontWeight = FontWeight.Black
+                                fontWeight = FontWeight.Black,
+                                fontSize = 10.sp
                             )
                         )
+                    }
+                } else if (item.rating.isNotBlank() && item.rating != "0.0") {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(6.dp)
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xCC000000))
+                            .padding(horizontal = 5.dp, vertical = 2.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = "⭐", fontSize = 9.sp)
+                            Spacer(modifier = Modifier.width(3.dp))
+                            Text(
+                                text = item.rating,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = SaribGoldRating,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                )
+                            )
+                        }
                     }
                 }
 
@@ -1682,7 +1847,7 @@ fun MediaCardItem(
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(6.dp)
-                            .size(30.dp)
+                            .size(28.dp)
                             .clip(CircleShape)
                             .background(Color(0xAA000000))
                             .clickable { onFavoriteToggle(item) },
@@ -1692,7 +1857,27 @@ fun MediaCardItem(
                             imageVector = if (item.isFavorite) Icons.Filled.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "المفضلة",
                             tint = if (item.isFavorite) Color(0xFFFF2A4B) else Color.White,
-                            modifier = Modifier.size(17.dp)
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                // Year or Category Badge (Bottom-Start inside poster)
+                if (item.year.isNotBlank()) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .padding(start = 6.dp, bottom = 28.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(Color(0x99000000))
+                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                    ) {
+                        Text(
+                            text = item.year,
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = SaribTextMuted,
+                                fontSize = 9.sp
+                            )
                         )
                     }
                 }
@@ -1703,7 +1888,7 @@ fun MediaCardItem(
                         .fillMaxSize()
                         .background(
                             Brush.verticalGradient(
-                                listOf(Color.Transparent, Color(0xCC070C14))
+                                listOf(Color.Transparent, Color(0x33000000), Color(0xEE070C14))
                             )
                         )
                 )
@@ -1713,13 +1898,14 @@ fun MediaCardItem(
                     text = item.title,
                     style = MaterialTheme.typography.labelSmall.copy(
                         color = if (isFocused) SaribCyanAccent else Color.White,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 11.sp
                     ),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-                        .padding(8.dp),
+                        .padding(horizontal = 6.dp, vertical = 6.dp),
                     textAlign = TextAlign.Center
                 )
             }

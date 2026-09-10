@@ -54,6 +54,7 @@ data class RemoteStreamConfig(
     val seriesCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
     val vodCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
     val matchesApiUrl: String = "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
+    val apiFootballKey: String = "0f0396f63d80f2bad18ec0e706985c88",
     val m3uPlaylistUrl: String = "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
     val m3uMoviesUrl: String = "",
     val moviesApiUrl: String = "",
@@ -171,6 +172,11 @@ class FirebaseStreamManager(private val context: Context) {
                         newsApiUrl = newsApiUrl,
                         isNewsApiEnabled = isNewsApiEnabled,
                         matchesApiUrl = docSnapshot.getString("matches_api_url") ?: "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
+                        apiFootballKey = docSnapshot.getString("api_football_key") 
+                            ?: docSnapshot.getString("football_api_key") 
+                            ?: docSnapshot.getString("matches_api_key") 
+                            ?: docSnapshot.getString("rapidapi_key") 
+                            ?: "0f0396f63d80f2bad18ec0e706985c88",
                         m3uPlaylistUrl = docSnapshot.getString("m3u_playlist_url") 
                             ?: docSnapshot.getString("m3u_url") 
                             ?: "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
@@ -246,6 +252,7 @@ class FirebaseStreamManager(private val context: Context) {
                             newsApiUrl = newsApiUrl,
                             isNewsApiEnabled = isNewsApiEnabled,
                             matchesApiUrl = targetObj.optString("matches_api_url", baseConfig.matchesApiUrl),
+                            apiFootballKey = targetObj.optString("api_football_key", targetObj.optString("football_api_key", targetObj.optString("matches_api_key", targetObj.optString("rapidapi_key", baseConfig.apiFootballKey)))),
                             m3uPlaylistUrl = targetObj.optString("m3u_playlist_url", targetObj.optString("m3u_url", baseConfig.m3uPlaylistUrl)),
                             m3uMoviesUrl = targetObj.optString("m3u_movies_url", targetObj.optString("movies_m3u_url", baseConfig.m3uMoviesUrl)),
                             moviesApiUrl = targetObj.optString("movies_api_url", targetObj.optString("movies_api", baseConfig.moviesApiUrl)),
@@ -1740,5 +1747,56 @@ class FirebaseStreamManager(private val context: Context) {
             status = obj.optString("status", ""),
             isEnabled = isEnabled
         )
+    }
+
+    /**
+     * Remote API key fetcher specifically for Football / Matches data.
+     * Checks Firestore 'matches_config/main_config', 'stream_config/main_config',
+     * RTDB '/matches_config.json', '/api_football_key.json', '/football_api_key.json', '/matches_api_key.json'.
+     */
+    suspend fun fetchMatchesApiKey(): String? = withContext(Dispatchers.IO) {
+        // 1. Try Firestore
+        if (isFirebaseAvailable()) {
+            try {
+                val firestore = FirebaseFirestore.getInstance()
+                val doc = firestore.collection("matches_config").document("main_config").get().await()
+                if (doc != null && doc.exists()) {
+                    val key = doc.getString("api_football_key") ?: doc.getString("football_api_key") ?: doc.getString("matches_api_key") ?: doc.getString("api_key") ?: doc.getString("rapidapi_key")
+                    if (!key.isNullOrBlank()) return@withContext key.trim()
+                }
+            } catch (e: Exception) {
+                // Ignore and try RTDB
+            }
+        }
+
+        // 2. Try RTDB direct paths
+        val directUrls = listOf(
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches_config.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/api_football_key.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/football_api_key.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches_api_key.json"
+        )
+        for (url in directUrls) {
+            try {
+                val request = Request.Builder().url(url).build()
+                val response = httpClient.newCall(request).execute()
+                val body = response.body?.string().orEmpty().trim()
+                if (body.isNotEmpty() && body != "null") {
+                    if (body.startsWith("{")) {
+                        val obj = JSONObject(body)
+                        val key = obj.optString("api_football_key", obj.optString("football_api_key", obj.optString("matches_api_key", obj.optString("api_key", ""))))
+                        if (key.isNotBlank()) return@withContext key.trim()
+                    } else if (body.startsWith("\"") && body.endsWith("\"")) {
+                        val rawKey = body.removeSurrounding("\"").trim()
+                        if (rawKey.isNotBlank()) return@withContext rawKey
+                    } else if (body.length in 10..100) {
+                        return@withContext body
+                    }
+                }
+            } catch (e: Exception) {
+                // Next
+            }
+        }
+        null
     }
 }

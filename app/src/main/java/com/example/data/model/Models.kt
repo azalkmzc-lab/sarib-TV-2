@@ -161,6 +161,15 @@ data class MatchEventItem(
     val detail: String = ""
 )
 
+data class MatchStatisticItem(
+    val type: String,
+    val typeArabic: String,
+    val homeValue: String,
+    val awayValue: String,
+    val homePercent: Float,
+    val awayPercent: Float
+)
+
 data class MatchItem(
     val id: String,
     val leagueName: String,

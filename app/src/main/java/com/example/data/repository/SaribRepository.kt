@@ -148,6 +148,14 @@ class SaribRepository(private val context: Context) {
                 }
 
                 matchesClient.apiUrlBase = firebaseConfig.matchesApiUrl
+                if (firebaseConfig.apiFootballKey.isNotBlank()) {
+                    matchesClient.apiFootballKey = firebaseConfig.apiFootballKey
+                }
+                val dedicatedApiKey = firebaseStreamManager.fetchMatchesApiKey()
+                if (!dedicatedApiKey.isNullOrBlank()) {
+                    matchesClient.apiFootballKey = dedicatedApiKey
+                    Log.i("SaribRepository", "Applied dedicated matches API key from Firebase: ${dedicatedApiKey.take(6)}***")
+                }
                 Log.d("SaribRepository", "Applied remote config from Firebase: host=${firebaseConfig.serverHost}")
             } catch (e: Exception) {
                 Log.w("SaribRepository", "Could not load Firebase config: ${e.message}")
@@ -479,6 +487,10 @@ class SaribRepository(private val context: Context) {
 
     suspend fun fetchMatchEvents(fixtureId: String): List<com.example.data.model.MatchEventItem> {
         return matchesClient.fetchEvents(fixtureId)
+    }
+
+    suspend fun fetchMatchStatistics(fixtureId: String): List<com.example.data.model.MatchStatisticItem> {
+        return matchesClient.fetchStatistics(fixtureId)
     }
 
     private fun applyMatchOverride(match: MatchItem, matchNumber: Int, overrides: List<MatchStreamOverride>): MatchItem {

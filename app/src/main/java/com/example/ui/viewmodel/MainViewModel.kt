@@ -31,6 +31,7 @@ sealed interface AppScreen {
     data class CategoryDetail(val category: ChannelCategory) : AppScreen
     data class MediaCategoryDetail(val category: ChannelCategory) : AppScreen
     data class SeriesDetail(val mediaItem: MediaItem) : AppScreen
+    data class MatchDetail(val match: MatchItem) : AppScreen
     data class Player(
         val title: String,
         val subtitle: String,
@@ -278,6 +279,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 _currentScreen.value = AppScreen.Main
                 return true
             }
+        } else if (curr is AppScreen.MatchDetail) {
+            if (backStack.isNotEmpty()) {
+                val previous = backStack.removeAt(backStack.lastIndex)
+                _currentScreen.value = previous
+                return true
+            } else {
+                _currentScreen.value = AppScreen.Main
+                return true
+            }
         } else if (curr is AppScreen.CategoryDetail || curr is AppScreen.MediaCategoryDetail) {
             if (backStack.isNotEmpty()) {
                 val previous = backStack.removeAt(backStack.lastIndex)
@@ -380,12 +390,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun openMatchDetail(match: MatchItem) {
+        val curr = _currentScreen.value
+        if (curr is AppScreen.MatchDetail && curr.match.id == match.id) return
+        if (curr != AppScreen.Splash && curr !is AppScreen.MatchDetail) {
+            backStack.add(curr)
+        }
+        _currentScreen.value = AppScreen.MatchDetail(match)
+    }
+
     suspend fun getMatchLineups(fixtureId: String): Pair<com.example.data.model.TeamLineup?, com.example.data.model.TeamLineup?> {
         return repository.fetchMatchLineups(fixtureId)
     }
 
     suspend fun getMatchEvents(fixtureId: String): List<com.example.data.model.MatchEventItem> {
         return repository.fetchMatchEvents(fixtureId)
+    }
+
+    suspend fun getMatchStatistics(fixtureId: String): List<com.example.data.model.MatchStatisticItem> {
+        return repository.fetchMatchStatistics(fixtureId)
     }
 
     fun refreshNews() {
