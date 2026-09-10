@@ -191,7 +191,9 @@ fun SaribApp(
                     isLive = selectedMatch.isLive,
                     servers = selectedMatch.getActiveServers()
                 )
-            }
+            },
+            onFetchLineups = { id -> viewModel.getMatchLineups(id) },
+            onFetchEvents = { id -> viewModel.getMatchEvents(id) }
         )
     }
 

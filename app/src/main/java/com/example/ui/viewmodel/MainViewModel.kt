@@ -361,6 +361,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    suspend fun getMatchLineups(fixtureId: String): Pair<com.example.data.model.TeamLineup?, com.example.data.model.TeamLineup?> {
+        return repository.fetchMatchLineups(fixtureId)
+    }
+
+    suspend fun getMatchEvents(fixtureId: String): List<com.example.data.model.MatchEventItem> {
+        return repository.fetchMatchEvents(fixtureId)
+    }
+
     fun refreshNews() {
         viewModelScope.launch {
             repository.fetchNews()

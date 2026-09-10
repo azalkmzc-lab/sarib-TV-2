@@ -20,9 +20,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.EventNote
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.SportsSoccer
@@ -34,8 +36,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,13 +57,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.data.local.LocalAppPreferences
 import com.example.data.local.tr
+import com.example.data.model.MatchEventItem
 import com.example.data.model.MatchItem
+import com.example.data.model.MatchPlayer
+import com.example.data.model.TeamLineup
 import com.example.ui.theme.SaribCardBg
 import com.example.ui.theme.SaribCardBorder
 import com.example.ui.theme.SaribCardBorderSubtle
@@ -73,11 +84,34 @@ fun MatchDetailsDialog(
     match: MatchItem,
     onDismissRequest: () -> Unit,
     onWatchMatch: (MatchItem, String) -> Unit,
+    onFetchLineups: suspend (String) -> Pair<TeamLineup?, TeamLineup?> = { _ -> Pair(null, null) },
+    onFetchEvents: suspend (String) -> List<MatchEventItem> = { _ -> emptyList() },
     modifier: Modifier = Modifier
 ) {
     val prefs = LocalAppPreferences.current
     val context = LocalContext.current
     var hasAlert by remember { mutableStateOf(prefs.hasMatchNotification(match.id)) }
+    var selectedTabIndex by remember { mutableIntStateOf(0) }
+
+    // Fetch Lineups & Events from API-Football
+    var homeLineup by remember { mutableStateOf<TeamLineup?>(null) }
+    var awayLineup by remember { mutableStateOf<TeamLineup?>(null) }
+    var matchEvents by remember { mutableStateOf<List<MatchEventItem>>(emptyList()) }
+    var isLoadingDetails by remember { mutableStateOf(false) }
+
+    LaunchedEffect(match.id) {
+        isLoadingDetails = true
+        try {
+            val lineups = onFetchLineups(match.id)
+            homeLineup = lineups.first
+            awayLineup = lineups.second
+            matchEvents = onFetchEvents(match.id)
+        } catch (e: Exception) {
+            // Graceful fallback
+        } finally {
+            isLoadingDetails = false
+        }
+    }
 
     val serverList = remember(match) {
         val list = mutableListOf<Pair<String, String>>()
@@ -116,7 +150,7 @@ fun MatchDetailsDialog(
                 modifier = Modifier
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
-                    .padding(20.dp)
+                    .padding(18.dp)
             ) {
                 // Top Action Bar (League Title + Notification Toggle + Close)
                 Row(
@@ -124,27 +158,28 @@ fun MatchDetailsDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                         if (match.leagueIconUrl.isNotBlank()) {
                             AsyncImage(
                                 model = match.leagueIconUrl,
                                 contentDescription = match.leagueName,
-                                modifier = Modifier.size(22.dp),
+                                modifier = Modifier.size(24.dp),
                                 contentScale = ContentScale.Fit
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                         }
                         Text(
-                            text = match.leagueName,
+                            text = match.leagueName.ifBlank { "مباريات اليوم" },
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
                                 color = SaribCyanAccent
-                            )
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Team Notification Alert Bell Button
                         IconButton(
                             onClick = {
                                 val newState = prefs.toggleMatchNotification(match.id)
@@ -184,7 +219,7 @@ fun MatchDetailsDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
                 // Teams Score / Versus Card
                 Box(
@@ -193,7 +228,7 @@ fun MatchDetailsDialog(
                         .clip(RoundedCornerShape(20.dp))
                         .background(
                             Brush.verticalGradient(
-                                listOf(SaribCardBg, Color(0xFF09101C))
+                                listOf(Color(0xFF0F1A2E), Color(0xFF080D17))
                             )
                         )
                         .border(1.dp, SaribCardBorder, RoundedCornerShape(20.dp))
@@ -214,7 +249,7 @@ fun MatchDetailsDialog(
                                     model = match.homeLogoUrl,
                                     contentDescription = match.homeTeam,
                                     modifier = Modifier
-                                        .size(52.dp)
+                                        .size(54.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFF1B263B)),
                                     contentScale = ContentScale.Fit
@@ -222,7 +257,7 @@ fun MatchDetailsDialog(
                             } else {
                                 Box(
                                     modifier = Modifier
-                                        .size(52.dp)
+                                        .size(54.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFF1B263B)),
                                     contentAlignment = Alignment.Center
@@ -240,7 +275,9 @@ fun MatchDetailsDialog(
                                     fontWeight = FontWeight.Bold,
                                     color = SaribTextPrimary,
                                     textAlign = TextAlign.Center
-                                )
+                                ),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
@@ -254,30 +291,41 @@ fun MatchDetailsDialog(
                                     modifier = Modifier
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(SaribLiveRed)
-                                        .padding(horizontal = 10.dp, vertical = 3.dp)
+                                        .padding(horizontal = 10.dp, vertical = 3.dp),
+                                    contentAlignment = Alignment.Center
                                 ) {
                                     Text(
-                                        text = tr("live"),
+                                        text = "مباشر LIVE",
                                         style = MaterialTheme.typography.labelSmall.copy(
                                             color = Color.White,
-                                            fontWeight = FontWeight.Black
+                                            fontWeight = FontWeight.Black,
+                                            fontSize = 10.sp
                                         )
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(6.dp))
                             }
 
+                            val scoreDisplay = if (match.homeScore > 0 || match.awayScore > 0 || match.status.contains("-")) {
+                                if (match.status.contains("-")) match.status else "${match.homeScore} - ${match.awayScore}"
+                            } else {
+                                "VS"
+                            }
+
                             Text(
-                                text = if (match.isLive || match.status.contains("-")) match.status else match.matchTime,
+                                text = scoreDisplay,
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Black,
-                                    color = if (match.isLive) SaribCyanAccent else SaribTextPrimary
+                                    color = if (match.isLive) SaribCyanAccent else Color.White
                                 )
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = match.matchDate,
-                                style = MaterialTheme.typography.labelSmall.copy(color = SaribTextMuted)
+                                text = match.matchTime.ifBlank { match.matchDate },
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    color = if (match.isLive) SaribCyanAccent else SaribTextMuted,
+                                    fontWeight = FontWeight.SemiBold
+                                )
                             )
                         }
 
@@ -291,7 +339,7 @@ fun MatchDetailsDialog(
                                     model = match.awayLogoUrl,
                                     contentDescription = match.awayTeam,
                                     modifier = Modifier
-                                        .size(52.dp)
+                                        .size(54.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFF1B263B)),
                                     contentScale = ContentScale.Fit
@@ -299,7 +347,7 @@ fun MatchDetailsDialog(
                             } else {
                                 Box(
                                     modifier = Modifier
-                                        .size(52.dp)
+                                        .size(54.dp)
                                         .clip(CircleShape)
                                         .background(Color(0xFF1B263B)),
                                     contentAlignment = Alignment.Center
@@ -317,138 +365,406 @@ fun MatchDetailsDialog(
                                     fontWeight = FontWeight.Bold,
                                     color = SaribTextPrimary,
                                     textAlign = TextAlign.Center
-                                )
+                                ),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                // Info Rows: Stadium, Commentator, Channel
-                Column(
+                // Modern 4-Tab Navigation: [سيرفرات البث | التشكيلة الحقيقية | أحداث المباراة | تفاصيل اللقاء]
+                val tabs = listOf("سيرفرات البث", "التشكيلة", "الأحداث", "المعلومات")
+                TabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    containerColor = SaribCardBg,
+                    contentColor = SaribCyanAccent,
+                    indicator = { tabPositions ->
+                        if (selectedTabIndex < tabPositions.size) {
+                            TabRowDefaults.SecondaryIndicator(
+                                modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                                color = SaribCyanAccent,
+                                height = 3.dp
+                            )
+                        }
+                    },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(SaribCardBg)
-                        .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(14.dp))
-                        .padding(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(12.dp))
                 ) {
-                    if (match.stadium.isNotBlank()) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Stadium, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "${tr("stadium")}: ", style = MaterialTheme.typography.labelMedium.copy(color = SaribTextSecondary))
-                            Text(text = match.stadium, style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextPrimary, fontWeight = FontWeight.SemiBold))
-                        }
-                    }
-
-                    if (match.commentator.isNotBlank()) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Mic, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "${tr("commentator")}: ", style = MaterialTheme.typography.labelMedium.copy(color = SaribTextSecondary))
-                            Text(text = match.commentator, style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextPrimary, fontWeight = FontWeight.SemiBold))
-                        }
-                    }
-
-                    if (match.channelName.isNotBlank()) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Tv, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(text = "${tr("channel")}: ", style = MaterialTheme.typography.labelMedium.copy(color = SaribTextSecondary))
-                            Text(text = match.channelName, style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextPrimary, fontWeight = FontWeight.SemiBold))
-                        }
+                    tabs.forEachIndexed { index, label ->
+                        Tab(
+                            selected = selectedTabIndex == index,
+                            onClick = { selectedTabIndex = index },
+                            text = {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = if (selectedTabIndex == index) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 12.sp
+                                    ),
+                                    color = if (selectedTabIndex == index) SaribCyanAccent else SaribTextMuted
+                                )
+                            }
+                        )
                     }
                 }
 
-                Spacer(modifier = Modifier.height(18.dp))
+                Spacer(modifier = Modifier.height(14.dp))
 
-                // Section: Streaming Servers Selection (5 Servers Slider / Chooser)
-                Text(
-                    text = tr("match_servers"),
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = SaribCyanAccent
-                    )
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-
-                serverList.forEachIndexed { index, (name, _) ->
-                    val isSelected = selectedServerIndex == index
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (isSelected) SaribElectricBlue.copy(alpha = 0.25f) else SaribCardBg)
-                            .border(
-                                1.dp,
-                                if (isSelected) SaribCyanAccent else SaribCardBorderSubtle,
-                                RoundedCornerShape(12.dp)
-                            )
-                            .clickable { selectedServerIndex = index }
-                            .padding(horizontal = 14.dp, vertical = 10.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    imageVector = Icons.Default.Sensors,
-                                    contentDescription = null,
-                                    tint = if (isSelected) SaribCyanAccent else SaribTextMuted,
-                                    modifier = Modifier.size(18.dp)
+                when (selectedTabIndex) {
+                    // TAB 0: SERVERS & LIVE PLAYBACK
+                    0 -> {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Text(
+                                text = "اختر سيرفر البث المباشر:",
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = SaribCyanAccent
                                 )
-                                Spacer(modifier = Modifier.width(10.dp))
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            serverList.forEachIndexed { index, (name, _) ->
+                                val isSelected = selectedServerIndex == index
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(if (isSelected) SaribElectricBlue.copy(alpha = 0.25f) else SaribCardBg)
+                                        .border(
+                                            1.dp,
+                                            if (isSelected) SaribCyanAccent else SaribCardBorderSubtle,
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable { selectedServerIndex = index }
+                                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Sensors,
+                                                contentDescription = null,
+                                                tint = if (isSelected) SaribCyanAccent else SaribTextMuted,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(10.dp))
+                                            Text(
+                                                text = name,
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    color = if (isSelected) SaribCyanAccent else SaribTextPrimary,
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                                )
+                                            )
+                                        }
+
+                                        if (isSelected) {
+                                            Text(
+                                                text = "جاهز للبث",
+                                                style = MaterialTheme.typography.labelSmall.copy(color = SaribCyanAccent, fontWeight = FontWeight.Bold)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            // Watch Button
+                            Button(
+                                onClick = {
+                                    val chosenUrl = serverList.getOrNull(selectedServerIndex)?.second ?: match.streamUrl
+                                    onWatchMatch(match, chosenUrl)
+                                    onDismissRequest()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                shape = RoundedCornerShape(14.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = SaribElectricBlue)
+                            ) {
+                                Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
+                                Spacer(modifier = Modifier.width(8.dp))
                                 Text(
-                                    text = name,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        color = if (isSelected) SaribCyanAccent else SaribTextPrimary,
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    text = tr("watch_now"),
+                                    style = MaterialTheme.typography.titleMedium.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
                                     )
                                 )
                             }
+                        }
+                    }
 
-                            if (isSelected) {
-                                Text(
-                                    text = "جاهز للبث",
-                                    style = MaterialTheme.typography.labelSmall.copy(color = SaribCyanAccent)
-                                )
+                    // TAB 1: REAL LINEUPS (التشكيلة الحقيقية من API Football)
+                    1 -> {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            if (homeLineup == null && awayLineup == null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 24.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(Icons.Default.People, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(36.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = if (isLoadingDetails) "جاري سحب التشكيلة الرسمية من API-Football..." else "سيتم نشر التشكيلة الرسمية قبل انطلاق المباراة بساعة",
+                                            style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextMuted, textAlign = TextAlign.Center)
+                                        )
+                                    }
+                                }
+                            } else {
+                                // Home Team Lineup Card
+                                homeLineup?.let { lineup ->
+                                    TeamLineupSection(teamName = match.homeTeam, lineup = lineup, isHome = true)
+                                    Spacer(modifier = Modifier.height(14.dp))
+                                }
+
+                                // Away Team Lineup Card
+                                awayLineup?.let { lineup ->
+                                    TeamLineupSection(teamName = match.awayTeam, lineup = lineup, isHome = false)
+                                }
+                            }
+                        }
+                    }
+
+                    // TAB 2: REAL MATCH EVENTS TIMELINE (أحداث اللقاء)
+                    2 -> {
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            if (matchEvents.isEmpty()) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 24.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Icon(Icons.Default.EventNote, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(36.dp))
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            text = if (isLoadingDetails) "جاري سحب أحداث اللقاء اللحظية..." else "لا توجد أحداث مسجلة حتى الآن (أهداف، كروت، تبديلات)",
+                                            style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextMuted, textAlign = TextAlign.Center)
+                                        )
+                                    }
+                                }
+                            } else {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    matchEvents.forEach { event ->
+                                        MatchEventCard(event = event)
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // TAB 3: MATCH INFO
+                    3 -> {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(SaribCardBg)
+                                .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(14.dp))
+                                .padding(14.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            if (match.stadium.isNotBlank()) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Stadium, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(text = "${tr("stadium")}: ", style = MaterialTheme.typography.labelMedium.copy(color = SaribTextSecondary))
+                                    Text(text = match.stadium, style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextPrimary, fontWeight = FontWeight.SemiBold))
+                                }
+                            }
+
+                            if (match.commentator.isNotBlank()) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Mic, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(text = "${tr("commentator")}: ", style = MaterialTheme.typography.labelMedium.copy(color = SaribTextSecondary))
+                                    Text(text = match.commentator, style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextPrimary, fontWeight = FontWeight.SemiBold))
+                                }
+                            }
+
+                            if (match.channelName.isNotBlank()) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Tv, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(text = "${tr("channel")}: ", style = MaterialTheme.typography.labelMedium.copy(color = SaribTextSecondary))
+                                    Text(text = match.channelName, style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextPrimary, fontWeight = FontWeight.SemiBold))
+                                }
+                            }
+
+                            if (match.leagueName.isNotBlank()) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.SportsSoccer, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(18.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(text = "البطولة: ", style = MaterialTheme.typography.labelMedium.copy(color = SaribTextSecondary))
+                                    Text(text = match.leagueName, style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextPrimary, fontWeight = FontWeight.SemiBold))
+                                }
                             }
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Watch Button
-                Button(
-                    onClick = {
-                        val chosenUrl = serverList.getOrNull(selectedServerIndex)?.second ?: match.streamUrl
-                        onWatchMatch(match, chosenUrl)
-                        onDismissRequest()
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = SaribElectricBlue)
-                ) {
-                    Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = tr("watch_now"),
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    )
-                }
             }
+        }
+    }
+}
+
+@Composable
+private fun TeamLineupSection(teamName: String, lineup: TeamLineup, isHome: Boolean) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(SaribCardBg)
+            .border(1.dp, if (isHome) SaribCyanAccent.copy(alpha = 0.5f) else SaribElectricBlue.copy(alpha = 0.5f), RoundedCornerShape(14.dp))
+            .padding(12.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "$teamName (${lineup.formation.ifBlank { "التشكيلة الأساسية" }})",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold, color = if (isHome) SaribCyanAccent else SaribElectricBlue)
+            )
+            if (lineup.coachName.isNotBlank()) {
+                Text(
+                    text = "المدرب: ${lineup.coachName}",
+                    style = MaterialTheme.typography.labelSmall.copy(color = SaribTextMuted)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Starting XI
+        Text(text = "اللاعبون الأساسيون:", style = MaterialTheme.typography.labelSmall.copy(color = Color.White, fontWeight = FontWeight.Bold))
+        Spacer(modifier = Modifier.height(6.dp))
+
+        lineup.starters.forEach { player ->
+            PlayerRowItem(player = player)
+        }
+
+        if (lineup.substitutes.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = "دكة البدلاء:", style = MaterialTheme.typography.labelSmall.copy(color = SaribTextMuted, fontWeight = FontWeight.Bold))
+            Spacer(modifier = Modifier.height(4.dp))
+            lineup.substitutes.take(7).forEach { sub ->
+                PlayerRowItem(player = sub, isSubstitute = true)
+            }
+        }
+    }
+}
+
+@Composable
+private fun PlayerRowItem(player: MatchPlayer, isSubstitute: Boolean = false) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 3.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(20.dp)
+                .clip(CircleShape)
+                .background(if (isSubstitute) Color(0x33FFFFFF) else SaribCyanAccent.copy(alpha = 0.2f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = if (player.number > 0) player.number.toString() else "-",
+                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, color = Color.White, fontWeight = FontWeight.Bold)
+            )
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = player.name,
+            style = MaterialTheme.typography.bodySmall.copy(color = if (isSubstitute) SaribTextSecondary else SaribTextPrimary, fontWeight = FontWeight.Medium),
+            modifier = Modifier.weight(1f)
+        )
+        if (player.position.isNotBlank()) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color(0x22FFFFFF))
+                    .padding(horizontal = 6.dp, vertical = 2.dp)
+            ) {
+                Text(
+                    text = player.position,
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp, color = SaribCyanAccent)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MatchEventCard(event: MatchEventItem) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(10.dp))
+            .background(SaribCardBg)
+            .border(0.5.dp, SaribCardBorderSubtle, RoundedCornerShape(10.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Minute Badge
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(SaribElectricBlue)
+                .padding(horizontal = 6.dp, vertical = 3.dp)
+        ) {
+            Text(
+                text = "${event.minute}'",
+                style = MaterialTheme.typography.labelSmall.copy(color = Color.White, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+            )
+        }
+
+        Spacer(modifier = Modifier.width(10.dp))
+
+        // Event Type Icon
+        val eventIcon = when (event.type.lowercase()) {
+            "goal" -> "⚽"
+            "card" -> if (event.detail.contains("Red", ignoreCase = true)) "🟥" else "🟨"
+            "subst" -> "🔄"
+            else -> "⚡"
+        }
+
+        Text(text = eventIcon, fontSize = 16.sp)
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = event.playerName.ifBlank { event.type },
+                style = MaterialTheme.typography.bodySmall.copy(color = Color.White, fontWeight = FontWeight.Bold)
+            )
+            if (event.assistPlayer.isNotBlank()) {
+                Text(
+                    text = "صناعة: ${event.assistPlayer}",
+                    style = MaterialTheme.typography.labelSmall.copy(color = SaribTextMuted, fontSize = 10.sp)
+                )
+            }
+        }
+
+        if (event.teamName.isNotBlank()) {
+            Text(
+                text = event.teamName,
+                style = MaterialTheme.typography.labelSmall.copy(color = SaribCyanAccent, fontSize = 10.sp)
+            )
         }
     }
 }

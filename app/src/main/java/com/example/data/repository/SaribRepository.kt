@@ -569,6 +569,14 @@ class SaribRepository(private val context: Context) {
         }
     }
 
+    suspend fun fetchMatchLineups(fixtureId: String): Pair<com.example.data.model.TeamLineup?, com.example.data.model.TeamLineup?> {
+        return matchesClient.fetchLineups(fixtureId)
+    }
+
+    suspend fun fetchMatchEvents(fixtureId: String): List<com.example.data.model.MatchEventItem> {
+        return matchesClient.fetchEvents(fixtureId)
+    }
+
     private fun applyMatchOverride(match: MatchItem, matchNumber: Int, overrides: List<MatchStreamOverride>): MatchItem {
         val override = overrides.firstOrNull { ov ->
             ov.isEnabled && (

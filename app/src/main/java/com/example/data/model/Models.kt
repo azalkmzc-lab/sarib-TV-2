@@ -135,6 +135,32 @@ fun HeroBannerItem.getActiveServers(): List<Pair<String, String>> {
     return list
 }
 
+data class MatchPlayer(
+    val id: String = "",
+    val name: String,
+    val number: Int = 0,
+    val position: String = "",
+    val isStarter: Boolean = true
+)
+
+data class TeamLineup(
+    val teamName: String,
+    val teamLogo: String = "",
+    val formation: String = "4-3-3",
+    val coachName: String = "",
+    val starters: List<MatchPlayer> = emptyList(),
+    val substitutes: List<MatchPlayer> = emptyList()
+)
+
+data class MatchEventItem(
+    val minute: String,
+    val teamName: String,
+    val playerName: String,
+    val assistPlayer: String = "",
+    val type: String,
+    val detail: String = ""
+)
+
 data class MatchItem(
     val id: String,
     val leagueName: String,
