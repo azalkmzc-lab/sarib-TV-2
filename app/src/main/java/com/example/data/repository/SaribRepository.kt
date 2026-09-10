@@ -21,9 +21,11 @@ import com.example.data.remote.MatchesApiClient
 import com.example.data.remote.RemoteStreamConfig
 import com.example.data.remote.XtreamApiClient
 import com.example.util.SecurityChecker
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -146,12 +148,12 @@ class SaribRepository(private val context: Context) {
                 }
 
                 matchesClient.apiUrlBase = firebaseConfig.matchesApiUrl
-                Log.d("SaribRepository", "Applied remote config from Firebase: host=${firebaseConfig.serverHost}, seriesHost=${firebaseConfig.seriesAccount.serverHost}, liveXtream=${firebaseConfig.isLiveXtreamEnabled}, channelsApi=${firebaseConfig.isChannelsApiEnabled}")
+                Log.d("SaribRepository", "Applied remote config from Firebase: host=${firebaseConfig.serverHost}")
             } catch (e: Exception) {
                 Log.w("SaribRepository", "Could not load Firebase config: ${e.message}")
             }
 
-            // 3. Fetch Firebase Sliders from independent path (/sliders)
+            // 3. Fetch Firebase Sliders in parallel
             try {
                 val remoteSliders = firebaseStreamManager.fetchSliders()
                 if (remoteSliders.isNotEmpty()) {
@@ -162,11 +164,49 @@ class SaribRepository(private val context: Context) {
                 Log.w("SaribRepository", "Could not load Firebase sliders: ${e.message}")
             }
 
-            // 4. Ultra-Fast Startup & Multi-Source Sync
-            val syncResult = coroutineScope {
-                // Firebase & M3U & API: Channels, Categories, Custom Movies, Matches
+            // 4. Quick Light-Sync for Splash Screen (Enters app instantly)
+            coroutineScope {
                 val customCatsDeferred = async { firebaseStreamManager.fetchCustomCategories() }
                 val customChannelsDeferred = async { firebaseStreamManager.fetchCustomChannels() }
+                val matchesDeferred = async { fetchMatchesForDay(0) }
+
+                val customCats = customCatsDeferred.await()
+                val customChannels = customChannelsDeferred.await()
+                val remoteMatches = matchesDeferred.await()
+
+                if (customCats.isNotEmpty()) {
+                    dao.clearAllCategories()
+                    dao.insertCategories(customCats.map { it.toEntity() })
+                }
+                if (customChannels.isNotEmpty()) {
+                    dao.clearAllChannels()
+                    customChannels.chunked(250).forEach { chunk ->
+                        dao.insertChannels(chunk.map { it.toEntity() })
+                    }
+                }
+                if (remoteMatches.isNotEmpty()) {
+                    dao.clearAllMatches()
+                    dao.insertMatches(remoteMatches.map { it.toEntity() })
+                }
+            }
+
+            // Launch heavy content (VOD, Series categories, M3U playlists, extra APIs) in background
+            kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                syncAllContentInBackground(force = false)
+            }
+
+            Result.success(true)
+        } catch (e: Exception) {
+            Log.e("SaribRepository", "Backend initialization error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun syncAllContentInBackground(force: Boolean = false) = withContext(Dispatchers.IO) {
+        try {
+            Log.d("SaribRepository", "Starting background full content sync...")
+            // Multi-Source Sync: Live Xtream, M3U playlists, Movies & Series categories
+            coroutineScope {
                 val channelsApiDeferred = async {
                     if (currentRemoteConfig.isChannelsApiEnabled && currentRemoteConfig.channelsApiUrl.isNotBlank()) {
                         firebaseStreamManager.fetchChannelsFromApi(currentRemoteConfig.channelsApiUrl)
@@ -179,7 +219,7 @@ class SaribRepository(private val context: Context) {
                 }
                 val liveXtreamChannelsDeferred = async {
                     if (currentRemoteConfig.isLiveXtreamEnabled && currentRemoteConfig.liveXtreamAccount.serverHost.isNotBlank()) {
-                        liveXtreamClient.fetchLiveStreams(limit = 100)
+                        liveXtreamClient.fetchLiveStreams(limit = 150)
                     } else emptyList()
                 }
                 val m3uResultDeferred = async {
@@ -193,8 +233,6 @@ class SaribRepository(private val context: Context) {
                             sourcesToFetch.add(Pair(src.url, src.name.ifBlank { "باقة M3U سحابية" }))
                         }
                     }
-
-                    // Add user imported playlists from local preferences
                     try {
                         val userM3uList = com.example.data.local.AppPreferences(context).getCustomM3uList()
                         for (userSrc in userM3uList) {
@@ -224,6 +262,7 @@ class SaribRepository(private val context: Context) {
                         channels = aggregatedChannels.distinctBy { it.id }
                     )
                 }
+
                 val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies(currentRemoteConfig.moviesApiUrl) }
                 val customMovieCategoriesDeferred = async { firebaseStreamManager.fetchCustomMovieCategories() }
                 val m3uMoviesDeferred = async {
@@ -231,17 +270,12 @@ class SaribRepository(private val context: Context) {
                         if (currentRemoteConfig.m3uMoviesUrl.isNotBlank()) listOf(currentRemoteConfig.m3uMoviesUrl) else emptyList()
                     )
                 }
-                val matchesDeferred = async { fetchMatchesForDay(0) }
-                val newsDeferred = async { fetchNews() }
-
-                // Xtream: VOD Movies & Series categories and previews using dedicated accounts
                 val vodCategoriesDeferred = async { vodXtreamClient.fetchVodCategories() }
                 val seriesCategoriesDeferred = async { seriesXtreamClient.fetchSeriesCategories() }
-                val topMoviesDeferred = async { vodXtreamClient.fetchVodStreams(limit = 10) }
-                val topSeriesDeferred = async { seriesXtreamClient.fetchSeries(limit = 10) }
+                val topMoviesDeferred = async { vodXtreamClient.fetchVodStreams(limit = 15) }
+                val topSeriesDeferred = async { seriesXtreamClient.fetchSeries(limit = 15) }
+                val newsDeferred = async { fetchNews() }
 
-                val customCats = customCatsDeferred.await()
-                val customChannels = customChannelsDeferred.await()
                 val channelsApiChannels = channelsApiDeferred.await()
                 val liveXtreamCats = liveXtreamCatsDeferred.await()
                 val liveXtreamChannels = liveXtreamChannelsDeferred.await()
@@ -249,32 +283,27 @@ class SaribRepository(private val context: Context) {
                 val customMovies = customMoviesDeferred.await()
                 val customMovieCategories = customMovieCategoriesDeferred.await()
                 val m3uMoviesResult = m3uMoviesDeferred.await()
-                val remoteMatches = matchesDeferred.await()
-                newsDeferred.await()
                 val vodCategories = vodCategoriesDeferred.await()
                 val seriesCategories = seriesCategoriesDeferred.await()
                 val topMovies = topMoviesDeferred.await()
                 val topSeries = topSeriesDeferred.await()
+                newsDeferred.await()
 
-                val combinedChannels = (customChannels + channelsApiChannels + liveXtreamChannels + m3uResult.channels).distinctBy { it.id }
+                val combinedChannels = (channelsApiChannels + liveXtreamChannels + m3uResult.channels).distinctBy { it.id }
                 val m3uParsedMovies = (m3uResult.movies + m3uMoviesResult.movies).distinctBy { it.id }
                 val m3uParsedMovieCategories = (m3uResult.movieCategories + m3uMoviesResult.movieCategories).distinctBy { it.id }
-                val allCats = (customCats + liveXtreamCats + m3uResult.categories + vodCategories + seriesCategories + customMovieCategories + m3uParsedMovieCategories).distinctBy { it.id }
+                val allCats = (liveXtreamCats + m3uResult.categories + vodCategories + seriesCategories + customMovieCategories + m3uParsedMovieCategories).distinctBy { it.id }
                 val allMovs = (customMovies + m3uParsedMovies + topMovies).distinctBy { it.id }
 
-                // Update local Room database with fresh items
                 if (allCats.isNotEmpty()) {
-                    dao.clearAllCategories()
                     dao.insertCategories(allCats.map { it.toEntity() })
                 }
                 if (combinedChannels.isNotEmpty()) {
-                    dao.clearAllChannels()
                     combinedChannels.chunked(250).forEach { chunk ->
                         dao.insertChannels(chunk.map { it.toEntity() })
                     }
                 }
                 if (allMovs.isNotEmpty() || topSeries.isNotEmpty()) {
-                    dao.clearAllMedia()
                     if (allMovs.isNotEmpty()) {
                         dao.insertMediaItems(allMovs.map { it.toEntity() })
                     }
@@ -282,135 +311,10 @@ class SaribRepository(private val context: Context) {
                         dao.insertMediaItems(topSeries.map { it.toEntity() })
                     }
                 }
-                if (remoteMatches.isNotEmpty()) {
-                    dao.clearAllMatches()
-                    dao.insertMatches(remoteMatches.map { it.toEntity() })
-                }
-
-                // If no custom sliders were defined in Firebase, construct dynamic sliders from top real media/streams
-                if (_heroSliders.value.isEmpty()) {
-                    val fallbackSliders = mutableListOf<HeroBannerItem>()
-                    // If matches exist, add top live or upcoming match as a Match Slider
-                    val topMatch = remoteMatches.firstOrNull { it.isLive } ?: remoteMatches.firstOrNull()
-                    if (topMatch != null) {
-                        fallbackSliders.add(
-                            HeroBannerItem(
-                                id = "match_${topMatch.id}",
-                                title = "${topMatch.homeTeam} VS ${topMatch.awayTeam}",
-                                subtitle = "${topMatch.leagueName} • ${topMatch.matchTime}",
-                                backdropUrl = "",
-                                badge = if (topMatch.isLive) "مباشر LIVE" else "مباراة القمة",
-                                genreTags = listOf("مباراة", topMatch.leagueName.ifBlank { "بث مباشر" }, "FHD"),
-                                streamUrl = topMatch.streamUrl,
-                                contentType = ContentType.MATCH,
-                                isLive = topMatch.isLive,
-                                sortOrder = 0,
-                                isActive = true,
-                                server1 = topMatch.server1,
-                                server2 = topMatch.server2,
-                                server3 = topMatch.server3,
-                                server4 = topMatch.server4,
-                                server5 = topMatch.server5,
-                                isMatchSlider = true,
-                                homeTeam = topMatch.homeTeam,
-                                homeLogoUrl = topMatch.homeLogoUrl,
-                                awayTeam = topMatch.awayTeam,
-                                awayLogoUrl = topMatch.awayLogoUrl,
-                                leagueName = topMatch.leagueName,
-                                leagueLogoUrl = topMatch.leagueIconUrl,
-                                matchTime = topMatch.matchTime,
-                                matchDate = topMatch.matchDate,
-                                homeScore = topMatch.homeScore,
-                                awayScore = topMatch.awayScore,
-                                matchStatus = topMatch.status,
-                                commentator = topMatch.commentator,
-                                channelName = topMatch.channelName
-                            )
-                        )
-                    }
-
-                    if (currentRemoteConfig.heroTitle.isNotBlank()) {
-                        fallbackSliders.add(
-                            HeroBannerItem(
-                                id = "hero_main",
-                                title = currentRemoteConfig.heroTitle,
-                                subtitle = currentRemoteConfig.heroSubtitle,
-                                backdropUrl = "",
-                                badge = "مميز",
-                                genreTags = listOf("مسلسل", "دراما", "أكشن"),
-                                streamUrl = currentRemoteConfig.heroStreamUrl,
-                                contentType = ContentType.SERIES,
-                                isLive = false,
-                                sortOrder = 1,
-                                isActive = true
-                            )
-                        )
-                    }
-
-                    allMovs.firstOrNull()?.let { movie ->
-                        fallbackSliders.add(
-                            HeroBannerItem(
-                                id = movie.id,
-                                title = movie.title,
-                                subtitle = "${movie.year} • ${movie.genre}",
-                                backdropUrl = movie.backdropUrl.ifEmpty { movie.posterUrl },
-                                badge = "سينما VIP",
-                                genreTags = listOf("فيلم", "HD"),
-                                streamUrl = movie.streamUrl,
-                                contentType = ContentType.MOVIE,
-                                isLive = false,
-                                sortOrder = 1,
-                                isActive = true
-                            )
-                        )
-                    }
-
-                    customChannels.firstOrNull()?.let { ch ->
-                        fallbackSliders.add(
-                            HeroBannerItem(
-                                id = ch.id,
-                                title = ch.name,
-                                subtitle = "${ch.categoryName} • بث مباشر عالي الدقة",
-                                backdropUrl = ch.logoUrl,
-                                badge = "مباشر LIVE",
-                                genreTags = listOf("قناة", "مباشر"),
-                                streamUrl = ch.streamUrl,
-                                contentType = ContentType.CHANNEL,
-                                isLive = true,
-                                sortOrder = 2,
-                                isActive = true
-                            )
-                        )
-                    }
-
-                    if (fallbackSliders.isNotEmpty()) {
-                        _heroSliders.value = fallbackSliders
-                    }
-                }
-
-                val hasRemoteData = customCats.isNotEmpty() || customChannels.isNotEmpty() || channelsApiChannels.isNotEmpty() || liveXtreamChannels.isNotEmpty() || allMovs.isNotEmpty() || topSeries.isNotEmpty()
-                hasRemoteData
             }
-
-            if (syncResult) {
-                Result.success(true)
-            } else {
-                val localCats = dao.getChannelsCount()
-                if (localCats > 0) {
-                    Result.success(true)
-                } else {
-                    Result.failure(Exception("لم يتصل بالسيرفر. يرجى التحقق من اتصالك بالإنترنت أو حالة السيرفر."))
-                }
-            }
+            Log.d("SaribRepository", "Background content sync finished successfully.")
         } catch (e: Exception) {
-            Log.e("SaribRepository", "Init backend sync error: ${e.message}", e)
-            val cachedCount = try { dao.getChannelsCount() } catch (ex: Exception) { 0 }
-            if (cachedCount > 0) {
-                Result.success(true)
-            } else {
-                val msg = e.message ?: "لم يتصل بالسيرفر. يرجى التحقق من اتصال الإنترنت."
-                Result.failure(Exception(msg))
-            }
+            Log.w("SaribRepository", "Background sync encountered error: ${e.message}")
         }
     }
 

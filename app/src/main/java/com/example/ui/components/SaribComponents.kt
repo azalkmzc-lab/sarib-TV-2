@@ -47,7 +47,9 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -106,6 +108,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.focusable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import com.example.R
 import com.example.data.model.ChannelCategory
 import com.example.data.model.ChannelItem
@@ -139,6 +150,8 @@ fun SaribTopHeader(
     onTelegramClick: () -> Unit,
     onFavoritesClick: () -> Unit,
     onSearchClick: (() -> Unit)? = null,
+    onRefreshClick: (() -> Unit)? = null,
+    isRefreshing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -223,7 +236,7 @@ fun SaribTopHeader(
                     )
                 }
 
-                // Right Action Icons (Telegram / Social & Favorites & Optional Search)
+                // Right Action Icons (Search, Refresh, Telegram, Favorites)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -243,6 +256,38 @@ fun SaribTopHeader(
                                 contentDescription = "البحث",
                                 tint = SaribTextPrimary,
                                 modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    if (onRefreshClick != null) {
+                        val spinRotation by rememberInfiniteTransition(label = "refresh_spin").animateFloat(
+                            initialValue = 0f,
+                            targetValue = 360f,
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(1000, easing = androidx.compose.animation.core.LinearEasing),
+                                repeatMode = RepeatMode.Restart
+                            ),
+                            label = "spin_anim"
+                        )
+                        IconButton(
+                            onClick = onRefreshClick,
+                            modifier = Modifier
+                                .testTag("header_refresh_button")
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(if (isRefreshing) SaribElectricBlue.copy(alpha = 0.35f) else SaribCardBg)
+                                .border(1.dp, if (isRefreshing) SaribCyanAccent else SaribCardBorder, CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "تحديث محتوى التطبيق",
+                                tint = if (isRefreshing) SaribCyanAccent else SaribTextPrimary,
+                                modifier = Modifier
+                                    .size(20.dp)
+                                    .graphicsLayer {
+                                        if (isRefreshing) rotationZ = spinRotation
+                                    }
                             )
                         }
                     }
@@ -1543,14 +1588,45 @@ fun MediaCardItem(
     modifier: Modifier = Modifier
 ) {
     val displayImageUrl = item.posterUrl.ifBlank { item.backdropUrl }
+    var isFocused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.08f else 1.0f,
+        animationSpec = tween(durationMillis = 150),
+        label = "mediaCardScale"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isFocused) SaribCyanAccent else SaribCardBorder,
+        animationSpec = tween(durationMillis = 150),
+        label = "mediaCardBorder"
+    )
+    val borderWidth = if (isFocused) 2.5.dp else 1.dp
 
     Card(
         modifier = modifier
             .width(135.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(18.dp))
-            .border(1.dp, SaribCardBorder, RoundedCornerShape(18.dp))
+            .border(borderWidth, borderColor, RoundedCornerShape(18.dp))
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyUp && (
+                    keyEvent.key == Key.DirectionCenter ||
+                    keyEvent.key == Key.Enter ||
+                    keyEvent.key == Key.NumPadEnter ||
+                    keyEvent.key == Key.ButtonA
+                )) {
+                    onClick(item)
+                    true
+                } else false
+            }
             .clickable { onClick(item) },
-        colors = CardDefaults.cardColors(containerColor = SaribCardBg)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFocused) SaribCardBgSecondary else SaribCardBg
+        )
     ) {
         Column {
             Box(
@@ -1636,7 +1712,7 @@ fun MediaCardItem(
                 Text(
                     text = item.title,
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color.White,
+                        color = if (isFocused) SaribCyanAccent else Color.White,
                         fontWeight = FontWeight.Bold
                     ),
                     maxLines = 2,
@@ -1657,13 +1733,45 @@ fun LargeChannelCategoryCard(
     onClick: (ChannelCategory) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.04f else 1.0f,
+        animationSpec = tween(durationMillis = 150),
+        label = "catCardScale"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isFocused) SaribCyanAccent else SaribCardBorder,
+        animationSpec = tween(durationMillis = 150),
+        label = "catCardBorder"
+    )
+    val borderWidth = if (isFocused) 2.dp else 1.dp
+
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(20.dp))
-            .border(1.dp, SaribCardBorder, RoundedCornerShape(20.dp))
+            .border(borderWidth, borderColor, RoundedCornerShape(20.dp))
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyUp && (
+                    keyEvent.key == Key.DirectionCenter ||
+                    keyEvent.key == Key.Enter ||
+                    keyEvent.key == Key.NumPadEnter ||
+                    keyEvent.key == Key.ButtonA
+                )) {
+                    onClick(category)
+                    true
+                } else false
+            }
             .clickable { onClick(category) },
-        colors = CardDefaults.cardColors(containerColor = SaribCardBg)
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFocused) SaribCardBgSecondary else SaribCardBg
+        )
     ) {
         Box(
             modifier = Modifier
@@ -1793,6 +1901,7 @@ fun SaribBottomNav(
             items.forEach { (labelKey, icon, tabKey) ->
                 val label = com.example.data.local.tr(labelKey)
                 val isSelected = currentTab == tabKey
+                var isItemFocused by remember { mutableStateOf(false) }
 
                 Box(
                     modifier = Modifier
@@ -1800,13 +1909,30 @@ fun SaribBottomNav(
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(18.dp))
                         .background(
-                            if (isSelected) SaribElectricBlue.copy(alpha = 0.35f) else Color.Transparent
+                            when {
+                                isSelected -> SaribElectricBlue.copy(alpha = 0.35f)
+                                isItemFocused -> SaribElectricBlue.copy(alpha = 0.2f)
+                                else -> Color.Transparent
+                            }
                         )
                         .border(
-                            width = if (isSelected) 1.dp else 0.dp,
-                            color = if (isSelected) SaribCyanAccent else Color.Transparent,
+                            width = if (isSelected || isItemFocused) 1.5.dp else 0.dp,
+                            color = if (isItemFocused) SaribCyanAccent else if (isSelected) SaribCyanAccent else Color.Transparent,
                             shape = RoundedCornerShape(18.dp)
                         )
+                        .onFocusChanged { isItemFocused = it.isFocused }
+                        .focusable()
+                        .onKeyEvent { keyEvent ->
+                            if (keyEvent.type == KeyEventType.KeyUp && (
+                                keyEvent.key == Key.DirectionCenter ||
+                                keyEvent.key == Key.Enter ||
+                                keyEvent.key == Key.NumPadEnter ||
+                                keyEvent.key == Key.ButtonA
+                            )) {
+                                onTabSelected(tabKey)
+                                true
+                            } else false
+                        }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
@@ -1846,14 +1972,14 @@ fun SaribBottomNav(
                             Icon(
                                 imageVector = icon,
                                 contentDescription = label,
-                                tint = SaribTextMuted,
+                                tint = if (isItemFocused) SaribCyanAccent else SaribTextMuted,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    color = SaribTextMuted,
+                                    color = if (isItemFocused) SaribCyanAccent else SaribTextMuted,
                                     fontSize = 10.sp
                                 ),
                                 maxLines = 1
@@ -1874,18 +2000,51 @@ fun ActionButtonCard(
     isActive: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.05f else 1.0f,
+        animationSpec = tween(durationMillis = 150),
+        label = "actionBtnScale"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = when {
+            isFocused -> SaribCyanAccent
+            isActive -> SaribCyanAccent
+            else -> SaribCardBorder
+        },
+        animationSpec = tween(durationMillis = 150),
+        label = "actionBtnBorder"
+    )
+
     androidx.compose.material3.Card(
         modifier = modifier
             .height(58.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(16.dp))
             .border(
-                1.dp,
-                if (isActive) SaribCyanAccent else SaribCardBorder,
+                if (isFocused) 2.dp else 1.dp,
+                borderColor,
                 RoundedCornerShape(16.dp)
             )
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyUp && (
+                    keyEvent.key == Key.DirectionCenter ||
+                    keyEvent.key == Key.Enter ||
+                    keyEvent.key == Key.NumPadEnter ||
+                    keyEvent.key == Key.ButtonA
+                )) {
+                    onClick()
+                    true
+                } else false
+            }
             .clickable { onClick() },
         colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = if (isActive) SaribElectricBlue.copy(alpha = 0.15f) else SaribCardBg
+            containerColor = if (isFocused) SaribCardBgSecondary else if (isActive) SaribElectricBlue.copy(alpha = 0.15f) else SaribCardBg
         )
     ) {
         Row(
@@ -1898,7 +2057,7 @@ fun ActionButtonCard(
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                tint = if (isActive) SaribCyanAccent else SaribTextSecondary,
+                tint = if (isFocused || isActive) SaribCyanAccent else SaribTextSecondary,
                 modifier = Modifier.size(20.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -1906,7 +2065,7 @@ fun ActionButtonCard(
                 text = title,
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Bold,
-                    color = if (isActive) SaribCyanAccent else SaribTextPrimary
+                    color = if (isFocused || isActive) SaribCyanAccent else SaribTextPrimary
                 )
             )
         }

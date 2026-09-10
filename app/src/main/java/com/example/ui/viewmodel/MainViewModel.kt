@@ -63,6 +63,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _connectionError = MutableStateFlow<String?>(null)
     val connectionError: StateFlow<String?> = _connectionError.asStateFlow()
 
+    // Global Content Refresh State
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     // Global Anti-VPN Security State (Scanned every 3 seconds)
     private val _isVpnDetected = MutableStateFlow(false)
     val isVpnDetected: StateFlow<Boolean> = _isVpnDetected.asStateFlow()
@@ -204,6 +208,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val errorMsg = result.exceptionOrNull()?.message?.takeIf { it.isNotBlank() }
                     ?: "لم يتصل بالسيرفر. يرجى التحقق من اتصالك بالإنترنت أو حالة السيرفر."
                 _connectionError.value = errorMsg
+            }
+        }
+    }
+
+    fun refreshAllData() {
+        if (_isRefreshing.value) return
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                repository.syncAllContentInBackground(force = true)
+                android.widget.Toast.makeText(getApplication(), "تم تحديث محتوى التطبيق بنجاح 🔄", android.widget.Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                android.widget.Toast.makeText(getApplication(), "تعذر تحديث المحتوى: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }

@@ -27,7 +27,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -927,246 +929,213 @@ fun PlayerScreen(
 
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    // Row 2: Comprehensive Bottom Action Bar
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
+                    // Row 2: Comprehensive Horizontally-Scrollable Bottom Action Bar (تحريك الشريط وإظهار جميع الأزرار بسلاسة)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                     ) {
-                        item {
-                            // 1. Previous Channel Button
-                            IconButton(
-                                onClick = previousChannel,
-                                modifier = Modifier.size(38.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.SkipPrevious,
-                                    contentDescription = "القناة السابقة",
-                                    tint = SaribCyanAccent,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
+                        // 1. Previous Channel Button
+                        IconButton(
+                            onClick = previousChannel,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SkipPrevious,
+                                contentDescription = "القناة السابقة",
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
 
-                        item {
-                            // 2. Fast Rewind 10s
-                            IconButton(
-                                onClick = {
-                                    val target = (exoPlayer.currentPosition - 10000).coerceAtLeast(0L)
-                                    exoPlayer.seekTo(target)
+                        // 2. Fast Rewind 10s
+                        IconButton(
+                            onClick = {
+                                val target = (exoPlayer.currentPosition - 10000).coerceAtLeast(0L)
+                                exoPlayer.seekTo(target)
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FastRewind,
+                                contentDescription = "تأخير 10 ثوان",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        // 3. Main Play / Pause Button
+                        Box(
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .background(SaribCyanAccent)
+                                .clickable {
+                                    if (isPlaying) exoPlayer.pause() else exoPlayer.play()
                                 },
-                                modifier = Modifier.size(38.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.FastRewind,
-                                    contentDescription = "تأخير 10 ثوان",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                                contentDescription = if (isPlaying) "إيقاف" else "تشغيل",
+                                tint = Color.Black,
+                                modifier = Modifier.size(28.dp)
+                            )
                         }
 
-                        item {
-                            // 3. Main Play / Pause Button
-                            Box(
-                                modifier = Modifier
-                                    .size(44.dp)
-                                    .clip(CircleShape)
-                                    .background(SaribCyanAccent)
-                                    .clickable {
-                                        if (isPlaying) exoPlayer.pause() else exoPlayer.play()
-                                    },
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                    contentDescription = if (isPlaying) "إيقاف" else "تشغيل",
-                                    tint = Color.Black,
-                                    modifier = Modifier.size(26.dp)
-                                )
-                            }
+                        // 4. Fast Forward 10s
+                        IconButton(
+                            onClick = {
+                                val target = (exoPlayer.currentPosition + 10000).coerceAtMost(if (duration > 0) duration else Long.MAX_VALUE)
+                                exoPlayer.seekTo(target)
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.FastForward,
+                                contentDescription = "تقديم 10 ثوان",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
                         }
 
-                        item {
-                            // 4. Fast Forward 10s
-                            IconButton(
-                                onClick = {
-                                    val target = (exoPlayer.currentPosition + 10000).coerceAtMost(if (duration > 0) duration else Long.MAX_VALUE)
-                                    exoPlayer.seekTo(target)
-                                },
-                                modifier = Modifier.size(38.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.FastForward,
-                                    contentDescription = "تقديم 10 ثوان",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
+                        // 5. Next Channel Button
+                        IconButton(
+                            onClick = nextChannel,
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.SkipNext,
+                                contentDescription = "القناة التالية",
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(26.dp)
+                            )
                         }
 
-                        item {
-                            // 5. Next Channel Button
-                            IconButton(
-                                onClick = nextChannel,
-                                modifier = Modifier.size(38.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.SkipNext,
-                                    contentDescription = "القناة التالية",
-                                    tint = SaribCyanAccent,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                            }
-                        }
-
-                        item {
-                            Spacer(modifier = Modifier.width(6.dp))
-                        }
-
-                        item {
-                            // 6. In-Player Channel Switcher Drawer Button (قائمة القنوات)
-                            Surface(
-                                color = SaribElectricBlue.copy(alpha = 0.35f),
-                                shape = RoundedCornerShape(12.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, SaribCyanAccent.copy(alpha = 0.5f)),
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        showInPlayerChannelDrawer = true
-                                        showServerDialog = false
-                                        showQualityDialog = false
-                                        showCastDialog = false
-                                    }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(Icons.Default.Tv, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text("القنوات", color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp))
-                                }
-                            }
-                        }
-
-                        item {
-                            Spacer(modifier = Modifier.width(6.dp))
-                        }
-
-                        item {
-                            // 7. Multi-Server / Multi-Stream Toggle Button (تشغيل كل السيرفرات معاً)
-                            Surface(
-                                color = if (isMultiStreamMode) SaribCyanAccent.copy(alpha = 0.35f) else Color(0x33FFFFFF),
-                                shape = RoundedCornerShape(12.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, if (isMultiStreamMode) SaribCyanAccent else Color(0x33FFFFFF)),
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .clickable {
-                                        isMultiStreamMode = !isMultiStreamMode
-                                        if (isMultiStreamMode) {
-                                            activeAudioSlot = 0
-                                            Toast.makeText(context, "تم تفعيل عرض كل السيرفرات معاً", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(Icons.Default.GridView, contentDescription = null, tint = if (isMultiStreamMode) SaribCyanAccent else Color.White, modifier = Modifier.size(16.dp))
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        text = if (isMultiStreamMode) "شاشة فردية" else "كل السيرفرات",
-                                        color = if (isMultiStreamMode) SaribCyanAccent else Color.White,
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp)
-                                    )
-                                }
-                            }
-                        }
-
-                        item {
-                            Spacer(modifier = Modifier.width(6.dp))
-                        }
-
-                        item {
-                            // 8. Individual Server Picker (السيرفرات)
-                            IconButton(
-                                onClick = {
-                                    showServerDialog = true
-                                    showInPlayerChannelDrawer = false
-                                    showQualityDialog = false
-                                    showCastDialog = false
-                                },
-                                modifier = Modifier.size(38.dp)
-                            ) {
-                                Icon(Icons.Default.Dns, contentDescription = "السيرفرات", tint = Color.White, modifier = Modifier.size(20.dp))
-                            }
-                        }
-
-                        item {
-                            // 9. Quality & Audio Settings (الجودة والصوت)
-                            IconButton(
-                                onClick = {
-                                    showQualityDialog = true
-                                    showServerDialog = false
-                                    showInPlayerChannelDrawer = false
-                                    showCastDialog = false
-                                },
-                                modifier = Modifier.size(38.dp)
-                            ) {
-                                Icon(Icons.Default.Tune, contentDescription = "الجودة والصوت", tint = Color.White, modifier = Modifier.size(20.dp))
-                            }
-                        }
-
-                        item {
-                            // 10. Cast to TV (بث للشاشة)
-                            IconButton(
-                                onClick = {
-                                    showCastDialog = true
+                        // 6. In-Player Channel Switcher Drawer Button (قائمة القنوات)
+                        Surface(
+                            color = SaribElectricBlue.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, SaribCyanAccent.copy(alpha = 0.6f)),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    showInPlayerChannelDrawer = true
                                     showServerDialog = false
                                     showQualityDialog = false
-                                    showInPlayerChannelDrawer = false
-                                },
-                                modifier = Modifier.size(38.dp)
+                                    showCastDialog = false
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Default.Cast, contentDescription = "بث للشاشة", tint = SaribCyanAccent, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.Tv, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(17.dp))
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text("القنوات", color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp))
                             }
                         }
 
-                        item {
-                            // 11. Aspect Ratio / Resize Mode (أبعاد الشاشة)
-                            IconButton(
-                                onClick = {
-                                    resizeMode = when (resizeMode) {
-                                        AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-                                        else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        // 7. Multi-Server / Multi-Stream Toggle Button (تشغيل كل السيرفرات معاً)
+                        Surface(
+                            color = if (isMultiStreamMode) SaribCyanAccent.copy(alpha = 0.35f) else Color(0x33FFFFFF),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (isMultiStreamMode) SaribCyanAccent else Color(0x33FFFFFF)),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    isMultiStreamMode = !isMultiStreamMode
+                                    if (isMultiStreamMode) {
+                                        activeAudioSlot = 0
+                                        Toast.makeText(context, "تم تفعيل عرض كل السيرفرات معاً", Toast.LENGTH_SHORT).show()
                                     }
-                                    val modeLabel = when (resizeMode) {
-                                        AspectRatioFrameLayout.RESIZE_MODE_FIT -> "تناسب (Fit)"
-                                        AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "تكبير (Zoom)"
-                                        else -> "ملء الشاشة (Fill)"
-                                    }
-                                    Toast.makeText(context, modeLabel, Toast.LENGTH_SHORT).show()
-                                },
-                                modifier = Modifier.size(38.dp)
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Default.AspectRatio, contentDescription = "تنسيق الأبعاد", tint = Color.White, modifier = Modifier.size(20.dp))
+                                Icon(Icons.Default.GridView, contentDescription = null, tint = if (isMultiStreamMode) SaribCyanAccent else Color.White, modifier = Modifier.size(17.dp))
+                                Spacer(modifier = Modifier.width(5.dp))
+                                Text(
+                                    text = if (isMultiStreamMode) "شاشة فردية" else "كل السيرفرات",
+                                    color = if (isMultiStreamMode) SaribCyanAccent else Color.White,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                )
                             }
                         }
 
-                        item {
-                            // 12. Lock Screen Controls
-                            IconButton(
-                                onClick = {
-                                    isControlsLocked = true
-                                    areControlsVisible = false
-                                },
-                                modifier = Modifier.size(38.dp)
-                            ) {
-                                Icon(Icons.Default.Lock, contentDescription = "قفل الأزرار", tint = Color.White, modifier = Modifier.size(20.dp))
-                            }
+                        // 8. Individual Server Picker (السيرفرات)
+                        IconButton(
+                            onClick = {
+                                showServerDialog = true
+                                showInPlayerChannelDrawer = false
+                                showQualityDialog = false
+                                showCastDialog = false
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(Icons.Default.Dns, contentDescription = "السيرفرات", tint = Color.White, modifier = Modifier.size(22.dp))
+                        }
+
+                        // 9. Quality & Audio Settings (الجودة والصوت)
+                        IconButton(
+                            onClick = {
+                                showQualityDialog = true
+                                showServerDialog = false
+                                showInPlayerChannelDrawer = false
+                                showCastDialog = false
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(Icons.Default.Tune, contentDescription = "الجودة والصوت", tint = Color.White, modifier = Modifier.size(22.dp))
+                        }
+
+                        // 10. Cast to TV (بث للشاشة)
+                        IconButton(
+                            onClick = {
+                                showCastDialog = true
+                                showServerDialog = false
+                                showQualityDialog = false
+                                showInPlayerChannelDrawer = false
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(Icons.Default.Cast, contentDescription = "بث للشاشة", tint = SaribCyanAccent, modifier = Modifier.size(22.dp))
+                        }
+
+                        // 11. Aspect Ratio / Resize Mode (أبعاد الشاشة)
+                        IconButton(
+                            onClick = {
+                                resizeMode = when (resizeMode) {
+                                    AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                                    else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                }
+                                val modeLabel = when (resizeMode) {
+                                    AspectRatioFrameLayout.RESIZE_MODE_FIT -> "تناسب (Fit)"
+                                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "تكبير (Zoom)"
+                                    else -> "ملء الشاشة (Fill)"
+                                }
+                                Toast.makeText(context, modeLabel, Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(Icons.Default.AspectRatio, contentDescription = "تنسيق الأبعاد", tint = Color.White, modifier = Modifier.size(22.dp))
+                        }
+
+                        // 12. Lock Screen Controls
+                        IconButton(
+                            onClick = {
+                                isControlsLocked = true
+                                areControlsVisible = false
+                            },
+                            modifier = Modifier.size(40.dp)
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = "قفل الأزرار", tint = Color.White, modifier = Modifier.size(22.dp))
                         }
                     }
                 }

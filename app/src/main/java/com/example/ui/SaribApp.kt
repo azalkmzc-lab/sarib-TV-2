@@ -106,6 +106,7 @@ fun SaribApp(
     val searchResults by viewModel.searchResults.collectAsState()
 
     val isVpnDetected by viewModel.isVpnDetected.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isImportingM3u by viewModel.isImportingM3u.collectAsState()
     val importStatusMessage by viewModel.importStatusMessage.collectAsState()
 
@@ -272,7 +273,9 @@ fun SaribApp(
                                 onMenuClick = { scope.launch { drawerState.open() } },
                                 onTelegramClick = openTelegram,
                                 onFavoritesClick = { viewModel.selectTab("favorites") },
-                                onSearchClick = { viewModel.navigateTo(AppScreen.Search) }
+                                onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
+                                onRefreshClick = { viewModel.refreshAllData() },
+                                isRefreshing = isRefreshing
                             )
                         },
                         bottomBar = {

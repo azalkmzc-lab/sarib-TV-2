@@ -1,9 +1,13 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,13 +43,21 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -224,15 +236,50 @@ fun SeriesDetailScreen(
                         Spacer(modifier = Modifier.height(16.dp))
 
                         // Direct Play Button
+                        var isPlayBtnFocused by remember { mutableStateOf(false) }
+                        val playBtnScale by animateFloatAsState(
+                            targetValue = if (isPlayBtnFocused) 1.05f else 1.0f,
+                            animationSpec = tween(durationMillis = 150),
+                            label = "playBtnScale"
+                        )
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .graphicsLayer {
+                                    scaleX = playBtnScale
+                                    scaleY = playBtnScale
+                                }
                                 .clip(RoundedCornerShape(12.dp))
+                                .border(
+                                    width = if (isPlayBtnFocused) 2.5.dp else 0.dp,
+                                    color = if (isPlayBtnFocused) Color.White else Color.Transparent,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
                                 .background(
                                     Brush.horizontalGradient(
-                                        listOf(SaribElectricBlue, SaribCyanAccent)
+                                        if (isPlayBtnFocused) listOf(SaribCyanAccent, SaribElectricBlue)
+                                        else listOf(SaribElectricBlue, SaribCyanAccent)
                                     )
                                 )
+                                .onFocusChanged { isPlayBtnFocused = it.isFocused }
+                                .focusable()
+                                .onKeyEvent { keyEvent ->
+                                    if (keyEvent.type == KeyEventType.KeyUp && (
+                                        keyEvent.key == Key.DirectionCenter ||
+                                        keyEvent.key == Key.Enter ||
+                                        keyEvent.key == Key.NumPadEnter ||
+                                        keyEvent.key == Key.ButtonA
+                                    )) {
+                                        val firstEp = currentEpisodes.firstOrNull()
+                                        if (firstEp != null) {
+                                            onPlayEpisode(firstEp, "${mediaItem.title} - ${firstEp.title}")
+                                        } else {
+                                            onPlayDirect()
+                                        }
+                                        true
+                                    } else false
+                                }
                                 .clickable {
                                     val firstEp = currentEpisodes.firstOrNull()
                                     if (firstEp != null) {
@@ -395,13 +442,42 @@ fun EpisodeCardItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isFocused) 1.03f else 1.0f,
+        animationSpec = tween(durationMillis = 150),
+        label = "epScale"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isFocused) SaribCyanAccent else Color(0x2200D2FF),
+        animationSpec = tween(durationMillis = 150),
+        label = "epBorder"
+    )
+
     Box(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 6.dp)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(RoundedCornerShape(10.dp))
-            .background(SaribDarkCard)
-            .border(1.dp, Color(0x2200D2FF), RoundedCornerShape(10.dp))
+            .background(if (isFocused) SaribDarkCard.copy(alpha = 0.95f) else SaribDarkCard)
+            .border(if (isFocused) 2.dp else 1.dp, borderColor, RoundedCornerShape(10.dp))
+            .onFocusChanged { isFocused = it.isFocused }
+            .focusable()
+            .onKeyEvent { keyEvent ->
+                if (keyEvent.type == KeyEventType.KeyUp && (
+                    keyEvent.key == Key.DirectionCenter ||
+                    keyEvent.key == Key.Enter ||
+                    keyEvent.key == Key.NumPadEnter ||
+                    keyEvent.key == Key.ButtonA
+                )) {
+                    onClick()
+                    true
+                } else false
+            }
             .clickable { onClick() }
             .padding(10.dp)
     ) {

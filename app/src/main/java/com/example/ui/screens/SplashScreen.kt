@@ -70,35 +70,15 @@ fun SplashScreen(
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "splash_motion")
     
-    // Smooth cinematic poster scrolling offsets across 3 columns
-    val colOffset1 by infiniteTransition.animateFloat(
+    // Single unified smooth cinematic poster movement (فقط واحد مش ثلاثة)
+    val singlePosterOffset by infiniteTransition.animateFloat(
         initialValue = 0f,
-        targetValue = -600f,
+        targetValue = -450f,
         animationSpec = infiniteRepeatable(
-            animation = tween(16000, easing = LinearEasing),
+            animation = tween(22000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart
         ),
-        label = "col1"
-    )
-
-    val colOffset2 by infiniteTransition.animateFloat(
-        initialValue = -600f,
-        targetValue = 0f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(18000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "col2"
-    )
-
-    val colOffset3 by infiniteTransition.animateFloat(
-        initialValue = -200f,
-        targetValue = -800f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(20000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "col3"
+        label = "single_poster_scroll"
     )
 
     val pulseScale by infiniteTransition.animateFloat(
@@ -116,69 +96,27 @@ fun SplashScreen(
             .fillMaxSize()
             .background(SaribDarkBackground)
     ) {
-        // Fullscreen Animated Posters Wallpaper (Covering 100% of the screen)
+        // Single Unified Animated Poster Background (Covering full screen with slow continuous drift)
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .scale(1.15f)
+                .scale(1.1f)
         ) {
-            Row(
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .offset(y = singlePosterOffset.dp)
             ) {
-                // Column 1 (Left)
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .offset(y = colOffset1.dp)
-                ) {
-                    repeat(4) {
-                        Image(
-                            painter = painterResource(id = R.drawable.splash_posters_bg),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(520.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
-                }
-                // Column 2 (Center)
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .offset(y = colOffset2.dp)
-                ) {
-                    repeat(4) {
-                        Image(
-                            painter = painterResource(id = R.drawable.splash_posters_bg),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(520.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
-                }
-                // Column 3 (Right)
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .offset(y = colOffset3.dp)
-                ) {
-                    repeat(4) {
-                        Image(
-                            painter = painterResource(id = R.drawable.splash_posters_bg),
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(520.dp)
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
+                repeat(4) {
+                    Image(
+                        painter = painterResource(id = R.drawable.splash_posters_bg),
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(650.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
