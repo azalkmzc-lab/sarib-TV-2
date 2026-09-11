@@ -15,7 +15,7 @@ android {
 
   defaultConfig {
     applicationId = "com.aistudio.saribtv.kxmpzq"
-    minSdk = 21
+    minSdk = 24
     targetSdk = 36
     versionCode = 2
     versionName = "2.0"
@@ -108,6 +108,8 @@ dependencies {
   implementation(libs.firebase.ai)
   // Firestore for remote stream config and live management
   implementation(libs.firebase.firestore)
+  implementation(libs.firebase.messaging)
+  implementation(libs.androidx.work.runtime.ktx)
 
   // Uncomment ALL FOUR of the following dependencies together to use Firebase Auth and Google
   // Sign-In via Credential Manager:

@@ -29,6 +29,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Arrangement
@@ -65,6 +66,7 @@ import androidx.compose.material.icons.filled.AspectRatio
 import androidx.compose.material.icons.filled.Audiotrack
 import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ClosedCaption
@@ -172,9 +174,13 @@ import kotlinx.coroutines.withContext
 
 data class QualityOption(
     val name: String,
-    val resolutionLabel: String,
-    val height: Int,
-    val bitrate: Int
+    val resolutionLabel: String = "",
+    val width: Int = 0,
+    val height: Int = 0,
+    val bitrate: Int = 0,
+    val isAuto: Boolean = false,
+    val trackGroup: Tracks.Group? = null,
+    val trackIndex: Int = -1
 )
 
 data class AudioTrackOption(
@@ -273,27 +279,6 @@ fun PlayerScreen(
         mutableStateOf(list)
     }
 
-    // Quality, Audio & Subtitles
-    var availableQualityOptions by remember {
-        mutableStateOf(
-            listOf(
-                QualityOption("تلقائي (الأفضل متكيف)", "Auto Adaptive", Int.MAX_VALUE, Int.MAX_VALUE),
-                QualityOption("1080p FHD", "Full HD 60fps", 1080, 8_000_000),
-                QualityOption("720p HD", "High Definition", 720, 4_000_000),
-                QualityOption("480p SD", "Standard Def", 480, 1_500_000),
-                QualityOption("360p توفير البيانات", "Data Saver", 360, 800_000)
-            )
-        )
-    }
-    var selectedQualityIndex by remember { mutableIntStateOf(0) }
-    var availableAudioTracks by remember { mutableStateOf<List<AudioTrackOption>>(emptyList()) }
-    var selectedAudioTrackIndex by remember { mutableIntStateOf(0) }
-    var availableSubtitleTracks by remember { mutableStateOf<List<SubtitleTrackOption>>(emptyList()) }
-    var selectedSubtitleIndex by remember { mutableIntStateOf(0) }
-
-    // Anti-VPN 3-Second Security Scanner state
-    var isVpnDetectedInPlayer by remember { mutableStateOf(false) }
-
     // Main Single / Primary ExoPlayer (Slot 0)
     val exoPlayer = remember {
         val loadControl = DefaultLoadControl.Builder()
@@ -309,6 +294,57 @@ fun PlayerScreen(
                 playWhenReady = true
             }
     }
+
+    // Quality, Audio & Subtitles
+    var availableQualityOptions by remember {
+        mutableStateOf(
+            listOf(
+                QualityOption("تلقائي (متكيف حسب سرعة النت)", "Auto Adaptive", isAuto = true)
+            )
+        )
+    }
+    var selectedQualityIndex by remember { mutableIntStateOf(0) }
+    var availableAudioTracks by remember { mutableStateOf<List<AudioTrackOption>>(emptyList()) }
+    var selectedAudioTrackIndex by remember { mutableIntStateOf(0) }
+    var availableSubtitleTracks by remember { mutableStateOf<List<SubtitleTrackOption>>(emptyList()) }
+    var selectedSubtitleIndex by remember { mutableIntStateOf(0) }
+
+    val applyQualitySelection: (QualityOption, Int) -> Unit = remember(exoPlayer) {
+        { opt, idx ->
+            selectedQualityIndex = idx
+            try {
+                if (opt.isAuto) {
+                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                        .buildUpon()
+                        .clearOverridesOfType(C.TRACK_TYPE_VIDEO)
+                        .clearVideoSizeConstraints()
+                        .setMaxVideoBitrate(Int.MAX_VALUE)
+                        .build()
+                } else if (opt.trackGroup != null && opt.trackIndex >= 0) {
+                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                        .buildUpon()
+                        .setOverrideForType(
+                            TrackSelectionOverride(
+                                opt.trackGroup.mediaTrackGroup,
+                                listOf(opt.trackIndex)
+                            )
+                        )
+                        .build()
+                } else if (opt.height > 0) {
+                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                        .buildUpon()
+                        .setMaxVideoSize(opt.width.coerceAtLeast(1920), opt.height)
+                        .setMaxVideoBitrate(if (opt.bitrate > 0) opt.bitrate + 500_000 else Int.MAX_VALUE)
+                        .build()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("PlayerScreen", "Error applying track override: ${e.message}")
+            }
+        }
+    }
+
+    // Anti-VPN 3-Second Security Scanner state
+    var isVpnDetectedInPlayer by remember { mutableStateOf(false) }
 
     // Function to play main stream cleanly using StreamUrlParser
     val playStream: (String) -> Unit = remember(exoPlayer) {
@@ -556,8 +592,12 @@ fun PlayerScreen(
             }
 
             override fun onTracksChanged(tracks: Tracks) {
+                val videoQualityList = mutableListOf<QualityOption>()
                 val audioList = mutableListOf<AudioTrackOption>()
                 val subList = mutableListOf<SubtitleTrackOption>()
+                var maxW = 0
+                var maxH = 0
+                var maxBr = 0
 
                 tracks.groups.forEachIndexed { groupIdx, group ->
                     val type = group.type
@@ -566,13 +606,71 @@ fun PlayerScreen(
                         val lang = format.language ?: "und"
                         val label = format.label ?: if (lang != "und") lang else "مسار ${trackIdx + 1}"
 
-                        if (type == C.TRACK_TYPE_AUDIO) {
+                        if (type == C.TRACK_TYPE_VIDEO) {
+                            val w = format.width
+                            val h = format.height
+                            val br = format.bitrate
+                            val fps = if (format.frameRate > 0f) " ${format.frameRate.toInt()}fps" else ""
+                            if (h > 0 && w > 0) {
+                                if (h > maxH) maxH = h
+                                if (w > maxW) maxW = w
+                                if (br > maxBr) maxBr = br
+
+                                val resLabel = when {
+                                    h >= 2160 -> "4K Ultra HD ($w×$h$fps)"
+                                    h >= 1440 -> "2K QHD ($w×$h$fps)"
+                                    h >= 1080 -> "1080p FHD ($w×$h$fps)"
+                                    h >= 720 -> "720p HD ($w×$h$fps)"
+                                    h >= 576 -> "576p SD ($w×$h$fps)"
+                                    h >= 480 -> "480p SD ($w×$h$fps)"
+                                    h >= 360 -> "360p منخفض ($w×$h$fps)"
+                                    else -> "${h}p ($w×$h$fps)"
+                                }
+                                val brLabel = if (br > 0) " (${br / 1000} Kbps)" else ""
+                                val displayTitle = format.label ?: "$resLabel$brLabel"
+
+                                videoQualityList.add(
+                                    QualityOption(
+                                        name = displayTitle,
+                                        resolutionLabel = "$w×$h$fps",
+                                        width = w,
+                                        height = h,
+                                        bitrate = br,
+                                        isAuto = false,
+                                        trackGroup = group,
+                                        trackIndex = trackIdx
+                                    )
+                                )
+                            }
+                        } else if (type == C.TRACK_TYPE_AUDIO) {
                             audioList.add(AudioTrackOption(label = label, language = lang, trackGroupIndex = groupIdx, trackIndex = trackIdx))
                         } else if (type == C.TRACK_TYPE_TEXT) {
                             subList.add(SubtitleTrackOption(label = label, language = lang, trackGroupIndex = groupIdx, trackIndex = trackIdx))
                         }
                     }
                 }
+
+                videoQualityList.sortWith(compareByDescending<QualityOption> { it.height }.thenByDescending { it.bitrate })
+
+                val finalQualities = mutableListOf<QualityOption>()
+                val autoTitle = if (maxH > 0) {
+                    "تلقائي متكيف (أقصى دقة للقناة: ${maxH}p)"
+                } else {
+                    "تلقائي متكيف (أفضل دقة حسب سرعة النت)"
+                }
+                finalQualities.add(
+                    QualityOption(
+                        name = autoTitle,
+                        resolutionLabel = if (maxH > 0) "$maxW×$maxH" else "Auto Adaptive",
+                        width = maxW,
+                        height = maxH,
+                        bitrate = maxBr,
+                        isAuto = true
+                    )
+                )
+                finalQualities.addAll(videoQualityList)
+
+                availableQualityOptions = finalQualities
                 availableAudioTracks = audioList
                 availableSubtitleTracks = subList
             }
@@ -865,7 +963,7 @@ fun PlayerScreen(
                     )
                     .padding(12.dp)
             ) {
-                // TOP BAR: Back Button + Title + PiP
+                // TOP BAR: Back Button + Title + Top Action Tools
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -895,7 +993,7 @@ fun PlayerScreen(
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     color = Color.White,
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 17.sp
+                                    fontSize = 16.sp
                                 ),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
@@ -913,13 +1011,16 @@ fun PlayerScreen(
                         }
                     }
 
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
                         // LIVE Badge
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(if (isLive) SaribLiveRed else SaribElectricBlue)
-                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
                         ) {
                             Text(
                                 text = if (isLive) "LIVE" else "VOD",
@@ -929,6 +1030,45 @@ fun PlayerScreen(
                                     fontSize = 10.sp
                                 )
                             )
+                        }
+
+                        // Aspect Ratio / Resize Mode
+                        IconButton(
+                            onClick = {
+                                resizeMode = when (resizeMode) {
+                                    AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_FILL
+                                    else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                                }
+                                val modeLabel = when (resizeMode) {
+                                    AspectRatioFrameLayout.RESIZE_MODE_FIT -> "تناسب (Fit)"
+                                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "تكبير (Zoom)"
+                                    else -> "ملء الشاشة (Fill)"
+                                }
+                                Toast.makeText(context, modeLabel, Toast.LENGTH_SHORT).show()
+                            },
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x55000000))
+                        ) {
+                            Icon(Icons.Default.AspectRatio, contentDescription = "تنسيق الأبعاد", tint = Color.White, modifier = Modifier.size(18.dp))
+                        }
+
+                        // Cast to TV Button
+                        IconButton(
+                            onClick = {
+                                showCastDialog = true
+                                showServerDialog = false
+                                showQualityDialog = false
+                                showInPlayerChannelDrawer = false
+                            },
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x55000000))
+                        ) {
+                            Icon(Icons.Default.Cast, contentDescription = "بث للشاشة", tint = SaribCyanAccent, modifier = Modifier.size(18.dp))
                         }
 
                         // PiP Button
@@ -946,6 +1086,121 @@ fun PlayerScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                         }
+
+                        // Screen Lock Button
+                        IconButton(
+                            onClick = {
+                                isControlsLocked = true
+                                areControlsVisible = false
+                            },
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x55000000))
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = "قفل الأزرار", tint = Color.White, modifier = Modifier.size(18.dp))
+                        }
+                    }
+                }
+
+                // ================= CENTER PLAYBACK CONTROLS =================
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally)
+                ) {
+                    // Previous Channel
+                    IconButton(
+                        onClick = previousChannel,
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x66000000))
+                            .border(1.dp, SaribCyanAccent.copy(alpha = 0.5f), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipPrevious,
+                            contentDescription = "القناة السابقة",
+                            tint = SaribCyanAccent,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+
+                    // Fast Rewind 10s
+                    IconButton(
+                        onClick = {
+                            val target = (exoPlayer.currentPosition - 10000).coerceAtLeast(0L)
+                            exoPlayer.seekTo(target)
+                        },
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x66000000))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FastRewind,
+                            contentDescription = "تأخير 10 ثوان",
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    // Main Glowing Play / Pause Button
+                    Box(
+                        modifier = Modifier
+                            .size(62.dp)
+                            .clip(CircleShape)
+                            .background(SaribCyanAccent)
+                            .border(2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
+                            .clickable {
+                                if (isPlaying) exoPlayer.pause() else exoPlayer.play()
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isPlaying) "إيقاف" else "تشغيل",
+                            tint = Color.Black,
+                            modifier = Modifier.size(36.dp)
+                        )
+                    }
+
+                    // Fast Forward 10s
+                    IconButton(
+                        onClick = {
+                            val target = (exoPlayer.currentPosition + 10000).coerceAtMost(if (duration > 0) duration else Long.MAX_VALUE)
+                            exoPlayer.seekTo(target)
+                        },
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x66000000))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.FastForward,
+                            contentDescription = "تقديم 10 ثوان",
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    // Next Channel
+                    IconButton(
+                        onClick = nextChannel,
+                        modifier = Modifier
+                            .size(46.dp)
+                            .clip(CircleShape)
+                            .background(Color(0x66000000))
+                            .border(1.dp, SaribCyanAccent.copy(alpha = 0.5f), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = "القناة التالية",
+                            tint = SaribCyanAccent,
+                            modifier = Modifier.size(28.dp)
+                        )
                     }
                 }
 
@@ -998,95 +1253,17 @@ fun PlayerScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
 
-                    // Row 2: Comprehensive Horizontally-Scrollable Bottom Action Bar (تحريك الشريط وإظهار جميع الأزرار بسلاسة)
+                    // Row 2: Prominent Action Buttons Bar (إظهار كافة الوظائف بوضوح ودون اختفاء)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState())
-                            .padding(horizontal = 4.dp),
+                            .padding(horizontal = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+                        horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        // 1. Previous Channel Button
-                        IconButton(
-                            onClick = previousChannel,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SkipPrevious,
-                                contentDescription = "القناة السابقة",
-                                tint = SaribCyanAccent,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
-
-                        // 2. Fast Rewind 10s
-                        IconButton(
-                            onClick = {
-                                val target = (exoPlayer.currentPosition - 10000).coerceAtLeast(0L)
-                                exoPlayer.seekTo(target)
-                            },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FastRewind,
-                                contentDescription = "تأخير 10 ثوان",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        // 3. Main Play / Pause Button
-                        Box(
-                            modifier = Modifier
-                                .size(46.dp)
-                                .clip(CircleShape)
-                                .background(SaribCyanAccent)
-                                .clickable {
-                                    if (isPlaying) exoPlayer.pause() else exoPlayer.play()
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                                contentDescription = if (isPlaying) "إيقاف" else "تشغيل",
-                                tint = Color.Black,
-                                modifier = Modifier.size(28.dp)
-                            )
-                        }
-
-                        // 4. Fast Forward 10s
-                        IconButton(
-                            onClick = {
-                                val target = (exoPlayer.currentPosition + 10000).coerceAtMost(if (duration > 0) duration else Long.MAX_VALUE)
-                                exoPlayer.seekTo(target)
-                            },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.FastForward,
-                                contentDescription = "تقديم 10 ثوان",
-                                tint = Color.White,
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-
-                        // 5. Next Channel Button
-                        IconButton(
-                            onClick = nextChannel,
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.SkipNext,
-                                contentDescription = "القناة التالية",
-                                tint = SaribCyanAccent,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
-
-                        // 6. In-Player Channel Switcher Drawer Button (قائمة القنوات)
+                        // 1. In-Player Channel Switcher Drawer Button (قائمة القنوات)
                         Surface(
                             color = SaribElectricBlue.copy(alpha = 0.35f),
                             shape = RoundedCornerShape(12.dp),
@@ -1101,18 +1278,78 @@ fun PlayerScreen(
                                 }
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Default.Tv, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(17.dp))
-                                Spacer(modifier = Modifier.width(5.dp))
-                                Text("القنوات", color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp))
+                                Icon(Icons.Default.Tv, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("القنوات", color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp))
                             }
                         }
 
-                        // 7. Multi-Server / Multi-Stream Toggle Button (تشغيل كل السيرفرات معاً)
+                        // 2. Individual Server Picker (السيرفرات)
                         Surface(
-                            color = if (isMultiStreamMode) SaribCyanAccent.copy(alpha = 0.35f) else Color(0x33FFFFFF),
+                            color = Color(0x22FFFFFF),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x33FFFFFF)),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    showServerDialog = true
+                                    showInPlayerChannelDrawer = false
+                                    showQualityDialog = false
+                                    showCastDialog = false
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Dns, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "السيرفرات (${currentServersList.size})",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                )
+                            }
+                        }
+
+                        // 3. Real Quality & Audio Settings (الجودة والصوت)
+                        val currentQualityLabel = availableQualityOptions.getOrNull(selectedQualityIndex)?.let {
+                            if (it.isAuto) "تلقائي" else it.resolutionLabel.ifBlank { "مخصص" }
+                        } ?: "الجودة"
+
+                        Surface(
+                            color = Color(0x22FFFFFF),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x33FFFFFF)),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    showQualityDialog = true
+                                    showServerDialog = false
+                                    showInPlayerChannelDrawer = false
+                                    showCastDialog = false
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Tune, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = "الجودة ($currentQualityLabel)",
+                                    color = SaribCyanAccent,
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                )
+                            }
+                        }
+
+                        // 4. Multi-Server / Multi-Stream Toggle Button (تشغيل كل السيرفرات معاً)
+                        Surface(
+                            color = if (isMultiStreamMode) SaribCyanAccent.copy(alpha = 0.35f) else Color(0x22FFFFFF),
                             shape = RoundedCornerShape(12.dp),
                             border = androidx.compose.foundation.BorderStroke(1.dp, if (isMultiStreamMode) SaribCyanAccent else Color(0x33FFFFFF)),
                             modifier = Modifier
@@ -1126,87 +1363,39 @@ fun PlayerScreen(
                                 }
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Default.GridView, contentDescription = null, tint = if (isMultiStreamMode) SaribCyanAccent else Color.White, modifier = Modifier.size(17.dp))
-                                Spacer(modifier = Modifier.width(5.dp))
+                                Icon(Icons.Default.GridView, contentDescription = null, tint = if (isMultiStreamMode) SaribCyanAccent else Color.White, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
                                 Text(
-                                    text = if (isMultiStreamMode) "شاشة فردية" else "كل السيرفرات",
+                                    text = if (isMultiStreamMode) "فردي" else "كل السيرفرات",
                                     color = if (isMultiStreamMode) SaribCyanAccent else Color.White,
-                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp)
                                 )
                             }
                         }
 
-                        // 8. Individual Server Picker (السيرفرات)
-                        IconButton(
-                            onClick = {
-                                showServerDialog = true
-                                showInPlayerChannelDrawer = false
-                                showQualityDialog = false
-                                showCastDialog = false
-                            },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(Icons.Default.Dns, contentDescription = "السيرفرات", tint = Color.White, modifier = Modifier.size(22.dp))
-                        }
-
-                        // 9. Quality & Audio Settings (الجودة والصوت)
-                        IconButton(
-                            onClick = {
-                                showQualityDialog = true
-                                showServerDialog = false
-                                showInPlayerChannelDrawer = false
-                                showCastDialog = false
-                            },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(Icons.Default.Tune, contentDescription = "الجودة والصوت", tint = Color.White, modifier = Modifier.size(22.dp))
-                        }
-
-                        // 10. Cast to TV (بث للشاشة)
-                        IconButton(
-                            onClick = {
-                                showCastDialog = true
-                                showServerDialog = false
-                                showQualityDialog = false
-                                showInPlayerChannelDrawer = false
-                            },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(Icons.Default.Cast, contentDescription = "بث للشاشة", tint = SaribCyanAccent, modifier = Modifier.size(22.dp))
-                        }
-
-                        // 11. Aspect Ratio / Resize Mode (أبعاد الشاشة)
-                        IconButton(
-                            onClick = {
-                                resizeMode = when (resizeMode) {
-                                    AspectRatioFrameLayout.RESIZE_MODE_FIT -> AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> AspectRatioFrameLayout.RESIZE_MODE_FILL
-                                    else -> AspectRatioFrameLayout.RESIZE_MODE_FIT
+                        // 5. Instant Reload / Refresh Stream Button (تحديث البث)
+                        Surface(
+                            color = Color(0x22FFFFFF),
+                            shape = RoundedCornerShape(12.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0x33FFFFFF)),
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .clickable {
+                                    playStream(currentActiveUrl)
+                                    Toast.makeText(context, "جاري تحديث وإعادة تشغيل البث...", Toast.LENGTH_SHORT).show()
                                 }
-                                val modeLabel = when (resizeMode) {
-                                    AspectRatioFrameLayout.RESIZE_MODE_FIT -> "تناسب (Fit)"
-                                    AspectRatioFrameLayout.RESIZE_MODE_ZOOM -> "تكبير (Zoom)"
-                                    else -> "ملء الشاشة (Fill)"
-                                }
-                                Toast.makeText(context, modeLabel, Toast.LENGTH_SHORT).show()
-                            },
-                            modifier = Modifier.size(40.dp)
                         ) {
-                            Icon(Icons.Default.AspectRatio, contentDescription = "تنسيق الأبعاد", tint = Color.White, modifier = Modifier.size(22.dp))
-                        }
-
-                        // 12. Lock Screen Controls
-                        IconButton(
-                            onClick = {
-                                isControlsLocked = true
-                                areControlsVisible = false
-                            },
-                            modifier = Modifier.size(40.dp)
-                        ) {
-                            Icon(Icons.Default.Lock, contentDescription = "قفل الأزرار", tint = Color.White, modifier = Modifier.size(22.dp))
+                            Row(
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text("تحديث", color = Color.White, style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, fontSize = 11.sp))
+                            }
                         }
                     }
                 }
@@ -1445,48 +1634,141 @@ fun PlayerScreen(
             Surface(
                 modifier = Modifier
                     .align(Alignment.Center)
-                    .widthIn(max = 380.dp)
+                    .widthIn(max = 420.dp)
                     .padding(16.dp)
                     .clip(RoundedCornerShape(20.dp))
                     .border(1.dp, SaribCyanAccent, RoundedCornerShape(20.dp)),
                 color = Color(0xF2070D18)
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(
+                    modifier = Modifier
+                        .padding(18.dp)
+                        .verticalScroll(rememberScrollState())
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "⚙️ ضبط الجودة والصوت",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = SaribCyanAccent)
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Tune, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "جودة البث والصوت الحقيقية",
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Color.White)
+                            )
+                        }
                         IconButton(onClick = { showQualityDialog = false }, modifier = Modifier.size(30.dp)) {
                             Icon(Icons.Default.Close, contentDescription = "إغلاق", tint = SaribTextMuted)
                         }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
-                    Text("دقة وجودة الفيديو:", style = MaterialTheme.typography.labelMedium.copy(color = SaribCyanAccent, fontWeight = FontWeight.Bold))
+                    Text(
+                        text = "دقة الفيديو الفعلية للبث:",
+                        style = MaterialTheme.typography.labelMedium.copy(color = SaribCyanAccent, fontWeight = FontWeight.Bold)
+                    )
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    availableQualityOptions.forEachIndexed { idx, opt ->
-                        val isSel = selectedQualityIndex == idx
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 3.dp)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSel) SaribElectricBlue.copy(alpha = 0.3f) else Color(0x22FFFFFF))
-                                .clickable {
-                                    selectedQualityIndex = idx
-                                    showQualityDialog = false
-                                    Toast.makeText(context, "تم ضبط الجودة: ${opt.name}", Toast.LENGTH_SHORT).show()
+                    if (availableQualityOptions.isEmpty()) {
+                        Text(
+                            text = "جاري الكشف عن الجودات المتاحة...",
+                            style = MaterialTheme.typography.bodySmall.copy(color = SaribTextMuted)
+                        )
+                    } else {
+                        availableQualityOptions.forEachIndexed { idx, opt ->
+                            val isSel = selectedQualityIndex == idx
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 3.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(if (isSel) SaribElectricBlue.copy(alpha = 0.35f) else Color(0x22FFFFFF))
+                                    .border(1.dp, if (isSel) SaribCyanAccent else Color(0x15FFFFFF), RoundedCornerShape(10.dp))
+                                    .clickable {
+                                        applyQualitySelection(opt, idx)
+                                        showQualityDialog = false
+                                        Toast.makeText(context, "تم تطبيق: ${opt.name}", Toast.LENGTH_SHORT).show()
+                                    }
+                                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = opt.name,
+                                            color = if (isSel) SaribCyanAccent else Color.White,
+                                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = if (isSel) FontWeight.Bold else FontWeight.Medium)
+                                        )
+                                        if (opt.resolutionLabel.isNotBlank()) {
+                                            Text(
+                                                text = "الدقة: ${opt.resolutionLabel}",
+                                                color = SaribTextMuted,
+                                                style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp)
+                                            )
+                                        }
+                                    }
+                                    if (isSel) {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = "محدد",
+                                            tint = SaribCyanAccent,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
                                 }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
-                        ) {
-                            Text(text = opt.name, color = if (isSel) SaribCyanAccent else Color.White, style = MaterialTheme.typography.bodySmall)
+                            }
+                        }
+                    }
+
+                    // Multi Audio Tracks Section (إذا تواجدت عدة مسارات صوتية)
+                    if (availableAudioTracks.size > 1) {
+                        Spacer(modifier = Modifier.height(14.dp))
+                        Text(
+                            text = "المسارات الصوتية / المعلق:",
+                            style = MaterialTheme.typography.labelMedium.copy(color = SaribCyanAccent, fontWeight = FontWeight.Bold)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+
+                        availableAudioTracks.forEachIndexed { aIdx, aTrack ->
+                            val isAudioSel = selectedAudioTrackIndex == aIdx
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(if (isAudioSel) SaribElectricBlue.copy(alpha = 0.35f) else Color(0x18FFFFFF))
+                                    .clickable {
+                                        selectedAudioTrackIndex = aIdx
+                                        try {
+                                            exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters
+                                                .buildUpon()
+                                                .setPreferredAudioLanguage(aTrack.language)
+                                                .build()
+                                            Toast.makeText(context, "تم تغيير الصوت: ${aTrack.label}", Toast.LENGTH_SHORT).show()
+                                        } catch (_: Exception) {}
+                                    }
+                                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = aTrack.label,
+                                        color = if (isAudioSel) SaribCyanAccent else Color.White,
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                    if (isAudioSel) {
+                                        Icon(Icons.Default.Check, contentDescription = null, tint = SaribCyanAccent, modifier = Modifier.size(16.dp))
+                                    }
+                                }
+                            }
                         }
                     }
                 }
