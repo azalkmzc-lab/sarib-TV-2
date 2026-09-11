@@ -11,6 +11,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DrawerValue
@@ -20,16 +21,21 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.model.ContentType
 import com.example.data.model.MatchItem
@@ -110,6 +116,13 @@ fun SaribApp(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isImportingM3u by viewModel.isImportingM3u.collectAsState()
     val importStatusMessage by viewModel.importStatusMessage.collectAsState()
+
+    val visitedTabs = remember { mutableStateListOf("home") }
+    LaunchedEffect(currentTab) {
+        if (!visitedTabs.contains(currentTab)) {
+            visitedTabs.add(currentTab)
+        }
+    }
 
     var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
@@ -291,8 +304,19 @@ fun SaribApp(
                                 .fillMaxSize()
                                 .padding(innerPadding)
                         ) {
-                            when (currentTab) {
-                                "home" -> {
+                            // Home Screen Tab
+                            if (visitedTabs.contains("home") || currentTab == "home") {
+                                val isVisible = currentTab == "home"
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .then(
+                                            if (isVisible) Modifier.zIndex(1f)
+                                            else Modifier
+                                                .size(0.dp)
+                                                .graphicsLayer { alpha = 0f }
+                                        )
+                                ) {
                                     HomeScreen(
                                         heroSliders = heroSliders,
                                         popularChannels = mostWatchedChannels,
@@ -355,8 +379,21 @@ fun SaribApp(
                                         showBars = false
                                     )
                                 }
+                            }
 
-                                "channels" -> {
+                            // Channels Screen Tab
+                            if (visitedTabs.contains("channels") || currentTab == "channels") {
+                                val isVisible = currentTab == "channels"
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .then(
+                                            if (isVisible) Modifier.zIndex(1f)
+                                            else Modifier
+                                                .size(0.dp)
+                                                .graphicsLayer { alpha = 0f }
+                                        )
+                                ) {
                                     ChannelsScreen(
                                         categories = categories,
                                         onCategoryClick = { viewModel.openCategory(it) },
@@ -381,8 +418,21 @@ fun SaribApp(
                                         }
                                     )
                                 }
+                            }
 
-                                "matches" -> {
+                            // Matches Screen Tab
+                            if (visitedTabs.contains("matches") || currentTab == "matches") {
+                                val isVisible = currentTab == "matches"
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .then(
+                                            if (isVisible) Modifier.zIndex(1f)
+                                            else Modifier
+                                                .size(0.dp)
+                                                .graphicsLayer { alpha = 0f }
+                                        )
+                                ) {
                                     MatchesScreen(
                                         matches = allMatches,
                                         selectedDate = selectedMatchDate,
@@ -400,8 +450,21 @@ fun SaribApp(
                                         showBars = false
                                     )
                                 }
+                            }
 
-                                "entertainment" -> {
+                            // Entertainment Screen Tab
+                            if (visitedTabs.contains("entertainment") || currentTab == "entertainment") {
+                                val isVisible = currentTab == "entertainment"
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .then(
+                                            if (isVisible) Modifier.zIndex(1f)
+                                            else Modifier
+                                                .size(0.dp)
+                                                .graphicsLayer { alpha = 0f }
+                                        )
+                                ) {
                                     EntertainmentScreen(
                                         movies = featuredMovies,
                                         series = featuredSeries,
@@ -437,8 +500,21 @@ fun SaribApp(
                                         showBars = false
                                     )
                                 }
+                            }
 
-                                "favorites" -> {
+                            // Favorites Screen Tab
+                            if (visitedTabs.contains("favorites") || currentTab == "favorites") {
+                                val isVisible = currentTab == "favorites"
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .then(
+                                            if (isVisible) Modifier.zIndex(1f)
+                                            else Modifier
+                                                .size(0.dp)
+                                                .graphicsLayer { alpha = 0f }
+                                        )
+                                ) {
                                     FavoritesScreen(
                                         favorites = favorites,
                                         onItemClick = { fav ->
@@ -469,8 +545,21 @@ fun SaribApp(
                                         showBars = false
                                     )
                                 }
+                            }
 
-                                "news" -> {
+                            // News Screen Tab
+                            if (visitedTabs.contains("news") || currentTab == "news") {
+                                val isVisible = currentTab == "news"
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .then(
+                                            if (isVisible) Modifier.zIndex(1f)
+                                            else Modifier
+                                                .size(0.dp)
+                                                .graphicsLayer { alpha = 0f }
+                                        )
+                                ) {
                                     NewsScreen(
                                         newsArticles = newsArticles,
                                         onRefresh = { viewModel.refreshNews() },

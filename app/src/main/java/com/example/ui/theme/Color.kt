@@ -38,6 +38,7 @@ val SaribCyanAccent = Color(0xFF00C8FF)
 val SaribBlueGlow = Color(0x660088FF)
 val SaribBlueGlowSubtle = Color(0x330088FF)
 val SaribGoldRating = Color(0xFFF59E0B)
+val SaribAmberGold = Color(0xFFF59E0B)
 
 // Functional Colors
 val SaribTextPrimary = Color(0xFFFFFFFF)
