@@ -43,6 +43,7 @@ sealed interface AppScreen {
         val contentType: String = "MOVIE"
     ) : AppScreen
     object Search : AppScreen
+    object Downloads : AppScreen
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -519,6 +520,65 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun clearImportStatusMessage() {
         _importStatusMessage.value = null
+    }
+
+    // ================= DOWNLOAD MANAGER INTEGRATION =================
+    private val downloadManager = com.example.data.download.SaribDownloadManager.getInstance(application)
+
+    val activeDownloads: StateFlow<List<com.example.data.local.DownloadEntity>> = downloadManager.activeDownloads
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val completedDownloads: StateFlow<List<com.example.data.local.DownloadEntity>> = downloadManager.completedDownloads
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val realtimeDownloadProgress: StateFlow<Map<String, com.example.data.local.DownloadEntity>> = downloadManager.realtimeProgress
+
+    fun getStorageInfo(): com.example.data.download.SaribDownloadManager.StorageInfo {
+        return downloadManager.getStorageInfo()
+    }
+
+    fun startDownload(
+        id: String,
+        title: String,
+        subtitle: String = "",
+        posterUrl: String = "",
+        streamUrl: String,
+        selectedQuality: String = "1080p FHD",
+        subtitleUrl: String = "",
+        subtitleName: String = "",
+        contentType: String = "MOVIE"
+    ) {
+        downloadManager.startDownload(
+            id = id,
+            title = title,
+            subtitle = subtitle,
+            posterUrl = posterUrl,
+            streamUrl = streamUrl,
+            selectedQuality = selectedQuality,
+            subtitleUrl = subtitleUrl,
+            subtitleName = subtitleName,
+            contentType = contentType
+        )
+    }
+
+    fun pauseDownload(id: String) {
+        downloadManager.pauseDownload(id)
+    }
+
+    fun resumeDownload(item: com.example.data.local.DownloadEntity) {
+        downloadManager.resumeDownload(item)
+    }
+
+    fun cancelDownload(id: String) {
+        downloadManager.cancelDownload(id)
+    }
+
+    fun deleteCompletedDownload(id: String) {
+        downloadManager.deleteCompletedDownload(id)
+    }
+
+    fun navigateToDownloads() {
+        navigateTo(AppScreen.Downloads)
     }
 
     fun importM3uPlaylist(url: String, name: String = "", onFinished: (Boolean, String) -> Unit = { _, _ -> }) {

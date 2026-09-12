@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Movie
@@ -76,6 +77,7 @@ fun SaribDrawerContent(
     onNavigateToNews: () -> Unit = {},
     onNavigateToEntertainment: () -> Unit,
     onNavigateToFavorites: () -> Unit,
+    onNavigateToDownloads: () -> Unit = {},
     onSettingsClick: () -> Unit,
     onTelegramClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -202,6 +204,14 @@ fun SaribDrawerContent(
                         title = tr("favorites"),
                         tint = onSurfaceColor,
                         onClick = onNavigateToFavorites
+                    )
+                }
+                item {
+                    DrawerItem(
+                        icon = Icons.Default.Download,
+                        title = "التنزيلات والتحميلات",
+                        tint = SaribCyanAccent,
+                        onClick = onNavigateToDownloads
                     )
                 }
 

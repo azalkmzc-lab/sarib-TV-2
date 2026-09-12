@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.GridView
@@ -92,6 +93,7 @@ fun MediaCategoryDetailScreen(
     onRefresh: () -> Unit,
     onMediaClick: (MediaItem) -> Unit,
     onFavoriteToggle: ((MediaItem) -> Unit)? = null,
+    onDownloadClick: ((MediaItem) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -416,6 +418,24 @@ fun MediaCategoryDetailScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
+                                    if (onDownloadClick != null) {
+                                        IconButton(
+                                            onClick = { onDownloadClick(item) },
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF0C1929))
+                                                .border(1.dp, SaribCardBorderSubtle, CircleShape)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Download,
+                                                contentDescription = "تحميل",
+                                                tint = SaribCyanAccent,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+
                                     if (onFavoriteToggle != null) {
                                         IconButton(
                                             onClick = { onFavoriteToggle(item) },

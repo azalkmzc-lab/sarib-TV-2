@@ -180,4 +180,38 @@ interface SaribDao {
 
     @Query("SELECT COUNT(*) FROM matches")
     suspend fun getMatchesCount(): Int
+
+    // Downloads
+    @Query("SELECT * FROM downloads ORDER BY createdAt DESC")
+    fun getAllDownloads(): Flow<List<DownloadEntity>>
+
+    @Query("SELECT * FROM downloads WHERE status = 'DOWNLOADING' OR status = 'PAUSED'")
+    fun getActiveDownloads(): Flow<List<DownloadEntity>>
+
+    @Query("SELECT * FROM downloads WHERE status = 'COMPLETED' ORDER BY completedAt DESC")
+    fun getCompletedDownloads(): Flow<List<DownloadEntity>>
+
+    @Query("SELECT * FROM downloads WHERE id = :id LIMIT 1")
+    suspend fun getDownloadById(id: String): DownloadEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdateDownload(download: DownloadEntity)
+
+    @Query("UPDATE downloads SET progress = :progress, bytesDownloaded = :bytesDownloaded, totalBytes = :totalBytes, speedBps = :speedBps, etaSeconds = :etaSeconds, status = :status WHERE id = :id")
+    suspend fun updateDownloadProgress(id: String, progress: Int, bytesDownloaded: Long, totalBytes: Long, speedBps: Long, etaSeconds: Long, status: String)
+
+    @Query("UPDATE downloads SET status = :status, completedAt = :completedAt, localFilePath = :filePath WHERE id = :id")
+    suspend fun markDownloadCompleted(id: String, filePath: String, status: String = "COMPLETED", completedAt: Long = System.currentTimeMillis())
+
+    @Query("UPDATE downloads SET status = :status, errorMessage = :errorMessage WHERE id = :id")
+    suspend fun markDownloadFailed(id: String, errorMessage: String, status: String = "FAILED")
+
+    @Query("UPDATE downloads SET status = :status WHERE id = :id")
+    suspend fun updateDownloadStatus(id: String, status: String)
+
+    @Query("DELETE FROM downloads WHERE id = :id")
+    suspend fun deleteDownloadById(id: String)
+
+    @Query("DELETE FROM downloads")
+    suspend fun clearAllDownloads()
 }

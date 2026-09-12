@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tv
@@ -85,6 +86,8 @@ fun SeriesDetailScreen(
     onBackClick: () -> Unit,
     onPlayEpisode: (EpisodeItem, String) -> Unit,
     onPlayDirect: () -> Unit,
+    onDownloadEpisode: ((EpisodeItem, String) -> Unit)? = null,
+    onDownloadDirect: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var selectedSeasonIndex by remember { mutableIntStateOf(0) }
@@ -235,7 +238,7 @@ fun SeriesDetailScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Direct Play Button
+                        // Action Buttons: Play + Download
                         var isPlayBtnFocused by remember { mutableStateOf(false) }
                         val playBtnScale by animateFloatAsState(
                             targetValue = if (isPlayBtnFocused) 1.05f else 1.0f,
@@ -243,71 +246,115 @@ fun SeriesDetailScreen(
                             label = "playBtnScale"
                         )
 
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .graphicsLayer {
-                                    scaleX = playBtnScale
-                                    scaleY = playBtnScale
-                                }
-                                .clip(RoundedCornerShape(12.dp))
-                                .border(
-                                    width = if (isPlayBtnFocused) 2.5.dp else 0.dp,
-                                    color = if (isPlayBtnFocused) Color.White else Color.Transparent,
-                                    shape = RoundedCornerShape(12.dp)
-                                )
-                                .background(
-                                    Brush.horizontalGradient(
-                                        if (isPlayBtnFocused) listOf(SaribCyanAccent, SaribElectricBlue)
-                                        else listOf(SaribElectricBlue, SaribCyanAccent)
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .graphicsLayer {
+                                        scaleX = playBtnScale
+                                        scaleY = playBtnScale
+                                    }
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .border(
+                                        width = if (isPlayBtnFocused) 2.5.dp else 0.dp,
+                                        color = if (isPlayBtnFocused) Color.White else Color.Transparent,
+                                        shape = RoundedCornerShape(12.dp)
                                     )
-                                )
-                                .onFocusChanged { isPlayBtnFocused = it.isFocused }
-                                .focusable()
-                                .onKeyEvent { keyEvent ->
-                                    if (keyEvent.type == KeyEventType.KeyUp && (
-                                        keyEvent.key == Key.DirectionCenter ||
-                                        keyEvent.key == Key.Enter ||
-                                        keyEvent.key == Key.NumPadEnter ||
-                                        keyEvent.key == Key.ButtonA
-                                    )) {
+                                    .background(
+                                        Brush.horizontalGradient(
+                                            if (isPlayBtnFocused) listOf(SaribCyanAccent, SaribElectricBlue)
+                                            else listOf(SaribElectricBlue, SaribCyanAccent)
+                                        )
+                                    )
+                                    .onFocusChanged { isPlayBtnFocused = it.isFocused }
+                                    .focusable()
+                                    .onKeyEvent { keyEvent ->
+                                        if (keyEvent.type == KeyEventType.KeyUp && (
+                                            keyEvent.key == Key.DirectionCenter ||
+                                            keyEvent.key == Key.Enter ||
+                                            keyEvent.key == Key.NumPadEnter ||
+                                            keyEvent.key == Key.ButtonA
+                                        )) {
+                                            val firstEp = currentEpisodes.firstOrNull()
+                                            if (firstEp != null) {
+                                                onPlayEpisode(firstEp, "${mediaItem.title} - ${firstEp.title}")
+                                            } else {
+                                                onPlayDirect()
+                                            }
+                                            true
+                                        } else false
+                                    }
+                                    .clickable {
                                         val firstEp = currentEpisodes.firstOrNull()
                                         if (firstEp != null) {
                                             onPlayEpisode(firstEp, "${mediaItem.title} - ${firstEp.title}")
                                         } else {
                                             onPlayDirect()
                                         }
-                                        true
-                                    } else false
+                                    }
+                                    .padding(vertical = 14.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.PlayArrow,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Text(
+                                        text = if (currentEpisodes.isNotEmpty()) "تشغيل الحلقة 1" else "تشغيل العمل",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            color = Color.White,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
                                 }
-                                .clickable {
-                                    val firstEp = currentEpisodes.firstOrNull()
-                                    if (firstEp != null) {
-                                        onPlayEpisode(firstEp, "${mediaItem.title} - ${firstEp.title}")
-                                    } else {
-                                        onPlayDirect()
+                            }
+
+                            if (onDownloadDirect != null || onDownloadEpisode != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(SaribDarkCard)
+                                        .border(1.dp, SaribCyanAccent.copy(alpha = 0.6f), RoundedCornerShape(12.dp))
+                                        .clickable {
+                                            val firstEp = currentEpisodes.firstOrNull()
+                                            if (firstEp != null && onDownloadEpisode != null) {
+                                                onDownloadEpisode(firstEp, "${mediaItem.title} - ${firstEp.title}")
+                                            } else {
+                                                onDownloadDirect?.invoke()
+                                            }
+                                        }
+                                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Download,
+                                            contentDescription = "تحميل",
+                                            tint = SaribCyanAccent,
+                                            modifier = Modifier.size(22.dp)
+                                        )
+                                        Text(
+                                            text = "تحميل",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                color = SaribCyanAccent,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        )
                                     }
                                 }
-                                .padding(vertical = 14.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(24.dp)
-                                )
-                                Text(
-                                    text = if (currentEpisodes.isNotEmpty()) "بدء تشغيل الحلقة 1" else "تشغيل المسلسل",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        color = Color.White,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
                             }
                         }
 
@@ -408,6 +455,9 @@ fun SeriesDetailScreen(
                                 seriesTitle = mediaItem.title,
                                 onClick = {
                                     onPlayEpisode(ep, "${mediaItem.title} - ${ep.title}")
+                                },
+                                onDownloadClick = onDownloadEpisode?.let { downloadFn ->
+                                    { downloadFn(ep, "${mediaItem.title} - ${ep.title}") }
                                 }
                             )
                         }
@@ -440,6 +490,7 @@ fun EpisodeCardItem(
     episode: EpisodeItem,
     seriesTitle: String,
     onClick: () -> Unit,
+    onDownloadClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -547,6 +598,24 @@ fun EpisodeCardItem(
                             style = MaterialTheme.typography.labelSmall.copy(color = SaribTextMuted)
                         )
                     }
+                }
+            }
+
+            if (onDownloadClick != null) {
+                IconButton(
+                    onClick = onDownloadClick,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(Color(0x2200D2FF))
+                        .testTag("download_episode_${episode.episodeNum}")
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Download,
+                        contentDescription = "تحميل الحلقة",
+                        tint = SaribCyanAccent,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }

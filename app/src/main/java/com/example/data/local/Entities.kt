@@ -106,3 +106,27 @@ data class WatchHistoryEntity(
     val progressMs: Long = 0L,
     val durationMs: Long = 0L
 )
+
+@Entity(tableName = "downloads")
+data class DownloadEntity(
+    @PrimaryKey val id: String,
+    val title: String,
+    val subtitle: String = "",
+    val posterUrl: String = "",
+    val streamUrl: String,
+    val selectedQuality: String = "1080p FHD",
+    val subtitleUrl: String = "",
+    val subtitleName: String = "",
+    val localFilePath: String = "",
+    val localFileName: String = "",
+    val contentType: String = "MOVIE", // MOVIE, SERIES, ANIME, EPISODE
+    val status: String = "DOWNLOADING", // DOWNLOADING, PAUSED, COMPLETED, FAILED
+    val progress: Int = 0, // 0..100
+    val bytesDownloaded: Long = 0L,
+    val totalBytes: Long = 0L,
+    val speedBps: Long = 0L,
+    val etaSeconds: Long = 0L,
+    val errorMessage: String = "",
+    val createdAt: Long = System.currentTimeMillis(),
+    val completedAt: Long = 0L
+)

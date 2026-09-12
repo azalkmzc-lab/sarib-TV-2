@@ -42,6 +42,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
@@ -150,6 +151,7 @@ fun SaribTopHeader(
     onMenuClick: () -> Unit,
     onTelegramClick: () -> Unit,
     onFavoritesClick: () -> Unit,
+    onDownloadsClick: (() -> Unit)? = null,
     onSearchClick: (() -> Unit)? = null,
     onRefreshClick: (() -> Unit)? = null,
     isRefreshing: Boolean = false,
@@ -308,6 +310,25 @@ fun SaribTopHeader(
                             tint = SaribCyanAccent,
                             modifier = Modifier.size(18.dp)
                         )
+                    }
+
+                    if (onDownloadsClick != null) {
+                        IconButton(
+                            onClick = onDownloadsClick,
+                            modifier = Modifier
+                                .testTag("header_downloads_button")
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(SaribCardBg)
+                                .border(1.dp, SaribCardBorder, CircleShape)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = "التنزيلات",
+                                tint = SaribCyanAccent,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
 
                     IconButton(

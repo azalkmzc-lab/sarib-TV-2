@@ -40,6 +40,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.model.ContentType
 import com.example.data.model.MatchItem
 import com.example.data.model.getActiveServers
+import com.example.ui.components.DownloadDialog
 import com.example.ui.components.MatchDetailsDialog
 import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribDrawerContent
@@ -47,6 +48,7 @@ import com.example.ui.components.SaribTopHeader
 import com.example.ui.components.SettingsDialog
 import com.example.ui.components.VpnBlockedDialog
 import com.example.ui.screens.CategoryDetailScreen
+import com.example.ui.screens.DownloadsScreen
 import com.example.ui.screens.EntertainmentScreen
 import com.example.ui.screens.FavoritesScreen
 import com.example.ui.screens.HomeScreen
@@ -62,6 +64,16 @@ import com.example.ui.screens.SplashScreen
 import com.example.ui.viewmodel.AppScreen
 import com.example.ui.viewmodel.MainViewModel
 import kotlinx.coroutines.launch
+
+data class PendingDownloadItem(
+    val id: String,
+    val title: String,
+    val subtitle: String = "",
+    val posterUrl: String = "",
+    val streamUrl: String,
+    val servers: List<Pair<String, String>> = emptyList(),
+    val contentType: String = "MOVIE"
+)
 
 @Composable
 fun SaribApp(
@@ -116,6 +128,12 @@ fun SaribApp(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val isImportingM3u by viewModel.isImportingM3u.collectAsState()
     val importStatusMessage by viewModel.importStatusMessage.collectAsState()
+
+    // Download Manager states
+    val activeDownloads by viewModel.activeDownloads.collectAsState()
+    val completedDownloads by viewModel.completedDownloads.collectAsState()
+    val realtimeDownloadProgress by viewModel.realtimeDownloadProgress.collectAsState()
+    var pendingDownload by remember { mutableStateOf<PendingDownloadItem?>(null) }
 
     val visitedTabs = remember { mutableStateListOf("home") }
     LaunchedEffect(currentTab) {
@@ -222,6 +240,38 @@ fun SaribApp(
         )
     }
 
+    // DOWNLOAD SELECTION DIALOG
+    pendingDownload?.let { item ->
+        DownloadDialog(
+            title = item.title,
+            subtitle = item.subtitle,
+            posterUrl = item.posterUrl,
+            streamUrl = item.streamUrl,
+            servers = item.servers,
+            contentType = item.contentType,
+            onDismiss = { pendingDownload = null },
+            onStartInternalDownload = { quality, subUrl, subName, resolvedUrl ->
+                pendingDownload = null
+                viewModel.startDownload(
+                    id = item.id,
+                    title = item.title,
+                    subtitle = item.subtitle,
+                    posterUrl = item.posterUrl,
+                    streamUrl = resolvedUrl,
+                    selectedQuality = quality,
+                    subtitleUrl = subUrl,
+                    subtitleName = subName,
+                    contentType = item.contentType
+                )
+                Toast.makeText(context, "تم بدء تحميل: ${item.title}", Toast.LENGTH_LONG).show()
+            },
+            onNavigateToDownloads = {
+                pendingDownload = null
+                viewModel.navigateToDownloads()
+            }
+        )
+    }
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         gesturesEnabled = currentScreen is AppScreen.Main,
@@ -251,6 +301,10 @@ fun SaribApp(
                     onNavigateToFavorites = {
                         scope.launch { drawerState.close() }
                         viewModel.selectTab("favorites")
+                    },
+                    onNavigateToDownloads = {
+                        scope.launch { drawerState.close() }
+                        viewModel.navigateToDownloads()
                     },
                     onSettingsClick = {
                         scope.launch { drawerState.close() }
@@ -287,6 +341,7 @@ fun SaribApp(
                                 onMenuClick = { scope.launch { drawerState.open() } },
                                 onTelegramClick = openTelegram,
                                 onFavoritesClick = { viewModel.selectTab("favorites") },
+                                onDownloadsClick = { viewModel.navigateToDownloads() },
                                 onSearchClick = { viewModel.navigateTo(AppScreen.Search) },
                                 onRefreshClick = { viewModel.refreshAllData() },
                                 isRefreshing = isRefreshing
@@ -614,7 +669,18 @@ fun SaribApp(
                         onBackClick = { viewModel.popBack() },
                         onRefresh = { viewModel.refreshMediaCategory(screen.category) },
                         onMediaClick = handleMediaClick,
-                        onFavoriteToggle = handleMediaFavoriteToggle
+                        onFavoriteToggle = handleMediaFavoriteToggle,
+                        onDownloadClick = { media ->
+                            pendingDownload = PendingDownloadItem(
+                                id = media.id,
+                                title = media.title,
+                                subtitle = "${media.year} • ${media.genre}",
+                                posterUrl = media.posterUrl,
+                                streamUrl = media.streamUrl,
+                                servers = media.getActiveServers(),
+                                contentType = if (media.type == ContentType.SERIES) "SERIES" else "MOVIE"
+                            )
+                        }
                     )
                 }
 
@@ -665,6 +731,75 @@ fun SaribApp(
                                 isLive = false,
                                 servers = directServers
                             )
+                        },
+                        onDownloadEpisode = { ep, epTitle ->
+                            val epServers = mutableListOf<Pair<String, String>>()
+                            if (ep.streamUrl.isNotBlank()) {
+                                epServers.add("السيرفر الأساسي (الحلقة ${ep.episodeNum})" to ep.streamUrl)
+                                val baseWithoutExt = ep.streamUrl.substringBeforeLast('.')
+                                if (ep.streamUrl.endsWith(".mp4", ignoreCase = true)) {
+                                    epServers.add("سيرفر بديل (TS)" to "$baseWithoutExt.ts")
+                                    epServers.add("سيرفر بديل (M3U8)" to "$baseWithoutExt.m3u8")
+                                    epServers.add("سيرفر بديل (MKV)" to "$baseWithoutExt.mkv")
+                                } else if (ep.streamUrl.endsWith(".ts", ignoreCase = true)) {
+                                    epServers.add("سيرفر بديل (MP4)" to "$baseWithoutExt.mp4")
+                                    epServers.add("سيرفر بديل (M3U8)" to "$baseWithoutExt.m3u8")
+                                }
+                            }
+                            pendingDownload = PendingDownloadItem(
+                                id = "ep_${ep.id}",
+                                title = epTitle,
+                                subtitle = "${screen.mediaItem.title} • الحلقة ${ep.episodeNum}",
+                                posterUrl = ep.coverUrl.ifBlank { screen.mediaItem.posterUrl },
+                                streamUrl = ep.streamUrl,
+                                servers = epServers,
+                                contentType = "SERIES"
+                            )
+                        },
+                        onDownloadDirect = {
+                            val firstEp = currentSeriesDetail?.seasons?.firstOrNull()?.episodes?.firstOrNull()
+                            val streamToDownload = firstEp?.streamUrl ?: screen.mediaItem.streamUrl
+                            val directServers = mutableListOf<Pair<String, String>>()
+                            if (streamToDownload.isNotBlank()) {
+                                directServers.add("السيرفر الأساسي" to streamToDownload)
+                            }
+                            directServers.addAll(screen.mediaItem.getActiveServers().filter { it.second != streamToDownload })
+                            pendingDownload = PendingDownloadItem(
+                                id = screen.mediaItem.id,
+                                title = screen.mediaItem.title,
+                                subtitle = "${screen.mediaItem.year} • ${screen.mediaItem.genre}",
+                                posterUrl = screen.mediaItem.posterUrl,
+                                streamUrl = streamToDownload,
+                                servers = directServers,
+                                contentType = "SERIES"
+                            )
+                        }
+                    )
+                }
+
+                is AppScreen.Downloads -> {
+                    DownloadsScreen(
+                        activeDownloads = activeDownloads,
+                        completedDownloads = completedDownloads,
+                        realtimeProgress = realtimeDownloadProgress,
+                        storageInfo = viewModel.getStorageInfo(),
+                        onPauseDownload = { id -> viewModel.pauseDownload(id) },
+                        onResumeDownload = { item -> viewModel.resumeDownload(item) },
+                        onCancelDownload = { id -> viewModel.cancelDownload(id) },
+                        onDeleteCompletedDownload = { id -> viewModel.deleteCompletedDownload(id) },
+                        onPlayOffline = { item ->
+                            viewModel.playMedia(
+                                title = item.title,
+                                subtitle = item.subtitle.ifEmpty { "تشغيل بدون إنترنت (${item.selectedQuality})" },
+                                streamUrl = item.localFilePath,
+                                isLive = false,
+                                posterUrl = item.posterUrl,
+                                contentType = item.contentType
+                            )
+                        },
+                        onNavigateBack = { viewModel.popBack() },
+                        onBrowseEntertainment = {
+                            viewModel.selectTab("entertainment")
                         }
                     )
                 }

@@ -13,9 +13,10 @@ import androidx.room.RoomDatabase
         MediaEntity::class,
         FavoriteEntity::class,
         ApiSourceEntity::class,
-        WatchHistoryEntity::class
+        WatchHistoryEntity::class,
+        DownloadEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class SaribDatabase : RoomDatabase() {
