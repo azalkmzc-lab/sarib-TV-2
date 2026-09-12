@@ -7,9 +7,12 @@ import com.example.data.model.ContentType
 import com.example.data.model.MediaItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.ConnectionPool
+import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 class XtreamApiClient(
@@ -17,17 +20,47 @@ class XtreamApiClient(
     var username: String = "khaledsliman",
     var password: String = "755246419856"
 ) {
-    private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
-        .build()
+    companion object {
+        private val sharedClient = OkHttpClient.Builder()
+            .connectionPool(ConnectionPool(32, 5, TimeUnit.MINUTES))
+            .dispatcher(Dispatcher().apply {
+                maxRequests = 64
+                maxRequestsPerHost = 16
+            })
+            .connectTimeout(8, TimeUnit.SECONDS)
+            .readTimeout(12, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .build()
+
+        private val memoryCache = ConcurrentHashMap<String, Pair<Long, Any>>()
+        private const val CACHE_TTL_MS = 5 * 60 * 1000L // 5 minutes
+    }
+
+    private val client: OkHttpClient get() = sharedClient
 
     private fun getBaseUrl() = "${serverHost.trimEnd('/')}/player_api.php?username=$username&password=$password"
 
     fun updateCredentials(host: String, user: String, pass: String) {
-        this.serverHost = host
-        this.username = user
-        this.password = pass
+        if (this.serverHost != host || this.username != user || this.password != pass) {
+            this.serverHost = host
+            this.username = user
+            this.password = pass
+            memoryCache.clear()
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> getFromCache(key: String): T? {
+        val entry = memoryCache[key] ?: return null
+        if (System.currentTimeMillis() - entry.first < CACHE_TTL_MS) {
+            return entry.second as? T
+        }
+        memoryCache.remove(key)
+        return null
+    }
+
+    private fun putInCache(key: String, value: Any) {
+        memoryCache[key] = Pair(System.currentTimeMillis(), value)
     }
 
     suspend fun pingServer(): Boolean = withContext(Dispatchers.IO) {
@@ -43,6 +76,9 @@ class XtreamApiClient(
     }
 
     suspend fun fetchLiveCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
+        val cacheKey = "live_cats_${serverHost}_$username"
+        getFromCache<List<ChannelCategory>>(cacheKey)?.let { return@withContext it }
+
         try {
             val url = "${getBaseUrl()}&action=get_live_categories"
             val request = Request.Builder().url(url).build()
@@ -71,6 +107,7 @@ class XtreamApiClient(
                     )
                 }
             }
+            if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
         } catch (e: Exception) {
             Log.e("XtreamApiClient", "Error fetching live categories: ${e.message}", e)
@@ -79,6 +116,9 @@ class XtreamApiClient(
     }
 
     suspend fun fetchVodCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
+        val cacheKey = "vod_cats_${serverHost}_$username"
+        getFromCache<List<ChannelCategory>>(cacheKey)?.let { return@withContext it }
+
         try {
             val url = "${getBaseUrl()}&action=get_vod_categories"
             val request = Request.Builder().url(url).build()
@@ -107,6 +147,7 @@ class XtreamApiClient(
                     )
                 }
             }
+            if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
         } catch (e: Exception) {
             Log.e("XtreamApiClient", "Error fetching VOD categories: ${e.message}", e)
@@ -115,6 +156,9 @@ class XtreamApiClient(
     }
 
     suspend fun fetchSeriesCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
+        val cacheKey = "series_cats_${serverHost}_$username"
+        getFromCache<List<ChannelCategory>>(cacheKey)?.let { return@withContext it }
+
         try {
             val url = "${getBaseUrl()}&action=get_series_categories"
             val request = Request.Builder().url(url).build()
@@ -143,6 +187,7 @@ class XtreamApiClient(
                     )
                 }
             }
+            if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
         } catch (e: Exception) {
             Log.e("XtreamApiClient", "Error fetching Series categories: ${e.message}", e)
@@ -151,6 +196,9 @@ class XtreamApiClient(
     }
 
     suspend fun fetchLiveStreams(categoryId: String? = null, limit: Int = -1): List<ChannelItem> = withContext(Dispatchers.IO) {
+        val cacheKey = "live_streams_${serverHost}_${categoryId}_$limit"
+        getFromCache<List<ChannelItem>>(cacheKey)?.let { return@withContext it }
+
         try {
             val url = if (categoryId.isNullOrBlank()) {
                 "${getBaseUrl()}&action=get_live_streams"
@@ -196,6 +244,7 @@ class XtreamApiClient(
                     )
                 }
             }
+            if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
         } catch (e: Exception) {
             Log.e("XtreamApiClient", "Error fetching live streams: ${e.message}", e)
@@ -204,6 +253,8 @@ class XtreamApiClient(
     }
 
     suspend fun fetchVodStreams(categoryId: String? = null, limit: Int = -1): List<MediaItem> = withContext(Dispatchers.IO) {
+        val cacheKey = "vod_streams_${serverHost}_${categoryId}_$limit"
+        getFromCache<List<MediaItem>>(cacheKey)?.let { return@withContext it }
         try {
             val cleanCatId = categoryId?.removePrefix("vod_")
             val url = if (cleanCatId.isNullOrBlank()) {
@@ -250,6 +301,7 @@ class XtreamApiClient(
                     )
                 }
             }
+            if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
         } catch (e: Exception) {
             Log.e("XtreamApiClient", "Error fetching VOD streams: ${e.message}", e)
@@ -258,6 +310,9 @@ class XtreamApiClient(
     }
 
     suspend fun fetchSeries(categoryId: String? = null, limit: Int = -1): List<MediaItem> = withContext(Dispatchers.IO) {
+        val cacheKey = "series_streams_${serverHost}_${categoryId}_$limit"
+        getFromCache<List<MediaItem>>(cacheKey)?.let { return@withContext it }
+
         try {
             val cleanCatId = categoryId?.removePrefix("series_")
             val url = if (cleanCatId.isNullOrBlank()) {
@@ -309,6 +364,7 @@ class XtreamApiClient(
                     )
                 }
             }
+            if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
         } catch (e: Exception) {
             Log.e("XtreamApiClient", "Error fetching series: ${e.message}", e)
@@ -321,6 +377,9 @@ class XtreamApiClient(
     }
 
     suspend fun fetchSeriesDetails(seriesId: String): com.example.data.model.SeriesDetail? = withContext(Dispatchers.IO) {
+        val cacheKey = "series_detail_${serverHost}_$seriesId"
+        getFromCache<com.example.data.model.SeriesDetail>(cacheKey)?.let { return@withContext it }
+
         try {
             val cleanId = seriesId.removePrefix("xt_ser_")
             val url = "${getBaseUrl()}&action=get_series_info&series_id=$cleanId"
@@ -421,7 +480,7 @@ class XtreamApiClient(
                 )
             }.sortedBy { it.seasonNumber }
 
-            com.example.data.model.SeriesDetail(
+            val detail = com.example.data.model.SeriesDetail(
                 id = seriesId,
                 title = title,
                 coverUrl = cover,
@@ -432,6 +491,8 @@ class XtreamApiClient(
                 rating = rating,
                 seasons = seasonsList
             )
+            putInCache(cacheKey, detail)
+            detail
         } catch (e: Exception) {
             Log.e("XtreamApiClient", "Error parsing series details: ${e.message}", e)
             null

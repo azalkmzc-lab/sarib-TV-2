@@ -338,7 +338,6 @@ class SaribRepository(private val context: Context) {
             if (forceRefresh) {
                 val freshFirebaseChannels = firebaseStreamManager.fetchCustomChannels()
                 if (freshFirebaseChannels.isNotEmpty()) {
-                    dao.clearAllChannels()
                     dao.insertChannels(freshFirebaseChannels.map { it.toEntity() })
                 }
             }
@@ -348,7 +347,7 @@ class SaribRepository(private val context: Context) {
             }
 
             val categoryChannels = dao.getChannelsListByCategory(categoryId)
-            if (categoryChannels.isNotEmpty()) {
+            if (categoryChannels.isNotEmpty() && !forceRefresh) {
                 return@withContext categoryChannels.map { it.toModel() }
             }
 
@@ -366,10 +365,26 @@ class SaribRepository(private val context: Context) {
                 }
             }
 
-            dao.getAllChannelsList().map { it.toModel() }
+            // Fallback match from cached Room channels
+            val allLocal = dao.getAllChannelsList()
+            val matched = allLocal.filter {
+                it.categoryId.equals(categoryId, ignoreCase = true) ||
+                it.categoryName.equals(categoryId, ignoreCase = true) ||
+                it.categoryName.contains(categoryId, ignoreCase = true) ||
+                it.categoryId.contains(categoryId, ignoreCase = true)
+            }
+            if (matched.isNotEmpty()) {
+                return@withContext matched.map { it.toModel() }
+            }
+
+            if (categoryChannels.isNotEmpty()) {
+                return@withContext categoryChannels.map { it.toModel() }
+            }
+
+            emptyList()
         } catch (e: Exception) {
             Log.e("SaribRepository", "Error fetching channels for category $categoryId: ${e.message}", e)
-            dao.getAllChannelsList().map { it.toModel() }
+            emptyList()
         }
     }
 

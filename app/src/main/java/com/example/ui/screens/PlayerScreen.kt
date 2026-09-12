@@ -149,6 +149,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
@@ -280,16 +281,25 @@ fun PlayerScreen(
         mutableStateOf(list)
     }
 
-    // Main Single / Primary ExoPlayer (Slot 0)
+    // Main Single / Primary ExoPlayer (Slot 0) - Ultra High Performance & Instant Startup
     val exoPlayer = remember {
         val loadControl = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(12000, 45000, 1500, 2500)
-            .setBackBuffer(10000, false)
-            .setTargetBufferBytes(20 * 1024 * 1024)
-            .setPrioritizeTimeOverSizeThresholds(true)
+            .setBufferDurationsMs(
+                /* minBufferMs = */ if (isLive) 1500 else 3000,
+                /* maxBufferMs = */ if (isLive) 50000 else 180000,
+                /* bufferForPlaybackMs = */ 250,
+                /* bufferForPlaybackAfterRebufferMs = */ 500
+            )
+            .setBackBuffer(if (isLive) 5000 else 30000, true)
+            .setTargetBufferBytes(C.LENGTH_UNSET) // Unlimited buffer size to unleash full internet speed without throttling
+            .setPrioritizeTimeOverSizeThresholds(false)
             .build()
 
-        ExoPlayer.Builder(context)
+        val renderersFactory = DefaultRenderersFactory(context)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_PREFER)
+            .setEnableDecoderFallback(true)
+
+        ExoPlayer.Builder(context, renderersFactory)
             .setLoadControl(loadControl)
             .build().apply {
                 playWhenReady = true
@@ -361,8 +371,8 @@ fun PlayerScreen(
                     val httpDataSourceFactory = DefaultHttpDataSource.Factory()
                         .setUserAgent(parsed.userAgent ?: StreamUrlParser.DEFAULT_USER_AGENT)
                         .setAllowCrossProtocolRedirects(true)
-                        .setConnectTimeoutMs(25000)
-                        .setReadTimeoutMs(25000)
+                        .setConnectTimeoutMs(8000)
+                        .setReadTimeoutMs(15000)
                     StreamUrlParser.configureHttpDataSource(httpDataSourceFactory, parsed)
 
                     val dataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
@@ -375,6 +385,17 @@ fun PlayerScreen(
                     val mediaItemBuilder = MediaItem.Builder().setUri(Uri.parse(parsed.cleanUrl))
                     if (parsed.mimeType != null) {
                         mediaItemBuilder.setMimeType(parsed.mimeType)
+                    }
+                    if (isLive) {
+                        mediaItemBuilder.setLiveConfiguration(
+                            MediaItem.LiveConfiguration.Builder()
+                                .setTargetOffsetMs(1000)
+                                .setMinOffsetMs(500)
+                                .setMaxOffsetMs(4000)
+                                .setMinPlaybackSpeed(0.97f)
+                                .setMaxPlaybackSpeed(1.03f)
+                                .build()
+                        )
                     }
                     val mediaSource = mediaSourceFactory.createMediaSource(mediaItemBuilder.build())
                     exoPlayer.setMediaSource(mediaSource)

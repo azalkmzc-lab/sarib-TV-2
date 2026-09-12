@@ -284,11 +284,12 @@ object StreamUrlParser {
     }
 
     /**
-     * Builds a DefaultExtractorsFactory optimized for MPEG-TS, HLS, MP4 and live streams.
+     * Builds a DefaultExtractorsFactory optimized for MPEG-TS, HLS, MP4 and live streams with fast packet seeking.
      */
     fun createExtractorsFactory(): DefaultExtractorsFactory {
         return DefaultExtractorsFactory()
             .setConstantBitrateSeekingEnabled(true)
+            .setTsExtractorTimestampSearchBytes(1500 * TsExtractor.TS_PACKET_SIZE)
             .setTsExtractorFlags(
                 DefaultTsPayloadReaderFactory.FLAG_ALLOW_NON_IDR_KEYFRAMES or
                 DefaultTsPayloadReaderFactory.FLAG_DETECT_ACCESS_UNITS
@@ -350,7 +351,7 @@ object StreamUrlParser {
     }
 
     /**
-     * Applies parsed headers to HttpDataSource.Factory
+     * Applies parsed headers to HttpDataSource.Factory with high performance network properties
      */
     fun configureHttpDataSource(
         factory: DefaultHttpDataSource.Factory,
@@ -359,11 +360,14 @@ object StreamUrlParser {
         val customUa = config.userAgent ?: DEFAULT_USER_AGENT
         factory.setUserAgent(customUa)
         factory.setAllowCrossProtocolRedirects(true)
-        factory.setConnectTimeoutMs(20000)
-        factory.setReadTimeoutMs(20000)
-        if (config.headers.isNotEmpty()) {
-            factory.setDefaultRequestProperties(config.headers)
-        }
+        factory.setConnectTimeoutMs(8000)
+        factory.setReadTimeoutMs(15000)
+        val combinedHeaders = mutableMapOf<String, String>(
+            "Connection" to "keep-alive",
+            "Accept-Encoding" to "identity"
+        )
+        combinedHeaders.putAll(config.headers)
+        factory.setDefaultRequestProperties(combinedHeaders)
     }
 }
 

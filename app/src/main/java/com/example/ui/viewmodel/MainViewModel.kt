@@ -331,13 +331,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         _currentScreen.value = AppScreen.CategoryDetail(category)
         
-        viewModelScope.launch {
+        // Instant 0ms memory render from allChannels
+        val instantChannels = if (category.id == "all" || category.id == "custom" || category.id.isBlank()) {
+            allChannels.value
+        } else {
+            allChannels.value.filter {
+                it.categoryId == category.id ||
+                it.categoryName.equals(category.name, ignoreCase = true) ||
+                it.categoryName.contains(category.name, ignoreCase = true) ||
+                (category.id.isNotBlank() && it.categoryId.contains(category.id, ignoreCase = true))
+            }
+        }
+
+        if (instantChannels.isNotEmpty() && !forceRefresh) {
+            _categoryChannels.value = instantChannels
+            _isCategoryLoading.value = false
+        } else {
             _isCategoryLoading.value = true
+        }
+
+        viewModelScope.launch {
             try {
                 val channels = repository.getChannelsForCategoryOnDemand(category.id, forceRefresh = forceRefresh)
-                _categoryChannels.value = channels
+                if (channels.isNotEmpty()) {
+                    _categoryChannels.value = channels
+                } else if (instantChannels.isNotEmpty()) {
+                    _categoryChannels.value = instantChannels
+                }
             } catch (e: Exception) {
-                // Keep current or empty
+                if (_categoryChannels.value.isEmpty() && instantChannels.isNotEmpty()) {
+                    _categoryChannels.value = instantChannels
+                }
             } finally {
                 _isCategoryLoading.value = false
             }
@@ -359,17 +383,49 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
         _currentScreen.value = AppScreen.MediaCategoryDetail(category)
 
-        viewModelScope.launch {
+        val isSeries = category.categoryType == "series"
+        val cleanCatId = category.id.removePrefix("series_").removePrefix("vod_")
+
+        // Instant 0ms memory render for Movies & Series
+        val instantMedia = if (isSeries) {
+            featuredSeries.value.filter {
+                it.genre.contains(category.name, ignoreCase = true) ||
+                it.genre.contains(cleanCatId, ignoreCase = true) ||
+                it.id.contains(cleanCatId) ||
+                category.id == "all" || category.id == "all_series"
+            }
+        } else {
+            featuredMovies.value.filter {
+                it.genre.contains(category.name, ignoreCase = true) ||
+                it.genre.contains(cleanCatId, ignoreCase = true) ||
+                it.id.contains(cleanCatId) ||
+                category.id == "all" || category.id == "all_movies"
+            }
+        }
+
+        if (instantMedia.isNotEmpty() && !forceRefresh) {
+            _categoryMediaList.value = instantMedia
+            _isCategoryLoading.value = false
+        } else {
             _isCategoryLoading.value = true
+        }
+
+        viewModelScope.launch {
             try {
-                val media = if (category.categoryType == "series") {
+                val media = if (isSeries) {
                     repository.getSeriesForCategoryOnDemand(category.id)
                 } else {
                     repository.getMoviesForCategoryOnDemand(category.id)
                 }
-                _categoryMediaList.value = media
+                if (media.isNotEmpty()) {
+                    _categoryMediaList.value = media
+                } else if (instantMedia.isNotEmpty()) {
+                    _categoryMediaList.value = instantMedia
+                }
             } catch (e: Exception) {
-                // Keep current or empty
+                if (_categoryMediaList.value.isEmpty() && instantMedia.isNotEmpty()) {
+                    _categoryMediaList.value = instantMedia
+                }
             } finally {
                 _isCategoryLoading.value = false
             }
