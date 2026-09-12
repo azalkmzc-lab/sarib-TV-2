@@ -42,6 +42,7 @@ import com.example.data.model.MatchItem
 import com.example.data.model.getActiveServers
 import com.example.ui.components.DownloadDialog
 import com.example.ui.components.MatchDetailsDialog
+import com.example.ui.components.MovieDetailsDialog
 import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribDrawerContent
 import com.example.ui.components.SaribTopHeader
@@ -144,8 +145,9 @@ fun SaribApp(
 
     var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
-    // Dialog state for Match Details and Settings
+    // Dialog state for Match Details, Movie Details, and Settings
     var selectedMatchForDetails by remember { mutableStateOf<MatchItem?>(null) }
+    var selectedMovieForDetails by remember { mutableStateOf<com.example.data.model.MediaItem?>(null) }
     var showSettingsDialog by remember { mutableStateOf(false) }
 
     val openTelegram: () -> Unit = {
@@ -161,15 +163,7 @@ fun SaribApp(
         if (media.type == ContentType.SERIES || media.type == ContentType.ANIME) {
             viewModel.openSeriesDetails(media)
         } else {
-            viewModel.playMedia(
-                title = media.title,
-                subtitle = "${media.year} • ${media.genre}",
-                streamUrl = media.streamUrl,
-                isLive = false,
-                servers = media.getActiveServers(),
-                posterUrl = media.posterUrl,
-                contentType = if (media.type == ContentType.SERIES) "SERIES" else "MOVIE"
-            )
+            selectedMovieForDetails = media
         }
     }
 
@@ -188,6 +182,8 @@ fun SaribApp(
     BackHandler {
         if (drawerState.isOpen) {
             scope.launch { drawerState.close() }
+        } else if (selectedMovieForDetails != null) {
+            selectedMovieForDetails = null
         } else if (selectedMatchForDetails != null) {
             selectedMatchForDetails = null
         } else if (showSettingsDialog) {
@@ -227,6 +223,41 @@ fun SaribApp(
             },
             onFetchLineups = { id -> viewModel.getMatchLineups(id) },
             onFetchEvents = { id -> viewModel.getMatchEvents(id) }
+        )
+    }
+
+    // MOVIE DETAILS & DUAL ACTION (PLAY + DOWNLOAD) DIALOG
+    selectedMovieForDetails?.let { movie ->
+        MovieDetailsDialog(
+            media = movie,
+            onDismissRequest = { selectedMovieForDetails = null },
+            onPlayMovie = { m ->
+                selectedMovieForDetails = null
+                viewModel.playMedia(
+                    title = m.title,
+                    subtitle = "${m.year} • ${m.genre}",
+                    streamUrl = m.streamUrl,
+                    isLive = false,
+                    servers = m.getActiveServers(),
+                    posterUrl = m.posterUrl,
+                    contentType = "MOVIE"
+                )
+            },
+            onDownloadMovie = { m ->
+                selectedMovieForDetails = null
+                pendingDownload = PendingDownloadItem(
+                    id = m.id,
+                    title = m.title,
+                    subtitle = "${m.year} • ${m.genre}",
+                    posterUrl = m.posterUrl,
+                    streamUrl = m.streamUrl,
+                    servers = m.getActiveServers(),
+                    contentType = "MOVIE"
+                )
+            },
+            onToggleFavorite = { m ->
+                handleMediaFavoriteToggle(m)
+            }
         )
     }
 
@@ -736,16 +767,10 @@ fun SaribApp(
                             val epServers = mutableListOf<Pair<String, String>>()
                             if (ep.streamUrl.isNotBlank()) {
                                 epServers.add("السيرفر الأساسي (الحلقة ${ep.episodeNum})" to ep.streamUrl)
-                                val baseWithoutExt = ep.streamUrl.substringBeforeLast('.')
-                                if (ep.streamUrl.endsWith(".mp4", ignoreCase = true)) {
-                                    epServers.add("سيرفر بديل (TS)" to "$baseWithoutExt.ts")
-                                    epServers.add("سيرفر بديل (M3U8)" to "$baseWithoutExt.m3u8")
-                                    epServers.add("سيرفر بديل (MKV)" to "$baseWithoutExt.mkv")
-                                } else if (ep.streamUrl.endsWith(".ts", ignoreCase = true)) {
-                                    epServers.add("سيرفر بديل (MP4)" to "$baseWithoutExt.mp4")
-                                    epServers.add("سيرفر بديل (M3U8)" to "$baseWithoutExt.m3u8")
-                                }
                             }
+                            val extraServers = screen.mediaItem.getActiveServers().filter { it.second != ep.streamUrl }
+                            epServers.addAll(extraServers)
+
                             pendingDownload = PendingDownloadItem(
                                 id = "ep_${ep.id}",
                                 title = epTitle,

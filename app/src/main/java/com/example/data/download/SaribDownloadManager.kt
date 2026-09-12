@@ -15,7 +15,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,11 +22,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.ConnectionPool
+import okhttp3.Dispatcher
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
-import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -39,11 +41,19 @@ class SaribDownloadManager private constructor(private val context: Context) {
 
     private val activeJobs = ConcurrentHashMap<String, Job>()
 
+    // High performance OkHttpClient optimized for fast video streaming & downloading
     private val okHttpClient = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)
+        .connectionPool(ConnectionPool(16, 5, TimeUnit.MINUTES))
+        .dispatcher(Dispatcher().apply {
+            maxRequests = 64
+            maxRequestsPerHost = 16
+        })
+        .connectTimeout(25, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
         .followRedirects(true)
         .followSslRedirects(true)
+        .retryOnConnectionFailure(true)
         .build()
 
     val allDownloads: Flow<List<DownloadEntity>> = dao.getAllDownloads()
@@ -87,8 +97,9 @@ class SaribDownloadManager private constructor(private val context: Context) {
             streamUrl.contains(".m3u8", ignoreCase = true) -> "mp4"
             else -> "mp4"
         }
-        val fileName = "${sanitizedTitle}_${System.currentTimeMillis()}.$ext"
 
+        val safeIdTag = id.hashCode().toString().replace("-", "0")
+        val fileName = "${sanitizedTitle}_$safeIdTag.$ext"
         val downloadDir = getDownloadDirectory()
         val targetFile = File(downloadDir, fileName)
 
@@ -106,7 +117,7 @@ class SaribDownloadManager private constructor(private val context: Context) {
             contentType = contentType,
             status = "DOWNLOADING",
             progress = 0,
-            bytesDownloaded = 0L,
+            bytesDownloaded = if (targetFile.exists()) targetFile.length() else 0L,
             totalBytes = 0L,
             speedBps = 0L,
             etaSeconds = 0L,
@@ -139,15 +150,38 @@ class SaribDownloadManager private constructor(private val context: Context) {
         Toast.makeText(context, "بدأ تنزيل: $title", Toast.LENGTH_SHORT).show()
     }
 
+    /**
+     * High-speed resumable streaming loop with HTTP Range support.
+     * When paused, downloading resumes from the exact byte position rather than starting over.
+     */
     private suspend fun executeDownloadLoop(initialEntity: DownloadEntity, targetFile: File) = withContext(Dispatchers.IO) {
-        val request = Request.Builder()
-            .url(initialEntity.streamUrl)
-            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
-            .header("Accept", "*/*")
-            .build()
+        val existingBytes = if (targetFile.exists()) targetFile.length() else 0L
+        val isResume = existingBytes > 0L
 
-        val response = okHttpClient.newCall(request).execute()
-        if (!response.isSuccessful) {
+        val requestBuilder = Request.Builder()
+            .url(initialEntity.streamUrl)
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+            .header("Accept", "*/*")
+            .header("Connection", "keep-alive")
+
+        if (isResume) {
+            // Request continuation from the exact byte where paused
+            requestBuilder.header("Range", "bytes=$existingBytes-")
+        }
+
+        val response = try {
+            okHttpClient.newCall(requestBuilder.build()).execute()
+        } catch (e: Exception) {
+            val err = "تعذر الاتصال بالخادم (${e.localizedMessage ?: "مهلة الاتصال"})"
+            dao.markDownloadFailed(initialEntity.id, err)
+            removeFromMemoryState(initialEntity.id)
+            return@withContext
+        }
+
+        val isPartial = response.code == 206
+        val isSuccess = response.isSuccessful
+
+        if (!isSuccess && !isPartial) {
             val err = "خطأ في الخادم (رمز ${response.code})"
             dao.markDownloadFailed(initialEntity.id, err)
             removeFromMemoryState(initialEntity.id)
@@ -162,15 +196,34 @@ class SaribDownloadManager private constructor(private val context: Context) {
             return@withContext
         }
 
-        val totalLength = body.contentLength().coerceAtLeast(0L)
-        var bytesDownloaded = 0L
-        val inputStream: InputStream = body.byteStream()
-        val outputStream = FileOutputStream(targetFile)
+        val responseContentLength = body.contentLength()
+        val totalLength: Long = when {
+            isPartial && responseContentLength > 0 -> existingBytes + responseContentLength
+            !isPartial && responseContentLength > 0 -> responseContentLength
+            initialEntity.totalBytes > 0 -> initialEntity.totalBytes
+            else -> 0L
+        }
 
-        val buffer = ByteArray(64 * 1024)
+        var bytesDownloaded: Long
+        val appendMode: Boolean
+
+        if (isPartial) {
+            appendMode = true
+            bytesDownloaded = existingBytes
+        } else {
+            // Server did not support Range header, restart cleanly
+            appendMode = false
+            bytesDownloaded = 0L
+        }
+
+        // Fast I/O with 128KB buffer and 256KB stream caching
+        val buffer = ByteArray(128 * 1024)
+        val inputStream = BufferedInputStream(body.byteStream(), 256 * 1024)
+        val outputStream = BufferedOutputStream(FileOutputStream(targetFile, appendMode), 256 * 1024)
+
         var bytesRead: Int
-
         var lastDbUpdateTime = System.currentTimeMillis()
+        var lastMemoryUpdateTime = System.currentTimeMillis()
         var lastBytesInInterval = 0L
         var speedBps = 0L
         var etaSeconds = 0L
@@ -178,25 +231,28 @@ class SaribDownloadManager private constructor(private val context: Context) {
         try {
             while (inputStream.read(buffer).also { bytesRead = it } != -1) {
                 if (!isActive) {
-                    // Paused or cancelled
+                    // Download paused or canceled by user
                     break
                 }
+
                 outputStream.write(buffer, 0, bytesRead)
                 bytesDownloaded += bytesRead
                 lastBytesInInterval += bytesRead
 
                 val now = System.currentTimeMillis()
-                val elapsedSinceUpdate = now - lastDbUpdateTime
+                val elapsedMemory = now - lastMemoryUpdateTime
+                val elapsedDb = now - lastDbUpdateTime
 
-                if (elapsedSinceUpdate >= 800L) {
-                    speedBps = if (elapsedSinceUpdate > 0) (lastBytesInInterval * 1000L) / elapsedSinceUpdate else 0L
+                // Update real-time memory state every 200ms for high-speed UI smoothness
+                if (elapsedMemory >= 200L) {
+                    speedBps = if (elapsedMemory > 0) (lastBytesInInterval * 1000L) / elapsedMemory else 0L
                     lastBytesInInterval = 0L
-                    lastDbUpdateTime = now
+                    lastMemoryUpdateTime = now
 
                     val progress = if (totalLength > 0) {
                         ((bytesDownloaded * 100L) / totalLength).toInt().coerceIn(0, 99)
                     } else {
-                        50 // indeterminate
+                        50
                     }
 
                     etaSeconds = if (speedBps > 0 && totalLength > bytesDownloaded) {
@@ -213,8 +269,17 @@ class SaribDownloadManager private constructor(private val context: Context) {
                         etaSeconds = etaSeconds,
                         status = "DOWNLOADING"
                     )
-
                     updateMemoryState(updatedEntity)
+                }
+
+                // Throttle Database persistence to every 800ms
+                if (elapsedDb >= 800L) {
+                    lastDbUpdateTime = now
+                    val progress = if (totalLength > 0) {
+                        ((bytesDownloaded * 100L) / totalLength).toInt().coerceIn(0, 99)
+                    } else {
+                        50
+                    }
                     dao.updateDownloadProgress(
                         id = initialEntity.id,
                         progress = progress,
@@ -230,8 +295,8 @@ class SaribDownloadManager private constructor(private val context: Context) {
             outputStream.flush()
 
             if (isActive) {
-                // Download Finished Successfully
-                val finalTotal = if (totalLength > 0) totalLength else bytesDownloaded
+                // Download Finished Successfully!
+                val finalTotal = targetFile.length().coerceAtLeast(bytesDownloaded)
                 dao.updateDownloadProgress(
                     id = initialEntity.id,
                     progress = 100,
@@ -249,8 +314,24 @@ class SaribDownloadManager private constructor(private val context: Context) {
                 )
                 removeFromMemoryState(initialEntity.id)
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "اكتمل تنزيل: ${initialEntity.title}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(context, "اكتمل تنزيل: ${initialEntity.title} بنجاح ✓", Toast.LENGTH_LONG).show()
                 }
+            } else {
+                // Download was paused: save current position so resume continues from here
+                val currentFileLength = targetFile.length()
+                val progress = if (totalLength > 0) {
+                    ((currentFileLength * 100L) / totalLength).toInt().coerceIn(0, 99)
+                } else 0
+
+                dao.updateDownloadProgress(
+                    id = initialEntity.id,
+                    progress = progress,
+                    bytesDownloaded = currentFileLength,
+                    totalBytes = if (totalLength > 0) totalLength else currentFileLength,
+                    speedBps = 0L,
+                    etaSeconds = 0L,
+                    status = "PAUSED"
+                )
             }
         } finally {
             try { outputStream.close() } catch (_: Exception) {}
@@ -282,7 +363,7 @@ class SaribDownloadManager private constructor(private val context: Context) {
             dao.updateDownloadStatus(id, "PAUSED")
             removeFromMemoryState(id)
         }
-        Toast.makeText(context, "تم إيقاف التنزيل مؤقتاً", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "تم إيقاف التنزيل مؤقتاً (سيتم الاستئناف من نفس النقطة)", Toast.LENGTH_SHORT).show()
     }
 
     fun resumeDownload(entity: DownloadEntity) {
@@ -412,7 +493,6 @@ class SaribDownloadManager private constructor(private val context: Context) {
                 chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(chooser)
             } catch (e: Exception) {
-                // Fallback to browser or copy
                 try {
                     val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(streamUrl)).apply {
                         addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)

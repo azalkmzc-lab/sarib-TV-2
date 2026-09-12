@@ -106,35 +106,33 @@ fun DownloadDialog(
         val list = mutableListOf<DownloadQualityItem>()
         if (servers.isNotEmpty()) {
             servers.forEachIndexed { index, pair ->
-                val qBadge = when (index) {
-                    0 -> "1080p FHD"
-                    1 -> "720p HD"
-                    2 -> "CDN سريع"
-                    3 -> "480p SD"
-                    else -> "سيرفر ${index + 1}"
-                }
+                val badgeName = if (index == 0) "الأساسي" else "سيرفر ${index + 1}"
                 list.add(
                     DownloadQualityItem(
                         label = pair.first,
-                        description = "بث فائق السرعة وخادم مخصص",
-                        badge = qBadge,
+                        description = "سيرفر بث حقيقي مباشر",
+                        badge = badgeName,
                         streamUrlOverride = pair.second
                     )
                 )
             }
         } else {
-            list.add(DownloadQualityItem("1080p Full HD (الأعلى دقة)", "جودة سينمائية فائقة الوضوح", "1080p", streamUrl))
-            list.add(DownloadQualityItem("720p HD (متوازنة وسريعة)", "جودة عالية واستهلاك بيانات معتدل", "720p", streamUrl))
-            list.add(DownloadQualityItem("480p SD (توفير باقة النت)", "تحميل سريع واستهلاك مساحة أقل", "480p", streamUrl))
+            list.add(
+                DownloadQualityItem(
+                    label = "البث المباشر الحقيقي (Direct Stream)",
+                    description = "تنزيل الملف بأعلى جودة متوفرة من السيرفر الأصلي",
+                    badge = "الجودة المتاحة",
+                    streamUrlOverride = streamUrl
+                )
+            )
         }
         list
     }
 
     val subtitleOptions = remember {
         listOf(
-            DownloadSubtitleItem("ترجمة عربية مدمجة (Embedded)", "الترجمة الرسمية المدمجة في ملف الفيديو"),
-            DownloadSubtitleItem("تحميل ملف ترجمة عربي خارجي (SRT)", "تنزيل ملف الترجمة العربية المزامنة للمشاهدة بدون نت"),
-            DownloadSubtitleItem("بدون ترجمة (الصوت الأصلي فقط)", "تنزيل الفيديو بدون مسار ترجمة إضافي")
+            DownloadSubtitleItem("الترجمة والصوت المدمج بالملف (Embedded Audio/Subs)", "تشغيل مسارات الصوت والترجمة المدمجة تلقائياً في مشغل التطبيق", ""),
+            DownloadSubtitleItem("الصوت الأصلي المباشر فقط", "تحميل الفيديو بدون مسار ترجمة خارجي إضافي", "")
         )
     }
 

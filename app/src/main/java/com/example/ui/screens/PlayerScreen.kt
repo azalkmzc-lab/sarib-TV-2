@@ -146,6 +146,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.TrackSelectionOverride
 import androidx.media3.common.Tracks
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
@@ -364,7 +365,8 @@ fun PlayerScreen(
                         .setReadTimeoutMs(25000)
                     StreamUrlParser.configureHttpDataSource(httpDataSourceFactory, parsed)
 
-                    val mediaSourceFactory = DefaultMediaSourceFactory(httpDataSourceFactory, StreamUrlParser.createExtractorsFactory())
+                    val dataSourceFactory = DefaultDataSource.Factory(context, httpDataSourceFactory)
+                    val mediaSourceFactory = DefaultMediaSourceFactory(dataSourceFactory, StreamUrlParser.createExtractorsFactory())
                     val drmManager = StreamUrlParser.createDrmSessionManager(parsed)
                     if (drmManager != null) {
                         mediaSourceFactory.setDrmSessionManagerProvider { drmManager }
