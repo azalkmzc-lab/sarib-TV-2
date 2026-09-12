@@ -349,6 +349,7 @@ class XtreamApiClient(
                 val icon = obj.optString("stream_icon", "")
                 val rating = obj.optString("rating", "8.5")
                 val container = obj.optString("container_extension", "mp4").ifEmpty { "mp4" }
+                val catId = obj.optString("category_id", cleanCatId ?: "")
 
                 if (streamId.isNotEmpty()) {
                     val streamUrl = "${serverHost.trimEnd('/')}/movie/$username/$password/$streamId.$container"
@@ -360,7 +361,7 @@ class XtreamApiClient(
                         type = ContentType.MOVIE,
                         year = "2024",
                         rating = if (rating.isNotBlank() && rating != "0") rating.take(3) else "8.7",
-                        genre = "أفلام سينما",
+                        genre = if (catId.isNotBlank()) "vod_$catId" else "أفلام سينما",
                         description = "مشاهدة مباشرة بدقة عالية عبر SARIB TV",
                         duration = "120 دقيقة",
                         streamUrl = streamUrl,
@@ -425,7 +426,8 @@ class XtreamApiClient(
                 val plot = obj.optString("plot", "مسلسل درامي حصري على SARIB TV")
                 val rating = obj.optString("rating", "8.9")
                 val releaseDate = obj.optString("releaseDate", "2024")
-                val genre = obj.optString("genre", "دراما / تشويق")
+                val rawGenre = obj.optString("genre", "دراما / تشويق")
+                val catId = obj.optString("category_id", cleanCatId ?: "")
 
                 if (seriesId.isNotEmpty()) {
                     val streamUrl = "${serverHost.trimEnd('/')}/series/$username/$password/$seriesId.mp4"
@@ -434,10 +436,10 @@ class XtreamApiClient(
                         title = name,
                         posterUrl = cover,
                         backdropUrl = cover,
-                        type = if (genre.contains("أنمي", ignoreCase = true) || name.contains("anime", ignoreCase = true)) ContentType.ANIME else ContentType.SERIES,
+                        type = if (rawGenre.contains("أنمي", ignoreCase = true) || name.contains("anime", ignoreCase = true)) ContentType.ANIME else ContentType.SERIES,
                         year = releaseDate.take(4).ifEmpty { "2024" },
                         rating = if (rating.isNotBlank() && rating != "0") rating.take(3) else "8.9",
-                        genre = genre.ifEmpty { "مسلسل حصري" },
+                        genre = if (catId.isNotBlank()) "series_$catId" else rawGenre.ifEmpty { "مسلسل حصري" },
                         description = plot,
                         duration = "45 دقيقة",
                         seasonsCount = 1,

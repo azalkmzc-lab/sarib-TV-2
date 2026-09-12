@@ -290,6 +290,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 return true
             }
         } else if (curr is AppScreen.CategoryDetail || curr is AppScreen.MediaCategoryDetail) {
+            _selectedCategory.value = null
+            _categoryChannels.value = emptyList()
+            _categoryMediaList.value = emptyList()
             if (backStack.isNotEmpty()) {
                 val previous = backStack.removeAt(backStack.lastIndex)
                 _currentScreen.value = previous
@@ -325,21 +328,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         _selectedCategory.value = category
+        _categoryChannels.value = emptyList() // Immediately clear previous category channels!
+        
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.CategoryDetail) {
             backStack.add(curr)
         }
         _currentScreen.value = AppScreen.CategoryDetail(category)
         
-        // Instant 0ms memory render from allChannels
+        // Exact category matching for channels
         val instantChannels = if (category.id == "all" || category.id == "custom" || category.id.isBlank()) {
             allChannels.value
         } else {
             allChannels.value.filter {
-                it.categoryId == category.id ||
-                it.categoryName.equals(category.name, ignoreCase = true) ||
-                it.categoryName.contains(category.name, ignoreCase = true) ||
-                (category.id.isNotBlank() && it.categoryId.contains(category.id, ignoreCase = true))
+                it.categoryId.equals(category.id, ignoreCase = true) ||
+                it.categoryName.equals(category.name, ignoreCase = true)
             }
         }
 
@@ -347,12 +350,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _categoryChannels.value = instantChannels
             _isCategoryLoading.value = false
         } else {
+            _categoryChannels.value = emptyList()
             _isCategoryLoading.value = true
         }
 
         viewModelScope.launch {
             try {
-                val currentList = _categoryChannels.value.toMutableList()
+                val currentList = instantChannels.toMutableList()
                 val channels = repository.getChannelsForCategoryOnDemand(
                     categoryId = category.id,
                     forceRefresh = forceRefresh
@@ -370,8 +374,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val newItems = channels.filter { it.id !in existingIds }
                     if (newItems.isNotEmpty()) {
                         currentList.addAll(newItems)
-                        _categoryChannels.value = currentList.toList()
                     }
+                    _categoryChannels.value = currentList.toList()
                 } else if (_categoryChannels.value.isEmpty() && instantChannels.isNotEmpty()) {
                     _categoryChannels.value = instantChannels
                 }
@@ -394,6 +398,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         _selectedCategory.value = category
+        _categoryMediaList.value = emptyList() // Immediately clear previous category media!
+
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.MediaCategoryDetail) {
             backStack.add(curr)
@@ -401,22 +407,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _currentScreen.value = AppScreen.MediaCategoryDetail(category)
 
         val isSeries = category.categoryType == "series"
-        val cleanCatId = category.id.removePrefix("series_").removePrefix("vod_")
+        val cleanCatId = category.id.removePrefix("series_").removePrefix("vod_").removePrefix("m3u_mov_cat_")
 
-        // Instant 0ms memory render for Movies & Series
+        // Exact memory render for Movies & Series
         val instantMedia = if (isSeries) {
             featuredSeries.value.filter {
-                it.genre.contains(category.name, ignoreCase = true) ||
-                it.genre.contains(cleanCatId, ignoreCase = true) ||
-                it.id.contains(cleanCatId) ||
-                category.id == "all" || category.id == "all_series"
+                category.id == "all" || category.id == "all_series" ||
+                it.genre.equals(category.id, ignoreCase = true) ||
+                it.genre.equals("series_$cleanCatId", ignoreCase = true) ||
+                (cleanCatId.isNotBlank() && it.genre.equals(cleanCatId, ignoreCase = true)) ||
+                it.genre.equals(category.name, ignoreCase = true)
             }
         } else {
             featuredMovies.value.filter {
-                it.genre.contains(category.name, ignoreCase = true) ||
-                it.genre.contains(cleanCatId, ignoreCase = true) ||
-                it.id.contains(cleanCatId) ||
-                category.id == "all" || category.id == "all_movies"
+                category.id == "all" || category.id == "all_movies" ||
+                it.genre.equals(category.id, ignoreCase = true) ||
+                it.genre.equals("vod_$cleanCatId", ignoreCase = true) ||
+                (cleanCatId.isNotBlank() && it.genre.equals(cleanCatId, ignoreCase = true)) ||
+                it.genre.equals(category.name, ignoreCase = true)
             }
         }
 
@@ -424,12 +432,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             _categoryMediaList.value = instantMedia
             _isCategoryLoading.value = false
         } else {
+            _categoryMediaList.value = emptyList()
             _isCategoryLoading.value = true
         }
 
         viewModelScope.launch {
             try {
-                val currentMedia = _categoryMediaList.value.toMutableList()
+                val currentMedia = instantMedia.toMutableList()
                 val media = if (isSeries) {
                     repository.getSeriesForCategoryOnDemand(category.id) { batch ->
                         val existingIds = currentMedia.map { it.id }.toSet()
@@ -456,8 +465,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     val newItems = media.filter { it.id !in existingIds }
                     if (newItems.isNotEmpty()) {
                         currentMedia.addAll(newItems)
-                        _categoryMediaList.value = currentMedia.toList()
                     }
+                    _categoryMediaList.value = currentMedia.toList()
                 } else if (_categoryMediaList.value.isEmpty() && instantMedia.isNotEmpty()) {
                     _categoryMediaList.value = instantMedia
                 }

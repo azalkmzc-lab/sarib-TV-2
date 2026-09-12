@@ -331,7 +331,6 @@ class SaribRepository(private val context: Context) {
                 val freshFirebaseChannels = firebaseStreamManager.fetchCustomChannels()
                 if (freshFirebaseChannels.isNotEmpty()) {
                     dao.insertChannels(freshFirebaseChannels.map { it.toEntity() })
-                    onBatchLoaded(freshFirebaseChannels)
                 }
             }
 
@@ -352,8 +351,9 @@ class SaribRepository(private val context: Context) {
             val isXtreamCategory = !categoryId.startsWith("m3u_") && !categoryId.startsWith("fb_") && !categoryId.startsWith("api_")
             if (isXtreamCategory && currentRemoteConfig.isLiveXtreamEnabled && currentRemoteConfig.liveXtreamAccount.serverHost.isNotBlank()) {
                 try {
+                    val cleanLiveCatId = categoryId.removePrefix("live_")
                     val remoteChannels = liveXtreamClient.fetchLiveStreams(
-                        categoryId = categoryId,
+                        categoryId = cleanLiveCatId,
                         batchSize = 20
                     ) { batch ->
                         if (batch.isNotEmpty()) {
@@ -369,13 +369,11 @@ class SaribRepository(private val context: Context) {
                 }
             }
 
-            // Fallback match from cached Room channels
+            // Strict match from cached Room channels for this category only
             val allLocal = dao.getAllChannelsList()
             val matched = allLocal.filter {
                 it.categoryId.equals(categoryId, ignoreCase = true) ||
-                it.categoryName.equals(categoryId, ignoreCase = true) ||
-                it.categoryName.contains(categoryId, ignoreCase = true) ||
-                it.categoryId.contains(categoryId, ignoreCase = true)
+                it.categoryName.equals(categoryId, ignoreCase = true)
             }
             if (matched.isNotEmpty()) {
                 val mapped = matched.map { it.toModel() }
@@ -401,17 +399,19 @@ class SaribRepository(private val context: Context) {
         onBatchLoaded: suspend (List<MediaItem>) -> Unit = {}
     ): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
-            // Check local Room cache first (handles M3U, API, and previously loaded movies)
+            val cleanCatId = categoryId?.removePrefix("vod_")?.removePrefix("m3u_mov_cat_") ?: ""
+            
+            // Check local Room cache first for this specific category
             val localMovies = if (categoryId.isNullOrBlank() || categoryId == "all" || categoryId == "all_movies") {
                 dao.getMediaListByType("MOVIE")
             } else {
                 val allLocal = dao.getMediaListByType("MOVIE")
-                val matched = allLocal.filter {
-                    it.genre.contains(categoryId, ignoreCase = true) ||
-                    it.id.startsWith(categoryId) ||
-                    it.id.contains(categoryId)
+                allLocal.filter {
+                    it.genre.equals(categoryId, ignoreCase = true) ||
+                    it.genre.equals("vod_$cleanCatId", ignoreCase = true) ||
+                    (cleanCatId.isNotBlank() && it.genre.equals(cleanCatId, ignoreCase = true)) ||
+                    it.id.startsWith("m3u_mov_cat_${cleanCatId}_")
                 }
-                if (matched.isNotEmpty()) matched else emptyList()
             }
 
             if (localMovies.isNotEmpty()) {
@@ -425,7 +425,7 @@ class SaribRepository(private val context: Context) {
                 try {
                     val client = getVodClientForCategory(categoryId)
                     val remoteMovies = client.fetchVodStreams(
-                        categoryId = categoryId,
+                        categoryId = cleanCatId.ifBlank { categoryId },
                         batchSize = 20
                     ) { batch ->
                         if (batch.isNotEmpty()) {
@@ -445,23 +445,20 @@ class SaribRepository(private val context: Context) {
                 return@withContext localMovies.map { it.toModel() }
             }
 
-            // Fallback: try fetching custom movies from Firebase/API
-            val customMovies = firebaseStreamManager.fetchCustomMovies(currentRemoteConfig.moviesApiUrl)
-            if (customMovies.isNotEmpty()) {
-                dao.insertMediaItems(customMovies.map { it.toEntity() })
-                onBatchLoaded(customMovies)
-                return@withContext customMovies
+            // For general movies list or if category is "all", allow fetching general custom movies
+            if (categoryId.isNullOrBlank() || categoryId == "all" || categoryId == "all_movies") {
+                val customMovies = firebaseStreamManager.fetchCustomMovies(currentRemoteConfig.moviesApiUrl)
+                if (customMovies.isNotEmpty()) {
+                    dao.insertMediaItems(customMovies.map { it.toEntity() })
+                    onBatchLoaded(customMovies)
+                    return@withContext customMovies
+                }
             }
 
-            // General fallback to all cached movies
-            val finalFallback = dao.getMediaListByType("MOVIE").map { it.toModel() }
-            if (finalFallback.isNotEmpty()) onBatchLoaded(finalFallback)
-            finalFallback
+            emptyList()
         } catch (e: Exception) {
             Log.e("SaribRepository", "Error fetching movies for category $categoryId: ${e.message}", e)
-            val errFallback = dao.getMediaListByType("MOVIE").map { it.toModel() }
-            if (errFallback.isNotEmpty()) onBatchLoaded(errFallback)
-            errFallback
+            emptyList()
         }
     }
 
@@ -470,9 +467,14 @@ class SaribRepository(private val context: Context) {
         onBatchLoaded: suspend (List<MediaItem>) -> Unit = {}
     ): List<MediaItem> = withContext(Dispatchers.IO) {
         try {
+            val cleanCatId = categoryId?.removePrefix("series_") ?: ""
             val localSeries = dao.getMediaListByType("SERIES").filter {
                 if (categoryId.isNullOrBlank() || categoryId == "all" || categoryId == "all_series") true
-                else it.genre.contains(categoryId, ignoreCase = true) || it.id.contains(categoryId)
+                else {
+                    it.genre.equals(categoryId, ignoreCase = true) ||
+                    it.genre.equals("series_$cleanCatId", ignoreCase = true) ||
+                    (cleanCatId.isNotBlank() && it.genre.equals(cleanCatId, ignoreCase = true))
+                }
             }
             if (localSeries.isNotEmpty()) {
                 onBatchLoaded(localSeries.map { it.toModel() })
@@ -480,7 +482,7 @@ class SaribRepository(private val context: Context) {
 
             val client = getSeriesClientForCategory(categoryId)
             var remoteSeries = client.fetchSeries(
-                categoryId = categoryId,
+                categoryId = cleanCatId.ifBlank { categoryId },
                 batchSize = 20
             ) { batch ->
                 if (batch.isNotEmpty()) {
@@ -490,7 +492,7 @@ class SaribRepository(private val context: Context) {
             }
             if (remoteSeries.isEmpty() && client != seriesXtreamClient) {
                 remoteSeries = seriesXtreamClient.fetchSeries(
-                    categoryId = categoryId,
+                    categoryId = cleanCatId.ifBlank { categoryId },
                     batchSize = 20
                 ) { batch ->
                     if (batch.isNotEmpty()) {
@@ -501,7 +503,7 @@ class SaribRepository(private val context: Context) {
             }
             if (remoteSeries.isEmpty() && client != xtreamClient) {
                 remoteSeries = xtreamClient.fetchSeries(
-                    categoryId = categoryId,
+                    categoryId = cleanCatId.ifBlank { categoryId },
                     batchSize = 20
                 ) { batch ->
                     if (batch.isNotEmpty()) {
@@ -512,8 +514,12 @@ class SaribRepository(private val context: Context) {
             }
             if (remoteSeries.isNotEmpty()) {
                 dao.insertMediaItems(remoteSeries.map { it.toEntity() })
+                return@withContext remoteSeries
             }
-            remoteSeries
+            if (localSeries.isNotEmpty()) {
+                return@withContext localSeries.map { it.toModel() }
+            }
+            emptyList()
         } catch (e: Exception) {
             Log.e("SaribRepository", "Error fetching series for category $categoryId: ${e.message}", e)
             emptyList()
