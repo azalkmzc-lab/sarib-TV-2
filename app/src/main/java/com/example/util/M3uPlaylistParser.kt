@@ -53,8 +53,8 @@ object M3uPlaylistParser {
             OkHttpClient.Builder()
                 .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
                 .hostnameVerifier { _, _ -> true }
-                .connectTimeout(25, TimeUnit.SECONDS)
-                .readTimeout(35, TimeUnit.SECONDS)
+                .connectTimeout(6, TimeUnit.SECONDS)
+                .readTimeout(12, TimeUnit.SECONDS)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .retryOnConnectionFailure(true)
@@ -62,8 +62,8 @@ object M3uPlaylistParser {
         } catch (e: Exception) {
             Log.w(TAG, "Failed to create permissive SSL socket factory: ${e.message}")
             OkHttpClient.Builder()
-                .connectTimeout(25, TimeUnit.SECONDS)
-                .readTimeout(35, TimeUnit.SECONDS)
+                .connectTimeout(6, TimeUnit.SECONDS)
+                .readTimeout(12, TimeUnit.SECONDS)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .retryOnConnectionFailure(true)
@@ -179,12 +179,11 @@ object M3uPlaylistParser {
                 }
             }
 
-            reader.useLines { lines ->
-                for (rawLine in lines) {
-                    // Strip BOM and whitespace
-                    val line = rawLine.replace("\uFEFF", "").trim()
-                    if (line.isEmpty()) continue
-
+            var rawLine = reader.readLine()
+            while (rawLine != null) {
+                // Strip BOM and whitespace
+                val line = rawLine.replace("\uFEFF", "").trim()
+                if (line.isNotEmpty()) {
                     // 1. Check for standard #EXTINF
                     if (line.startsWith("#EXTINF", ignoreCase = true)) {
                         isHlsVariant = false
@@ -284,8 +283,8 @@ object M3uPlaylistParser {
                             pendingChannels.add(ch)
                             channelIndex++
 
-                            if (pendingChannels.size >= batchSize) {
-                                kotlinx.coroutines.runBlocking { flushBatch() }
+                            if (pendingChannels.size >= batchSize || pendingCategories.size >= 10) {
+                                flushBatch()
                             }
                         }
                     }
@@ -365,8 +364,8 @@ object M3uPlaylistParser {
                                 pendingMovies.add(mov)
                                 movieIndex++
 
-                                if (pendingMovies.size >= batchSize) {
-                                    kotlinx.coroutines.runBlocking { flushBatch() }
+                                if (pendingMovies.size >= batchSize || pendingMovieCategories.size >= 10) {
+                                    flushBatch()
                                 }
                             } else {
                                 val categoryId = "m3u_cat_" + Math.abs(currentGroup.trim().hashCode())
@@ -411,8 +410,8 @@ object M3uPlaylistParser {
                                 pendingChannels.add(ch)
                                 channelIndex++
 
-                                if (pendingChannels.size >= batchSize) {
-                                    kotlinx.coroutines.runBlocking { flushBatch() }
+                                if (pendingChannels.size >= batchSize || pendingCategories.size >= 10) {
+                                    flushBatch()
                                 }
                             }
                         }
@@ -425,6 +424,7 @@ object M3uPlaylistParser {
                         isHlsVariant = false
                     }
                 }
+                rawLine = reader.readLine()
             }
 
             // Flush any remaining items in buffer
@@ -533,5 +533,95 @@ object M3uPlaylistParser {
             ),
             movies = convertedMovies
         )
+    }
+
+    /**
+     * Ultra-fast lightweight category extractor: parses ONLY category names and groups from M3U
+     * without instantiating thousands of channel objects, providing instant category lists.
+     */
+    suspend fun parseCategoriesOnlyFromUrlStreaming(
+        playlistUrl: String,
+        defaultGroupName: String = "باقة القنوات المباشرة",
+        onCategoryBatch: suspend (List<ChannelCategory>) -> Unit
+    ) = withContext(Dispatchers.IO) {
+        val cleanUrl = playlistUrl.trim()
+        if (cleanUrl.isBlank()) return@withContext
+
+        try {
+            val request = Request.Builder()
+                .url(cleanUrl)
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                .header("Accept", "*/*")
+                .build()
+
+            val response = httpClient.newCall(request).execute()
+            if (!response.isSuccessful) return@withContext
+            val body = response.body ?: return@withContext
+
+            val reader = BufferedReader(InputStreamReader(body.byteStream(), Charsets.UTF_8))
+            val seenCategories = mutableSetOf<String>()
+            val pendingCategories = mutableListOf<ChannelCategory>()
+            val colors = listOf("#0088FF", "#00C8FF", "#2563EB", "#7C3AED", "#DC2626", "#059669", "#D97706", "#EC4899")
+
+            var rawLine = reader.readLine()
+            while (rawLine != null) {
+                val line = rawLine.replace("\uFEFF", "").trim()
+                if (line.startsWith("#EXTINF", ignoreCase = true)) {
+                    val group = extractAttribute(line, "group-title").ifBlank {
+                        extractAttribute(line, "group")
+                    }.ifBlank { defaultGroupName }
+
+                    val catId = "m3u_cat_" + Math.abs(group.trim().hashCode())
+                    if (seenCategories.add(catId)) {
+                        val category = ChannelCategory(
+                            id = catId,
+                            name = group,
+                            subtitle = "بث مباشر سريع CDN",
+                            channelCount = 0,
+                            iconUrl = "",
+                            categoryType = "live",
+                            gradientColorHex = colors[seenCategories.size % colors.size]
+                        )
+                        pendingCategories.add(category)
+                        if (pendingCategories.size >= 5) {
+                            val chunk = pendingCategories.toList()
+                            pendingCategories.clear()
+                            onCategoryBatch(chunk)
+                        }
+                    }
+                } else if (line.startsWith("#EXTGRP:", ignoreCase = true) || line.startsWith("#EXT-X-GROUP:", ignoreCase = true)) {
+                    val grp = line.substringAfter(':').trim()
+                    if (grp.isNotBlank()) {
+                        val catId = "m3u_cat_" + Math.abs(grp.hashCode())
+                        if (seenCategories.add(catId)) {
+                            val category = ChannelCategory(
+                                id = catId,
+                                name = grp,
+                                subtitle = "بث مباشر سريع CDN",
+                                channelCount = 0,
+                                iconUrl = "",
+                                categoryType = "live",
+                                gradientColorHex = colors[seenCategories.size % colors.size]
+                            )
+                            pendingCategories.add(category)
+                            if (pendingCategories.size >= 5) {
+                                val chunk = pendingCategories.toList()
+                                pendingCategories.clear()
+                                onCategoryBatch(chunk)
+                            }
+                        }
+                    }
+                }
+                rawLine = reader.readLine()
+            }
+
+            if (pendingCategories.isNotEmpty()) {
+                val chunk = pendingCategories.toList()
+                pendingCategories.clear()
+                onCategoryBatch(chunk)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error in parseCategoriesOnlyFromUrlStreaming: ${e.message}")
+        }
     }
 }

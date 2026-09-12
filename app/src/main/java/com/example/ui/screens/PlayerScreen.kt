@@ -285,14 +285,14 @@ fun PlayerScreen(
     val exoPlayer = remember {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                /* minBufferMs = */ if (isLive) 1500 else 3000,
-                /* maxBufferMs = */ if (isLive) 50000 else 180000,
-                /* bufferForPlaybackMs = */ 250,
-                /* bufferForPlaybackAfterRebufferMs = */ 500
+                /* minBufferMs = */ if (isLive) 800 else 1500,
+                /* maxBufferMs = */ if (isLive) 30000 else 90000,
+                /* bufferForPlaybackMs = */ 100, // Starts immediately (100ms)
+                /* bufferForPlaybackAfterRebufferMs = */ 250
             )
-            .setBackBuffer(if (isLive) 5000 else 30000, true)
+            .setBackBuffer(if (isLive) 3000 else 15000, true)
             .setTargetBufferBytes(C.LENGTH_UNSET) // Unlimited buffer size to unleash full internet speed without throttling
-            .setPrioritizeTimeOverSizeThresholds(false)
+            .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
         val renderersFactory = DefaultRenderersFactory(context)

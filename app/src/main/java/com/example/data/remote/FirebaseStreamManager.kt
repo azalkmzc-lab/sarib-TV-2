@@ -87,16 +87,18 @@ class FirebaseStreamManager(private val context: Context) {
             OkHttpClient.Builder()
                 .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as javax.net.ssl.X509TrustManager)
                 .hostnameVerifier { _, _ -> true }
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(25, TimeUnit.SECONDS)
+                .connectionPool(okhttp3.ConnectionPool(10, 5, TimeUnit.MINUTES))
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(8, TimeUnit.SECONDS)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .retryOnConnectionFailure(true)
                 .build()
         } catch (e: Exception) {
             OkHttpClient.Builder()
-                .connectTimeout(20, TimeUnit.SECONDS)
-                .readTimeout(25, TimeUnit.SECONDS)
+                .connectionPool(okhttp3.ConnectionPool(10, 5, TimeUnit.MINUTES))
+                .connectTimeout(5, TimeUnit.SECONDS)
+                .readTimeout(8, TimeUnit.SECONDS)
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .retryOnConnectionFailure(true)
@@ -115,14 +117,15 @@ class FirebaseStreamManager(private val context: Context) {
     suspend fun fetchRemoteConfig(): RemoteStreamConfig = withContext(Dispatchers.IO) {
         var baseConfig = RemoteStreamConfig()
 
-        // Strategy 1: Try Firebase Firestore (stream_config/main_config)
+        // Strategy 1: Try Firebase Firestore (stream_config/main_config) with fast 2-second timeout
         if (isFirebaseAvailable()) {
             try {
-                val firestore = FirebaseFirestore.getInstance()
-                val docSnapshot = firestore.collection("stream_config")
-                    .document("main_config")
-                    .get()
-                    .await()
+                kotlinx.coroutines.withTimeoutOrNull(2000L) {
+                    val firestore = FirebaseFirestore.getInstance()
+                    val docSnapshot = firestore.collection("stream_config")
+                        .document("main_config")
+                        .get()
+                        .await()
 
                 if (docSnapshot != null && docSnapshot.exists()) {
                     Log.i(TAG, "Loaded stream configuration from Firebase Firestore.")
@@ -210,6 +213,7 @@ class FirebaseStreamManager(private val context: Context) {
                     }
                 } catch (e: Exception) {
                     Log.w(TAG, "matches_config fetch error: ${e.message}")
+                }
                 }
             } catch (e: Exception) {
                 Log.w(TAG, "Firestore fetch failed, checking Realtime Database: ${e.message}")

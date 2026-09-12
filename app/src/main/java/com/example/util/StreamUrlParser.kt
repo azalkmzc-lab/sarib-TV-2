@@ -360,8 +360,8 @@ object StreamUrlParser {
         val customUa = config.userAgent ?: DEFAULT_USER_AGENT
         factory.setUserAgent(customUa)
         factory.setAllowCrossProtocolRedirects(true)
-        factory.setConnectTimeoutMs(8000)
-        factory.setReadTimeoutMs(15000)
+        factory.setConnectTimeoutMs(4000)
+        factory.setReadTimeoutMs(8000)
         val combinedHeaders = mutableMapOf<String, String>(
             "Connection" to "keep-alive",
             "Accept-Encoding" to "identity"

@@ -352,10 +352,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
-                val channels = repository.getChannelsForCategoryOnDemand(category.id, forceRefresh = forceRefresh)
+                val currentList = _categoryChannels.value.toMutableList()
+                val channels = repository.getChannelsForCategoryOnDemand(
+                    categoryId = category.id,
+                    forceRefresh = forceRefresh
+                ) { batch ->
+                    val existingIds = currentList.map { it.id }.toSet()
+                    val newItems = batch.filter { it.id !in existingIds }
+                    if (newItems.isNotEmpty()) {
+                        currentList.addAll(newItems)
+                        _categoryChannels.value = currentList.toList()
+                        _isCategoryLoading.value = false
+                    }
+                }
                 if (channels.isNotEmpty()) {
-                    _categoryChannels.value = channels
-                } else if (instantChannels.isNotEmpty()) {
+                    val existingIds = currentList.map { it.id }.toSet()
+                    val newItems = channels.filter { it.id !in existingIds }
+                    if (newItems.isNotEmpty()) {
+                        currentList.addAll(newItems)
+                        _categoryChannels.value = currentList.toList()
+                    }
+                } else if (_categoryChannels.value.isEmpty() && instantChannels.isNotEmpty()) {
                     _categoryChannels.value = instantChannels
                 }
             } catch (e: Exception) {
@@ -412,14 +429,36 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         viewModelScope.launch {
             try {
+                val currentMedia = _categoryMediaList.value.toMutableList()
                 val media = if (isSeries) {
-                    repository.getSeriesForCategoryOnDemand(category.id)
+                    repository.getSeriesForCategoryOnDemand(category.id) { batch ->
+                        val existingIds = currentMedia.map { it.id }.toSet()
+                        val newItems = batch.filter { it.id !in existingIds }
+                        if (newItems.isNotEmpty()) {
+                            currentMedia.addAll(newItems)
+                            _categoryMediaList.value = currentMedia.toList()
+                            _isCategoryLoading.value = false
+                        }
+                    }
                 } else {
-                    repository.getMoviesForCategoryOnDemand(category.id)
+                    repository.getMoviesForCategoryOnDemand(category.id) { batch ->
+                        val existingIds = currentMedia.map { it.id }.toSet()
+                        val newItems = batch.filter { it.id !in existingIds }
+                        if (newItems.isNotEmpty()) {
+                            currentMedia.addAll(newItems)
+                            _categoryMediaList.value = currentMedia.toList()
+                            _isCategoryLoading.value = false
+                        }
+                    }
                 }
                 if (media.isNotEmpty()) {
-                    _categoryMediaList.value = media
-                } else if (instantMedia.isNotEmpty()) {
+                    val existingIds = currentMedia.map { it.id }.toSet()
+                    val newItems = media.filter { it.id !in existingIds }
+                    if (newItems.isNotEmpty()) {
+                        currentMedia.addAll(newItems)
+                        _categoryMediaList.value = currentMedia.toList()
+                    }
+                } else if (_categoryMediaList.value.isEmpty() && instantMedia.isNotEmpty()) {
                     _categoryMediaList.value = instantMedia
                 }
             } catch (e: Exception) {

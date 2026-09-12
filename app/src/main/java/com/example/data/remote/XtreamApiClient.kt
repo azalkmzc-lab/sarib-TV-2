@@ -75,9 +75,15 @@ class XtreamApiClient(
         }
     }
 
-    suspend fun fetchLiveCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
+    suspend fun fetchLiveCategories(
+        batchSize: Int = 20,
+        onBatch: suspend (List<ChannelCategory>) -> Unit = {}
+    ): List<ChannelCategory> = withContext(Dispatchers.IO) {
         val cacheKey = "live_cats_${serverHost}_$username"
-        getFromCache<List<ChannelCategory>>(cacheKey)?.let { return@withContext it }
+        getFromCache<List<ChannelCategory>>(cacheKey)?.let {
+            if (it.isNotEmpty()) onBatch(it)
+            return@withContext it
+        }
 
         try {
             val url = "${getBaseUrl()}&action=get_live_categories"
@@ -88,6 +94,7 @@ class XtreamApiClient(
 
             val jsonArray = JSONArray(jsonStr)
             val list = mutableListOf<ChannelCategory>()
+            val currentBatch = mutableListOf<ChannelCategory>()
             val colors = listOf("#9333EA", "#2563EB", "#7C3AED", "#059669", "#DC2626", "#65A30D", "#0D9488", "#D97706", "#EC4899", "#F59E0B")
 
             for (i in 0 until jsonArray.length()) {
@@ -95,17 +102,25 @@ class XtreamApiClient(
                 val catId = obj.optString("category_id", "")
                 val catName = obj.optString("category_name", "باقة قنوات")
                 if (catId.isNotEmpty()) {
-                    list.add(
-                        ChannelCategory(
-                            id = catId,
-                            name = catName,
-                            subtitle = "باقة بث مباشر",
-                            channelCount = 0,
-                            categoryType = if (catName.contains("sport", ignoreCase = true) || catName.contains("رياض", ignoreCase = true)) "sports" else "entertainment",
-                            gradientColorHex = colors[i % colors.size]
-                        )
+                    val category = ChannelCategory(
+                        id = catId,
+                        name = catName,
+                        subtitle = "باقة بث مباشر",
+                        channelCount = 0,
+                        categoryType = if (catName.contains("sport", ignoreCase = true) || catName.contains("رياض", ignoreCase = true)) "sports" else "entertainment",
+                        gradientColorHex = colors[i % colors.size]
                     )
+                    list.add(category)
+                    currentBatch.add(category)
+                    if (currentBatch.size >= batchSize) {
+                        onBatch(currentBatch.toList())
+                        currentBatch.clear()
+                    }
                 }
+            }
+            if (currentBatch.isNotEmpty()) {
+                onBatch(currentBatch.toList())
+                currentBatch.clear()
             }
             if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
@@ -115,9 +130,15 @@ class XtreamApiClient(
         }
     }
 
-    suspend fun fetchVodCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
+    suspend fun fetchVodCategories(
+        batchSize: Int = 20,
+        onBatch: suspend (List<ChannelCategory>) -> Unit = {}
+    ): List<ChannelCategory> = withContext(Dispatchers.IO) {
         val cacheKey = "vod_cats_${serverHost}_$username"
-        getFromCache<List<ChannelCategory>>(cacheKey)?.let { return@withContext it }
+        getFromCache<List<ChannelCategory>>(cacheKey)?.let {
+            if (it.isNotEmpty()) onBatch(it)
+            return@withContext it
+        }
 
         try {
             val url = "${getBaseUrl()}&action=get_vod_categories"
@@ -128,6 +149,7 @@ class XtreamApiClient(
 
             val jsonArray = JSONArray(jsonStr)
             val list = mutableListOf<ChannelCategory>()
+            val currentBatch = mutableListOf<ChannelCategory>()
             val colors = listOf("#E11D48", "#2563EB", "#7C3AED", "#D97706", "#059669", "#9333EA")
 
             for (i in 0 until jsonArray.length()) {
@@ -135,17 +157,25 @@ class XtreamApiClient(
                 val catId = obj.optString("category_id", "")
                 val catName = obj.optString("category_name", "قسم أفلام")
                 if (catId.isNotEmpty()) {
-                    list.add(
-                        ChannelCategory(
-                            id = "vod_$catId",
-                            name = catName,
-                            subtitle = "أفلام سينمائية",
-                            channelCount = 0,
-                            categoryType = "vod",
-                            gradientColorHex = colors[i % colors.size]
-                        )
+                    val category = ChannelCategory(
+                        id = "vod_$catId",
+                        name = catName,
+                        subtitle = "أفلام سينمائية",
+                        channelCount = 0,
+                        categoryType = "vod",
+                        gradientColorHex = colors[i % colors.size]
                     )
+                    list.add(category)
+                    currentBatch.add(category)
+                    if (currentBatch.size >= batchSize) {
+                        onBatch(currentBatch.toList())
+                        currentBatch.clear()
+                    }
                 }
+            }
+            if (currentBatch.isNotEmpty()) {
+                onBatch(currentBatch.toList())
+                currentBatch.clear()
             }
             if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
@@ -155,9 +185,15 @@ class XtreamApiClient(
         }
     }
 
-    suspend fun fetchSeriesCategories(): List<ChannelCategory> = withContext(Dispatchers.IO) {
+    suspend fun fetchSeriesCategories(
+        batchSize: Int = 20,
+        onBatch: suspend (List<ChannelCategory>) -> Unit = {}
+    ): List<ChannelCategory> = withContext(Dispatchers.IO) {
         val cacheKey = "series_cats_${serverHost}_$username"
-        getFromCache<List<ChannelCategory>>(cacheKey)?.let { return@withContext it }
+        getFromCache<List<ChannelCategory>>(cacheKey)?.let {
+            if (it.isNotEmpty()) onBatch(it)
+            return@withContext it
+        }
 
         try {
             val url = "${getBaseUrl()}&action=get_series_categories"
@@ -168,6 +204,7 @@ class XtreamApiClient(
 
             val jsonArray = JSONArray(jsonStr)
             val list = mutableListOf<ChannelCategory>()
+            val currentBatch = mutableListOf<ChannelCategory>()
             val colors = listOf("#7C3AED", "#059669", "#2563EB", "#E11D48", "#D97706")
 
             for (i in 0 until jsonArray.length()) {
@@ -175,17 +212,25 @@ class XtreamApiClient(
                 val catId = obj.optString("category_id", "")
                 val catName = obj.optString("category_name", "قسم مسلسلات")
                 if (catId.isNotEmpty()) {
-                    list.add(
-                        ChannelCategory(
-                            id = "series_$catId",
-                            name = catName,
-                            subtitle = "مسلسلات حصرية",
-                            channelCount = 0,
-                            categoryType = "series",
-                            gradientColorHex = colors[i % colors.size]
-                        )
+                    val category = ChannelCategory(
+                        id = "series_$catId",
+                        name = catName,
+                        subtitle = "مسلسلات حصرية",
+                        channelCount = 0,
+                        categoryType = "series",
+                        gradientColorHex = colors[i % colors.size]
                     )
+                    list.add(category)
+                    currentBatch.add(category)
+                    if (currentBatch.size >= batchSize) {
+                        onBatch(currentBatch.toList())
+                        currentBatch.clear()
+                    }
                 }
+            }
+            if (currentBatch.isNotEmpty()) {
+                onBatch(currentBatch.toList())
+                currentBatch.clear()
             }
             if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
@@ -195,9 +240,17 @@ class XtreamApiClient(
         }
     }
 
-    suspend fun fetchLiveStreams(categoryId: String? = null, limit: Int = -1): List<ChannelItem> = withContext(Dispatchers.IO) {
+    suspend fun fetchLiveStreams(
+        categoryId: String? = null,
+        limit: Int = -1,
+        batchSize: Int = 25,
+        onBatch: suspend (List<ChannelItem>) -> Unit = {}
+    ): List<ChannelItem> = withContext(Dispatchers.IO) {
         val cacheKey = "live_streams_${serverHost}_${categoryId}_$limit"
-        getFromCache<List<ChannelItem>>(cacheKey)?.let { return@withContext it }
+        getFromCache<List<ChannelItem>>(cacheKey)?.let {
+            if (it.isNotEmpty()) onBatch(it)
+            return@withContext it
+        }
 
         try {
             val url = if (categoryId.isNullOrBlank()) {
@@ -212,6 +265,7 @@ class XtreamApiClient(
 
             val jsonArray = JSONArray(jsonStr)
             val list = mutableListOf<ChannelItem>()
+            val currentBatch = mutableListOf<ChannelItem>()
             val maxItems = if (limit > 0) minOf(limit, jsonArray.length()) else jsonArray.length()
 
             for (i in 0 until maxItems) {
@@ -225,24 +279,32 @@ class XtreamApiClient(
                 if (streamId.isNotEmpty()) {
                     val streamUrl = "${serverHost.trimEnd('/')}/live/$username/$password/$streamId.m3u8"
                     val backupUrl = "${serverHost.trimEnd('/')}/live/$username/$password/$streamId.ts"
-                    list.add(
-                        ChannelItem(
-                            id = "xt_ch_$streamId",
-                            name = name,
-                            categoryId = catId,
-                            categoryName = "باقة $catId",
-                            logoUrl = icon,
-                            streamUrl = streamUrl,
-                            backupUrl = backupUrl,
-                            country = "العالم العربي",
-                            language = "العربية",
-                            isFavorite = false,
-                            isEnabled = true,
-                            sortOrder = num,
-                            viewsCount = (1000..9900).random()
-                        )
+                    val channel = ChannelItem(
+                        id = "xt_ch_$streamId",
+                        name = name,
+                        categoryId = catId,
+                        categoryName = "باقة $catId",
+                        logoUrl = icon,
+                        streamUrl = streamUrl,
+                        backupUrl = backupUrl,
+                        country = "العالم العربي",
+                        language = "العربية",
+                        isFavorite = false,
+                        isEnabled = true,
+                        sortOrder = num,
+                        viewsCount = (1000..9900).random()
                     )
+                    list.add(channel)
+                    currentBatch.add(channel)
+                    if (currentBatch.size >= batchSize) {
+                        onBatch(currentBatch.toList())
+                        currentBatch.clear()
+                    }
                 }
+            }
+            if (currentBatch.isNotEmpty()) {
+                onBatch(currentBatch.toList())
+                currentBatch.clear()
             }
             if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
@@ -252,9 +314,17 @@ class XtreamApiClient(
         }
     }
 
-    suspend fun fetchVodStreams(categoryId: String? = null, limit: Int = -1): List<MediaItem> = withContext(Dispatchers.IO) {
+    suspend fun fetchVodStreams(
+        categoryId: String? = null,
+        limit: Int = -1,
+        batchSize: Int = 25,
+        onBatch: suspend (List<MediaItem>) -> Unit = {}
+    ): List<MediaItem> = withContext(Dispatchers.IO) {
         val cacheKey = "vod_streams_${serverHost}_${categoryId}_$limit"
-        getFromCache<List<MediaItem>>(cacheKey)?.let { return@withContext it }
+        getFromCache<List<MediaItem>>(cacheKey)?.let {
+            if (it.isNotEmpty()) onBatch(it)
+            return@withContext it
+        }
         try {
             val cleanCatId = categoryId?.removePrefix("vod_")
             val url = if (cleanCatId.isNullOrBlank()) {
@@ -269,6 +339,7 @@ class XtreamApiClient(
 
             val jsonArray = JSONArray(jsonStr)
             val list = mutableListOf<MediaItem>()
+            val currentBatch = mutableListOf<MediaItem>()
             val maxItems = if (limit > 0) minOf(limit, jsonArray.length()) else jsonArray.length()
 
             for (i in 0 until maxItems) {
@@ -281,25 +352,33 @@ class XtreamApiClient(
 
                 if (streamId.isNotEmpty()) {
                     val streamUrl = "${serverHost.trimEnd('/')}/movie/$username/$password/$streamId.$container"
-                    list.add(
-                        MediaItem(
-                            id = "xt_mov_$streamId",
-                            title = name,
-                            posterUrl = icon,
-                            backdropUrl = icon,
-                            type = ContentType.MOVIE,
-                            year = "2024",
-                            rating = if (rating.isNotBlank() && rating != "0") rating.take(3) else "8.7",
-                            genre = "أفلام سينما",
-                            description = "مشاهدة مباشرة بدقة عالية عبر SARIB TV",
-                            duration = "120 دقيقة",
-                            streamUrl = streamUrl,
-                            isTop = i < 10,
-                            topRank = String.format("%02d", i + 1),
-                            isFavorite = false
-                        )
+                    val movie = MediaItem(
+                        id = "xt_mov_$streamId",
+                        title = name,
+                        posterUrl = icon,
+                        backdropUrl = icon,
+                        type = ContentType.MOVIE,
+                        year = "2024",
+                        rating = if (rating.isNotBlank() && rating != "0") rating.take(3) else "8.7",
+                        genre = "أفلام سينما",
+                        description = "مشاهدة مباشرة بدقة عالية عبر SARIB TV",
+                        duration = "120 دقيقة",
+                        streamUrl = streamUrl,
+                        isTop = i < 10,
+                        topRank = String.format("%02d", i + 1),
+                        isFavorite = false
                     )
+                    list.add(movie)
+                    currentBatch.add(movie)
+                    if (currentBatch.size >= batchSize) {
+                        onBatch(currentBatch.toList())
+                        currentBatch.clear()
+                    }
                 }
+            }
+            if (currentBatch.isNotEmpty()) {
+                onBatch(currentBatch.toList())
+                currentBatch.clear()
             }
             if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
@@ -309,9 +388,17 @@ class XtreamApiClient(
         }
     }
 
-    suspend fun fetchSeries(categoryId: String? = null, limit: Int = -1): List<MediaItem> = withContext(Dispatchers.IO) {
+    suspend fun fetchSeries(
+        categoryId: String? = null,
+        limit: Int = -1,
+        batchSize: Int = 25,
+        onBatch: suspend (List<MediaItem>) -> Unit = {}
+    ): List<MediaItem> = withContext(Dispatchers.IO) {
         val cacheKey = "series_streams_${serverHost}_${categoryId}_$limit"
-        getFromCache<List<MediaItem>>(cacheKey)?.let { return@withContext it }
+        getFromCache<List<MediaItem>>(cacheKey)?.let {
+            if (it.isNotEmpty()) onBatch(it)
+            return@withContext it
+        }
 
         try {
             val cleanCatId = categoryId?.removePrefix("series_")
@@ -327,6 +414,7 @@ class XtreamApiClient(
 
             val jsonArray = JSONArray(jsonStr)
             val list = mutableListOf<MediaItem>()
+            val currentBatch = mutableListOf<MediaItem>()
             val maxItems = if (limit > 0) minOf(limit, jsonArray.length()) else jsonArray.length()
 
             for (i in 0 until maxItems) {
@@ -341,28 +429,36 @@ class XtreamApiClient(
 
                 if (seriesId.isNotEmpty()) {
                     val streamUrl = "${serverHost.trimEnd('/')}/series/$username/$password/$seriesId.mp4"
-                    list.add(
-                        MediaItem(
-                            id = "xt_ser_$seriesId",
-                            title = name,
-                            posterUrl = cover,
-                            backdropUrl = cover,
-                            type = if (genre.contains("أنمي", ignoreCase = true) || name.contains("anime", ignoreCase = true)) ContentType.ANIME else ContentType.SERIES,
-                            year = releaseDate.take(4).ifEmpty { "2024" },
-                            rating = if (rating.isNotBlank() && rating != "0") rating.take(3) else "8.9",
-                            genre = genre.ifEmpty { "مسلسل حصري" },
-                            description = plot,
-                            duration = "45 دقيقة",
-                            seasonsCount = 1,
-                            episodesCount = 10,
-                            streamUrl = streamUrl,
-                            isTop = i < 10,
-                            topRank = String.format("%02d", i + 1),
-                            isFavorite = false,
-                            rawSeriesId = seriesId
-                        )
+                    val seriesItem = MediaItem(
+                        id = "xt_ser_$seriesId",
+                        title = name,
+                        posterUrl = cover,
+                        backdropUrl = cover,
+                        type = if (genre.contains("أنمي", ignoreCase = true) || name.contains("anime", ignoreCase = true)) ContentType.ANIME else ContentType.SERIES,
+                        year = releaseDate.take(4).ifEmpty { "2024" },
+                        rating = if (rating.isNotBlank() && rating != "0") rating.take(3) else "8.9",
+                        genre = genre.ifEmpty { "مسلسل حصري" },
+                        description = plot,
+                        duration = "45 دقيقة",
+                        seasonsCount = 1,
+                        episodesCount = 10,
+                        streamUrl = streamUrl,
+                        isTop = i < 10,
+                        topRank = String.format("%02d", i + 1),
+                        isFavorite = false,
+                        rawSeriesId = seriesId
                     )
+                    list.add(seriesItem)
+                    currentBatch.add(seriesItem)
+                    if (currentBatch.size >= batchSize) {
+                        onBatch(currentBatch.toList())
+                        currentBatch.clear()
+                    }
                 }
+            }
+            if (currentBatch.isNotEmpty()) {
+                onBatch(currentBatch.toList())
+                currentBatch.clear()
             }
             if (list.isNotEmpty()) putInCache(cacheKey, list)
             list
