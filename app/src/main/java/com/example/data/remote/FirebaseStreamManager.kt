@@ -191,6 +191,26 @@ class FirebaseStreamManager(private val context: Context) {
                         heroStreamUrl = docSnapshot.getString("hero_stream_url") ?: "http://cliccck52258.club:2082/series/khaledsliman/755246419856/1.mp4"
                     )
                 }
+
+                // Dedicated check for matches_config in Firestore
+                try {
+                    val matchesDoc = firestore.collection("matches_config").document("main_config").get().await()
+                    if (matchesDoc != null && matchesDoc.exists()) {
+                        val key = matchesDoc.getString("api_football_key")
+                            ?: matchesDoc.getString("football_api_key")
+                            ?: matchesDoc.getString("matches_api_key")
+                            ?: matchesDoc.getString("api_key")
+                            ?: matchesDoc.getString("key")
+                        val mUrl = matchesDoc.getString("matches_api_url") ?: matchesDoc.getString("matches_url")
+                        baseConfig = baseConfig.copy(
+                            apiFootballKey = if (!key.isNullOrBlank()) key else baseConfig.apiFootballKey,
+                            matchesApiUrl = if (!mUrl.isNullOrBlank()) mUrl else baseConfig.matchesApiUrl
+                        )
+                        Log.i(TAG, "Loaded matches API config from Firestore matches_config/main_config")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "matches_config fetch error: ${e.message}")
+                }
             } catch (e: Exception) {
                 Log.w(TAG, "Firestore fetch failed, checking Realtime Database: ${e.message}")
             }
@@ -200,6 +220,8 @@ class FirebaseStreamManager(private val context: Context) {
         try {
             val rtdbUrls = listOf(
                 "https://iptvpro-f5172-default-rtdb.firebaseio.com/stream_config.json",
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches_config.json",
+                "https://iptvpro-f5172-default-rtdb.firebaseio.com/football_key.json",
                 "https://iptvpro-f5172-default-rtdb.firebaseio.com/.json"
             )
             for (url in rtdbUrls) {
