@@ -212,115 +212,151 @@ class SaribRepository(private val context: Context) {
 
     suspend fun syncAllContentInBackground(force: Boolean = false) = withContext(Dispatchers.IO) {
         try {
-            Log.d("SaribRepository", "Starting background full content sync...")
-            // Multi-Source Sync: Live Xtream, M3U playlists, Movies & Series categories
+            Log.d("SaribRepository", "Starting background progressive streaming sync...")
             coroutineScope {
-                val channelsApiDeferred = async {
-                    if (currentRemoteConfig.isChannelsApiEnabled && currentRemoteConfig.channelsApiUrl.isNotBlank()) {
-                        firebaseStreamManager.fetchChannelsFromApi(currentRemoteConfig.channelsApiUrl)
-                    } else emptyList()
-                }
-                val liveXtreamCatsDeferred = async {
-                    if (currentRemoteConfig.isLiveXtreamEnabled && currentRemoteConfig.liveXtreamAccount.serverHost.isNotBlank()) {
-                        liveXtreamClient.fetchLiveCategories()
-                    } else emptyList()
-                }
-                val liveXtreamChannelsDeferred = async {
-                    if (currentRemoteConfig.isLiveXtreamEnabled && currentRemoteConfig.liveXtreamAccount.serverHost.isNotBlank()) {
-                        liveXtreamClient.fetchLiveStreams(limit = 150)
-                    } else emptyList()
-                }
-                val m3uResultDeferred = async {
-                    val m3uSources = firebaseStreamManager.fetchM3uSources()
-                    val sourcesToFetch = mutableListOf<Pair<String, String>>()
-                    if (currentRemoteConfig.m3uPlaylistUrl.isNotBlank()) {
-                        sourcesToFetch.add(Pair(currentRemoteConfig.m3uPlaylistUrl, "باقة القنوات المباشرة"))
-                    }
-                    for (src in m3uSources) {
-                        if (src.url.isNotBlank() && src.isEnabled) {
-                            sourcesToFetch.add(Pair(src.url, src.name.ifBlank { "باقة M3U سحابية" }))
-                        }
-                    }
+                // 1. Live Xtream Categories & Channels (Immediate Progressive Push)
+                launch {
                     try {
-                        val userM3uList = com.example.data.local.AppPreferences(context).getCustomM3uList()
-                        for (userSrc in userM3uList) {
-                            if (userSrc.first.isNotBlank()) {
-                                sourcesToFetch.add(Pair(userSrc.first, userSrc.second))
+                        if (currentRemoteConfig.isLiveXtreamEnabled && currentRemoteConfig.liveXtreamAccount.serverHost.isNotBlank()) {
+                            val liveCats = liveXtreamClient.fetchLiveCategories()
+                            if (liveCats.isNotEmpty()) {
+                                dao.insertCategories(liveCats.map { it.toEntity() })
+                            }
+                            val liveChannels = liveXtreamClient.fetchLiveStreams(limit = 150)
+                            if (liveChannels.isNotEmpty()) {
+                                dao.insertChannels(liveChannels.map { it.toEntity() })
                             }
                         }
                     } catch (e: Exception) {
-                        Log.w("SaribRepository", "Error reading custom M3U preferences: ${e.message}")
+                        Log.w("SaribRepository", "Live Xtream progressive sync error: ${e.message}")
                     }
+                }
 
-                    val aggregatedCategories = mutableListOf<com.example.data.model.ChannelCategory>()
-                    val aggregatedChannels = mutableListOf<com.example.data.model.ChannelItem>()
-
-                    for ((url, name) in sourcesToFetch.distinctBy { it.first }) {
-                        try {
-                            val parsed = firebaseStreamManager.fetchM3uPlaylist(url, name)
-                            aggregatedCategories.addAll(parsed.categories)
-                            aggregatedChannels.addAll(parsed.channels)
-                        } catch (e: Exception) {
-                            Log.w("SaribRepository", "Error parsing M3U source $url: ${e.message}")
+                // 2. Channels API (Immediate Progressive Push)
+                launch {
+                    try {
+                        if (currentRemoteConfig.isChannelsApiEnabled && currentRemoteConfig.channelsApiUrl.isNotBlank()) {
+                            val apiChannels = firebaseStreamManager.fetchChannelsFromApi(currentRemoteConfig.channelsApiUrl)
+                            if (apiChannels.isNotEmpty()) {
+                                dao.insertChannels(apiChannels.map { it.toEntity() })
+                            }
                         }
-                    }
-
-                    com.example.util.ParsedM3uResult(
-                        categories = aggregatedCategories.distinctBy { it.id },
-                        channels = aggregatedChannels.distinctBy { it.id }
-                    )
-                }
-
-                val customMoviesDeferred = async { firebaseStreamManager.fetchCustomMovies(currentRemoteConfig.moviesApiUrl) }
-                val customMovieCategoriesDeferred = async { firebaseStreamManager.fetchCustomMovieCategories() }
-                val m3uMoviesDeferred = async {
-                    firebaseStreamManager.fetchMoviesFromM3uSources(
-                        if (currentRemoteConfig.m3uMoviesUrl.isNotBlank()) listOf(currentRemoteConfig.m3uMoviesUrl) else emptyList()
-                    )
-                }
-                val vodCategoriesDeferred = async { vodXtreamClient.fetchVodCategories() }
-                val seriesCategoriesDeferred = async { seriesXtreamClient.fetchSeriesCategories() }
-                val topMoviesDeferred = async { vodXtreamClient.fetchVodStreams(limit = 15) }
-                val topSeriesDeferred = async { seriesXtreamClient.fetchSeries(limit = 15) }
-                val newsDeferred = async { fetchNews() }
-
-                val channelsApiChannels = channelsApiDeferred.await()
-                val liveXtreamCats = liveXtreamCatsDeferred.await()
-                val liveXtreamChannels = liveXtreamChannelsDeferred.await()
-                val m3uResult = m3uResultDeferred.await()
-                val customMovies = customMoviesDeferred.await()
-                val customMovieCategories = customMovieCategoriesDeferred.await()
-                val m3uMoviesResult = m3uMoviesDeferred.await()
-                val vodCategories = vodCategoriesDeferred.await()
-                val seriesCategories = seriesCategoriesDeferred.await()
-                val topMovies = topMoviesDeferred.await()
-                val topSeries = topSeriesDeferred.await()
-                newsDeferred.await()
-
-                val combinedChannels = (channelsApiChannels + liveXtreamChannels + m3uResult.channels).distinctBy { it.id }
-                val m3uParsedMovies = (m3uResult.movies + m3uMoviesResult.movies).distinctBy { it.id }
-                val m3uParsedMovieCategories = (m3uResult.movieCategories + m3uMoviesResult.movieCategories).distinctBy { it.id }
-                val allCats = (liveXtreamCats + m3uResult.categories + vodCategories + seriesCategories + customMovieCategories + m3uParsedMovieCategories).distinctBy { it.id }
-                val allMovs = (customMovies + m3uParsedMovies + topMovies).distinctBy { it.id }
-
-                if (allCats.isNotEmpty()) {
-                    dao.insertCategories(allCats.map { it.toEntity() })
-                }
-                if (combinedChannels.isNotEmpty()) {
-                    combinedChannels.chunked(250).forEach { chunk ->
-                        dao.insertChannels(chunk.map { it.toEntity() })
+                    } catch (e: Exception) {
+                        Log.w("SaribRepository", "Channels API progressive sync error: ${e.message}")
                     }
                 }
-                if (allMovs.isNotEmpty() || topSeries.isNotEmpty()) {
-                    if (allMovs.isNotEmpty()) {
-                        dao.insertMediaItems(allMovs.map { it.toEntity() })
+
+                // 3. M3U Live & VOD Sources (Streaming line-by-line in batches of 25)
+                launch {
+                    try {
+                        val m3uSources = firebaseStreamManager.fetchM3uSources()
+                        val sourcesToFetch = mutableListOf<Pair<String, String>>()
+                        if (currentRemoteConfig.m3uPlaylistUrl.isNotBlank()) {
+                            sourcesToFetch.add(Pair(currentRemoteConfig.m3uPlaylistUrl, "باقة القنوات المباشرة"))
+                        }
+                        for (src in m3uSources) {
+                            if (src.url.isNotBlank() && src.isEnabled) {
+                                sourcesToFetch.add(Pair(src.url, src.name.ifBlank { "باقة M3U سحابية" }))
+                            }
+                        }
+                        try {
+                            val userM3uList = com.example.data.local.AppPreferences(context).getCustomM3uList()
+                            for (userSrc in userM3uList) {
+                                if (userSrc.first.isNotBlank()) {
+                                    sourcesToFetch.add(Pair(userSrc.first, userSrc.second))
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.w("SaribRepository", "Error reading custom M3U preferences: ${e.message}")
+                        }
+
+                        for ((url, name) in sourcesToFetch.distinctBy { it.first }) {
+                            try {
+                                com.example.util.M3uPlaylistParser.parseFromUrlStreaming(
+                                    playlistUrl = url,
+                                    defaultGroupName = name,
+                                    batchSize = 25
+                                ) { bCats, bChannels, bMovieCats, bMovies ->
+                                    if (bCats.isNotEmpty()) {
+                                        dao.insertCategories(bCats.map { it.toEntity() })
+                                    }
+                                    if (bMovieCats.isNotEmpty()) {
+                                        dao.insertCategories(bMovieCats.map { it.toEntity() })
+                                    }
+                                    if (bChannels.isNotEmpty()) {
+                                        dao.insertChannels(bChannels.map { it.toEntity() })
+                                    }
+                                    if (bMovies.isNotEmpty()) {
+                                        dao.insertMediaItems(bMovies.map { it.toEntity() })
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                Log.w("SaribRepository", "Error progressive streaming M3U source $url: ${e.message}")
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.w("SaribRepository", "M3U streaming sync error: ${e.message}")
                     }
-                    if (topSeries.isNotEmpty()) {
-                        dao.insertMediaItems(topSeries.map { it.toEntity() })
+                }
+
+                // 4. VOD Categories & Top Movies (Immediate Progressive Push)
+                launch {
+                    try {
+                        val vodCats = vodXtreamClient.fetchVodCategories()
+                        if (vodCats.isNotEmpty()) {
+                            dao.insertCategories(vodCats.map { it.toEntity() })
+                        }
+                        val topMovies = vodXtreamClient.fetchVodStreams(limit = 20)
+                        if (topMovies.isNotEmpty()) {
+                            dao.insertMediaItems(topMovies.map { it.toEntity() })
+                        }
+                    } catch (e: Exception) {
+                        Log.w("SaribRepository", "VOD progressive sync error: ${e.message}")
+                    }
+                }
+
+                // 5. Series Categories & Top Series (Immediate Progressive Push)
+                launch {
+                    try {
+                        val seriesCats = seriesXtreamClient.fetchSeriesCategories()
+                        if (seriesCats.isNotEmpty()) {
+                            dao.insertCategories(seriesCats.map { it.toEntity() })
+                        }
+                        val topSeries = seriesXtreamClient.fetchSeries(limit = 20)
+                        if (topSeries.isNotEmpty()) {
+                            dao.insertMediaItems(topSeries.map { it.toEntity() })
+                        }
+                    } catch (e: Exception) {
+                        Log.w("SaribRepository", "Series progressive sync error: ${e.message}")
+                    }
+                }
+
+                // 6. Custom Firebase Movies & Categories (Immediate Progressive Push)
+                launch {
+                    try {
+                        val customMovieCats = firebaseStreamManager.fetchCustomMovieCategories()
+                        if (customMovieCats.isNotEmpty()) {
+                            dao.insertCategories(customMovieCats.map { it.toEntity() })
+                        }
+                        val customMovies = firebaseStreamManager.fetchCustomMovies(currentRemoteConfig.moviesApiUrl)
+                        if (customMovies.isNotEmpty()) {
+                            dao.insertMediaItems(customMovies.map { it.toEntity() })
+                        }
+                    } catch (e: Exception) {
+                        Log.w("SaribRepository", "Custom movies progressive sync error: ${e.message}")
+                    }
+                }
+
+                // 7. News & Sliders
+                launch {
+                    try {
+                        fetchNews()
+                    } catch (e: Exception) {
+                        Log.w("SaribRepository", "News sync error: ${e.message}")
                     }
                 }
             }
-            Log.d("SaribRepository", "Background content sync finished successfully.")
+            Log.d("SaribRepository", "Background progressive sync finished successfully.")
         } catch (e: Exception) {
             Log.w("SaribRepository", "Background sync encountered error: ${e.message}")
         }

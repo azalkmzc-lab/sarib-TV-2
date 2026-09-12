@@ -113,21 +113,25 @@ object M3uPlaylistParser {
     }
 
     /**
-     * Downloads and parses an M3U / M3U8 playlist from a remote URL.
-     * Fully compatible with:
-     * 1. Multi-channel standard IPTV playlists (#EXTINF).
-     * 2. Multi-variant / multi-rendition HLS master playlists (#EXT-X-STREAM-INF / #EXT-X-MEDIA).
-     * 3. Playlists with BOM, Unicode / Arabic category names, and relative chunklist paths.
-     * 4. Older Android versions (API 21+) and Android TV devices.
+     * Downloads and parses an M3U / M3U8 playlist from a remote URL with PROGRESSIVE STREAMING.
+     * Yields batches of parsed categories, channels, and movies immediately as lines are read,
+     * allowing the UI to populate progressively without waiting for the full file to download.
      */
-    suspend fun parseFromUrl(
+    suspend fun parseFromUrlStreaming(
         playlistUrl: String,
-        defaultGroupName: String = "باقة القنوات المباشرة"
+        defaultGroupName: String = "باقة القنوات المباشرة",
+        batchSize: Int = 25,
+        onBatchParsed: suspend (categories: List<ChannelCategory>, channels: List<ChannelItem>, movieCategories: List<ChannelCategory>, movies: List<MediaItem>) -> Unit = { _, _, _, _ -> }
     ): ParsedM3uResult = withContext(Dispatchers.IO) {
         val categoriesMap = mutableMapOf<String, ChannelCategory>()
         val channels = mutableListOf<ChannelItem>()
         val movieCategoriesMap = mutableMapOf<String, ChannelCategory>()
         val moviesList = mutableListOf<MediaItem>()
+
+        val pendingChannels = mutableListOf<ChannelItem>()
+        val pendingCategories = mutableListOf<ChannelCategory>()
+        val pendingMovies = mutableListOf<MediaItem>()
+        val pendingMovieCategories = mutableListOf<ChannelCategory>()
 
         val cleanUrl = playlistUrl.trim()
         if (cleanUrl.isBlank()) {
@@ -160,6 +164,20 @@ object M3uPlaylistParser {
             var movieIndex = 0
 
             val colors = listOf("#0088FF", "#00C8FF", "#2563EB", "#7C3AED", "#DC2626", "#059669", "#D97706", "#EC4899")
+
+            suspend fun flushBatch() {
+                if (pendingChannels.isNotEmpty() || pendingCategories.isNotEmpty() || pendingMovies.isNotEmpty() || pendingMovieCategories.isNotEmpty()) {
+                    val cats = pendingCategories.toList()
+                    val chs = pendingChannels.toList()
+                    val mCats = pendingMovieCategories.toList()
+                    val movs = pendingMovies.toList()
+                    pendingCategories.clear()
+                    pendingChannels.clear()
+                    pendingMovieCategories.clear()
+                    pendingMovies.clear()
+                    onBatchParsed(cats, chs, mCats, movs)
+                }
+            }
 
             reader.useLines { lines ->
                 for (rawLine in lines) {
@@ -233,7 +251,7 @@ object M3uPlaylistParser {
 
                             val existingCat = categoriesMap[catId]
                             val newCount = (existingCat?.channelCount ?: 0) + 1
-                            categoriesMap[catId] = ChannelCategory(
+                            val category = ChannelCategory(
                                 id = catId,
                                 name = mediaGroup,
                                 subtitle = "بث مباشر سريع CDN",
@@ -242,25 +260,33 @@ object M3uPlaylistParser {
                                 categoryType = "live",
                                 gradientColorHex = colors[categoriesMap.size % colors.size]
                             )
+                            categoriesMap[catId] = category
+                            if (existingCat == null) {
+                                pendingCategories.add(category)
+                            }
 
-                            channels.add(
-                                ChannelItem(
-                                    id = "m3u_media_${channelIndex}_${Math.abs(fullStreamUrl.hashCode())}",
-                                    name = mediaName.ifBlank { "قناة ${channelIndex + 1}" },
-                                    categoryId = catId,
-                                    categoryName = mediaGroup,
-                                    logoUrl = "",
-                                    streamUrl = fullStreamUrl,
-                                    backupUrl = "",
-                                    country = "سحابي Cloud",
-                                    language = "العربية",
-                                    isFavorite = false,
-                                    isEnabled = true,
-                                    sortOrder = channelIndex,
-                                    viewsCount = (300..2500).random()
-                                )
+                            val ch = ChannelItem(
+                                id = "m3u_media_${channelIndex}_${Math.abs(fullStreamUrl.hashCode())}",
+                                name = mediaName.ifBlank { "قناة ${channelIndex + 1}" },
+                                categoryId = catId,
+                                categoryName = mediaGroup,
+                                logoUrl = "",
+                                streamUrl = fullStreamUrl,
+                                backupUrl = "",
+                                country = "سحابي Cloud",
+                                language = "العربية",
+                                isFavorite = false,
+                                isEnabled = true,
+                                sortOrder = channelIndex,
+                                viewsCount = (300..2500).random()
                             )
+                            channels.add(ch)
+                            pendingChannels.add(ch)
                             channelIndex++
+
+                            if (pendingChannels.size >= batchSize) {
+                                kotlinx.coroutines.runBlocking { flushBatch() }
+                            }
                         }
                     }
                     // 5. Stream URL line (non-comment line)
@@ -295,7 +321,7 @@ object M3uPlaylistParser {
                                 val categoryId = "m3u_mov_cat_" + Math.abs(currentGroup.trim().hashCode())
                                 val existingCat = movieCategoriesMap[categoryId]
                                 val newCount = (existingCat?.channelCount ?: 0) + 1
-                                movieCategoriesMap[categoryId] = ChannelCategory(
+                                val mCat = ChannelCategory(
                                     id = categoryId,
                                     name = currentGroup,
                                     subtitle = "أفلام وسينما سحابية",
@@ -304,6 +330,10 @@ object M3uPlaylistParser {
                                     categoryType = "movies",
                                     gradientColorHex = colors[movieCategoriesMap.size % colors.size]
                                 )
+                                movieCategoriesMap[categoryId] = mCat
+                                if (existingCat == null) {
+                                    pendingMovieCategories.add(mCat)
+                                }
 
                                 val yearRegex = "\\b(19\\d{2}|20\\d{2})\\b".toRegex()
                                 val year = yearRegex.find(currentName)?.value ?: "2024"
@@ -315,30 +345,34 @@ object M3uPlaylistParser {
                                     "m3u_mov_${movieIndex}_${Math.abs(streamUrl.hashCode())}"
                                 }
 
-                                moviesList.add(
-                                    MediaItem(
-                                        id = movieId,
-                                        title = cleanTitle.ifBlank { currentName.ifBlank { "فيلم ${movieIndex + 1}" } },
-                                        posterUrl = currentLogo,
-                                        backdropUrl = currentLogo,
-                                        type = ContentType.MOVIE,
-                                        year = year,
-                                        rating = "8.8",
-                                        genre = currentGroup,
-                                        description = "فيلم سينمائي عالي الجودة متوفر عبر البث السحابي.",
-                                        duration = "120 دقيقة",
-                                        streamUrl = streamUrl,
-                                        isTop = movieIndex < 6,
-                                        topRank = String.format("%02d", movieIndex + 1),
-                                        isFavorite = false
-                                    )
+                                val mov = MediaItem(
+                                    id = movieId,
+                                    title = cleanTitle.ifBlank { currentName.ifBlank { "فيلم ${movieIndex + 1}" } },
+                                    posterUrl = currentLogo,
+                                    backdropUrl = currentLogo,
+                                    type = ContentType.MOVIE,
+                                    year = year,
+                                    rating = "8.8",
+                                    genre = currentGroup,
+                                    description = "فيلم سينمائي عالي الجودة متوفر عبر البث السحابي.",
+                                    duration = "120 دقيقة",
+                                    streamUrl = streamUrl,
+                                    isTop = movieIndex < 6,
+                                    topRank = String.format("%02d", movieIndex + 1),
+                                    isFavorite = false
                                 )
+                                moviesList.add(mov)
+                                pendingMovies.add(mov)
                                 movieIndex++
+
+                                if (pendingMovies.size >= batchSize) {
+                                    kotlinx.coroutines.runBlocking { flushBatch() }
+                                }
                             } else {
                                 val categoryId = "m3u_cat_" + Math.abs(currentGroup.trim().hashCode())
                                 val existingCat = categoriesMap[categoryId]
                                 val newCount = (existingCat?.channelCount ?: 0) + 1
-                                categoriesMap[categoryId] = ChannelCategory(
+                                val category = ChannelCategory(
                                     id = categoryId,
                                     name = currentGroup,
                                     subtitle = "بث مباشر سريع CDN",
@@ -347,6 +381,10 @@ object M3uPlaylistParser {
                                     categoryType = "live",
                                     gradientColorHex = colors[categoriesMap.size % colors.size]
                                 )
+                                categoriesMap[categoryId] = category
+                                if (existingCat == null) {
+                                    pendingCategories.add(category)
+                                }
 
                                 val channelId = if (currentTvgId.isNotBlank()) {
                                     "m3u_${currentTvgId}_$channelIndex"
@@ -354,24 +392,28 @@ object M3uPlaylistParser {
                                     "m3u_ch_${channelIndex}_${Math.abs(streamUrl.hashCode())}"
                                 }
 
-                                channels.add(
-                                    ChannelItem(
-                                        id = channelId,
-                                        name = currentName.ifBlank { "قناة ${channelIndex + 1}" },
-                                        categoryId = categoryId,
-                                        categoryName = currentGroup,
-                                        logoUrl = currentLogo,
-                                        streamUrl = streamUrl,
-                                        backupUrl = "",
-                                        country = "سحابي Cloud",
-                                        language = "العربية",
-                                        isFavorite = false,
-                                        isEnabled = true,
-                                        sortOrder = channelIndex,
-                                        viewsCount = (300..2500).random()
-                                    )
+                                val ch = ChannelItem(
+                                    id = channelId,
+                                    name = currentName.ifBlank { "قناة ${channelIndex + 1}" },
+                                    categoryId = categoryId,
+                                    categoryName = currentGroup,
+                                    logoUrl = currentLogo,
+                                    streamUrl = streamUrl,
+                                    backupUrl = "",
+                                    country = "سحابي Cloud",
+                                    language = "العربية",
+                                    isFavorite = false,
+                                    isEnabled = true,
+                                    sortOrder = channelIndex,
+                                    viewsCount = (300..2500).random()
                                 )
+                                channels.add(ch)
+                                pendingChannels.add(ch)
                                 channelIndex++
+
+                                if (pendingChannels.size >= batchSize) {
+                                    kotlinx.coroutines.runBlocking { flushBatch() }
+                                }
                             }
                         }
 
@@ -384,6 +426,9 @@ object M3uPlaylistParser {
                     }
                 }
             }
+
+            // Flush any remaining items in buffer
+            flushBatch()
 
             // Fallback: If no #EXTINF was found but this is a direct M3U8/MPD/TS stream link
             if (channels.isEmpty() && moviesList.isEmpty() && (cleanUrl.contains(".m3u8", ignoreCase = true) || cleanUrl.contains(".mpd", ignoreCase = true) || cleanUrl.contains(".ts", ignoreCase = true))) {
@@ -398,23 +443,23 @@ object M3uPlaylistParser {
                     gradientColorHex = "#0088FF"
                 )
                 categoriesMap[catId] = category
-                channels.add(
-                    ChannelItem(
-                        id = "m3u_direct_${Math.abs(cleanUrl.hashCode())}",
-                        name = defaultGroupName,
-                        categoryId = catId,
-                        categoryName = defaultGroupName,
-                        logoUrl = "",
-                        streamUrl = cleanUrl,
-                        backupUrl = "",
-                        country = "سحابي Cloud",
-                        language = "العربية",
-                        isFavorite = false,
-                        isEnabled = true,
-                        sortOrder = 0,
-                        viewsCount = 1500
-                    )
+                val ch = ChannelItem(
+                    id = "m3u_direct_${Math.abs(cleanUrl.hashCode())}",
+                    name = defaultGroupName,
+                    categoryId = catId,
+                    categoryName = defaultGroupName,
+                    logoUrl = "",
+                    streamUrl = cleanUrl,
+                    backupUrl = "",
+                    country = "سحابي Cloud",
+                    language = "العربية",
+                    isFavorite = false,
+                    isEnabled = true,
+                    sortOrder = 0,
+                    viewsCount = 1500
                 )
+                channels.add(ch)
+                onBatchParsed(listOf(category), listOf(ch), emptyList(), emptyList())
             }
 
             Log.i(TAG, "Parsed ${channels.size} channels, ${moviesList.size} movies across ${categoriesMap.size} categories from $cleanUrl")
@@ -429,6 +474,14 @@ object M3uPlaylistParser {
             movies = moviesList
         )
     }
+
+    /**
+     * Downloads and parses an M3U / M3U8 playlist from a remote URL.
+     */
+    suspend fun parseFromUrl(
+        playlistUrl: String,
+        defaultGroupName: String = "باقة القنوات المباشرة"
+    ): ParsedM3uResult = parseFromUrlStreaming(playlistUrl, defaultGroupName, batchSize = 1000) { _, _, _, _ -> }
 
     /**
      * Parses an M3U playlist specifically dedicated to movies and VOD streams.
