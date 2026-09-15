@@ -14,6 +14,9 @@ import com.example.service.NotificationSyncWorker
 import com.example.util.FirebaseNotificationListener
 import com.example.util.NotificationHelper
 import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.messaging.FirebaseMessaging
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -23,6 +26,23 @@ class SaribApplication : Application(), ImageLoaderFactory {
     override fun onCreate() {
         super.onCreate()
         
+        // 0. Initialize Firebase & App Check
+        try {
+            FirebaseApp.initializeApp(this)
+            val firebaseAppCheck = FirebaseAppCheck.getInstance()
+            if (BuildConfig.DEBUG) {
+                firebaseAppCheck.installAppCheckProviderFactory(
+                    DebugAppCheckProviderFactory.getInstance()
+                )
+            } else {
+                firebaseAppCheck.installAppCheckProviderFactory(
+                    PlayIntegrityAppCheckProviderFactory.getInstance()
+                )
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("SaribApp", "AppCheck init warning: ${e.message}")
+        }
+
         // 1. Initialize Notification Channels
         try {
             NotificationHelper.initNotificationChannels(this)

@@ -14,7 +14,7 @@ android {
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.aistudio.saribtv.kxmpzq"
+    applicationId = "com.sarib.saribTV"
     minSdk = 24
     targetSdk = 36
     versionCode = 2
@@ -117,6 +117,8 @@ dependencies {
   // implementation(libs.androidx.credentials)
   // implementation(libs.androidx.credentials.play.services)
   // implementation(libs.googleid)
+  implementation(libs.firebase.appcheck)
+  implementation(libs.firebase.appcheck.playintegrity)
   implementation(libs.firebase.appcheck.recaptcha)
   implementation(libs.firebase.appcheck.debug)
   implementation(libs.kotlinx.coroutines.android)
