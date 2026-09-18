@@ -2,7 +2,15 @@
   "categories": [
     {
       "name": "بين سبورت",
-      "channels": []
+      "channels": [
+        {
+          "name": "بين 1",
+          "logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1Ex9xUPNhgPTCxigPyFt1wjNZFdzDsM3hSEyK_Lk-iA&s=10",
+          "servers": [
+            "https://www.manar2.shop/x1/60_1.m3u8"
+          ]
+        }
+      ]
     }
   ]
 }
