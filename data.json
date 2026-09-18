@@ -1,83 +1,161 @@
 {
   "date": "2026-09-18",
-  "timezone": "Asia/Aden",
   "matches": [
     {
-      "id": "espanyol-elche",
-      "league": "الدوري الإسباني",
+      "id": "20260918-espanyol-elche",
       "homeTeam": "إسبانيول",
       "awayTeam": "إلتشي",
       "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/88.png",
-      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/3751.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/375.png",
+      "league": "الدوري الإسباني",
       "time": "22:00",
       "channel": "beIN SPORTS 3",
-      "commentator": "محمد فوزي"
+      "commentator": "محمد فوزي",
+      "date": "18-09-2026"
     },
     {
-      "id": "brentford-chelsea",
-      "league": "الدوري الإنجليزي",
+      "id": "20260918-brentford-chelsea",
       "homeTeam": "برينتفورد",
       "awayTeam": "تشيلسي",
       "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/337.png",
       "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/363.png",
+      "league": "الدوري الإنجليزي",
       "time": "22:00",
       "channel": "beIN SPORTS 1",
-      "commentator": "علي سعيد الكعبي"
+      "commentator": "علي سعيد الكعبي",
+      "date": "18-09-2026"
     },
     {
-      "id": "monza-sassuolo",
-      "league": "الدوري الإيطالي",
+      "id": "20260918-monza-sassuolo",
       "homeTeam": "مونزا",
       "awayTeam": "ساسولو",
       "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/4007.png",
       "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/3997.png",
+      "league": "الدوري الإيطالي",
       "time": "21:45",
       "channel": "stc tv",
-      "commentator": "محمد الشامسي"
+      "commentator": "محمد الشامسي",
+      "date": "18-09-2026"
     },
     {
-      "id": "monaco-lens",
-      "league": "الدوري الفرنسي",
+      "id": "20260918-monaco-lens",
       "homeTeam": "موناكو",
       "awayTeam": "لانس",
       "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/174.png",
       "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/175.png",
+      "league": "الدوري الفرنسي",
       "time": "21:45",
       "channel": "beIN SPORTS 4",
-      "commentator": "محمد بركات"
+      "commentator": "محمد بركات",
+      "date": "18-09-2026"
     },
     {
-      "id": "bayern-union-berlin",
-      "league": "الدوري الألماني",
+      "id": "20260918-bayern-union",
       "homeTeam": "بايرن ميونخ",
       "awayTeam": "أونيون برلين",
       "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/132.png",
       "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/598.png",
+      "league": "الدوري الألماني",
       "time": "21:30",
       "channel": "MBC شاهد رياضة",
-      "commentator": null
+      "commentator": null,
+      "date": "18-09-2026"
     },
     {
-      "id": "al-tai-al-bukayriyah",
-      "league": "دوري الدرجة الأولى السعودي",
+      "id": "20260918-al-tai-al-bukayriyah",
       "homeTeam": "الطائي",
       "awayTeam": "البكيرية",
-      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/1186.png",
-      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10334.png",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/17705.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/22899.png",
+      "league": "دوري الدرجة الأولى السعودي",
       "time": "18:50",
       "channel": "ثمانية",
-      "commentator": null
+      "commentator": null,
+      "date": "18-09-2026"
     },
     {
-      "id": "jeddah-al-saqer",
-      "league": "دوري الدرجة الأولى السعودي",
+      "id": "20260918-jeddah-al-saqer",
       "homeTeam": "جدة",
       "awayTeam": "الصقر",
-      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10178.png",
-      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10335.png",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/17806.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/22898.png",
+      "league": "دوري الدرجة الأولى السعودي",
       "time": "19:05",
       "channel": "ثمانية",
-      "commentator": null
+      "commentator": null,
+      "date": "18-09-2026"
+    },
+    {
+      "id": "20260918-mosul-naft",
+      "homeTeam": "الموصل",
+      "awayTeam": "النفط",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10024.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10022.png",
+      "league": "الدوري العراقي",
+      "time": "18:45",
+      "channel": "Iraqi Sport HD",
+      "commentator": null,
+      "date": "18-09-2026"
+    },
+    {
+      "id": "20260918-karbalaa-erbil",
+      "homeTeam": "كربلاء",
+      "awayTeam": "أربيل",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10016.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10009.png",
+      "league": "الدوري العراقي",
+      "time": "18:45",
+      "channel": "Iraqi Syriac",
+      "commentator": null,
+      "date": "18-09-2026"
+    },
+    {
+      "id": "20260918-al-mina-dohuk",
+      "homeTeam": "الميناء",
+      "awayTeam": "دهوك",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10011.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10010.png",
+      "league": "الدوري العراقي",
+      "time": "21:00",
+      "channel": "Iraqi Syriac",
+      "commentator": null,
+      "date": "18-09-2026"
+    },
+    {
+      "id": "20260918-talaba-al-jolan",
+      "homeTeam": "الطلبة",
+      "awayTeam": "الجولان",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10008.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10025.png",
+      "league": "الدوري العراقي",
+      "time": "21:00",
+      "channel": "Iraqi Sport HD",
+      "commentator": null,
+      "date": "18-09-2026"
+    },
+    {
+      "id": "20260918-al-arabi-al-jazeera",
+      "homeTeam": "العربي",
+      "awayTeam": "الجزيرة",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10041.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10042.png",
+      "league": "الدوري الأردني",
+      "time": "18:00",
+      "channel": "Jordan Sport",
+      "commentator": null,
+      "date": "18-09-2026"
+    },
+    {
+      "id": "20260918-al-wehdat-al-ramtha",
+      "homeTeam": "الوحدات",
+      "awayTeam": "الرمثا",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10038.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10040.png",
+      "league": "الدوري الأردني",
+      "time": "20:30",
+      "channel": "Jordan Sport",
+      "commentator": null,
+      "date": "18-09-2026"
     }
   ]
 }
