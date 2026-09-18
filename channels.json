@@ -1,8 +1,159 @@
 {
-  "categories": [
-    {
-      "name": "بي ان سبورن",
-      "channels": []
-    }
-  ]
+    "icon_url": "https://i.ibb.co/r21Wn0CP/file-00000000ddb871f49d15006216c6b519.png",
+    "categories": [
+        {
+            "category_name": "قنوات ألوان سبورت (Alwan Sport)",
+            "category_icon": "https://i.ibb.co/r21Wn0CP/file-00000000ddb871f49d15006216c6b519.png",
+            "channels": [
+                {
+                    "name": "Alwan 1",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690316.ts"
+                },
+                {
+                    "name": "Alwan 2",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690317.ts"
+                },
+                {
+                    "name": "Alwan 3",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690318.ts"
+                },
+                {
+                    "name": "Alwan 4",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690319.ts"
+                },
+                {
+                    "name": "Alwan 5",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690320.ts"
+                },
+                {
+                    "name": "Alwan 6",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690321.ts"
+                },
+                {
+                    "name": "Alwan 7",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690322.ts"
+                },
+                {
+                    "name": "Alwan 8",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690323.ts"
+                },
+                {
+                    "name": "Alwan 9",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690324.ts"
+                },
+                {
+                    "name": "Alwan 10",
+                    "url": "http://otv8k.cc:8080/live/997699069900/7632236012/690325.ts"
+                }
+            ]
+        },
+        {
+            "category_name": "قنوات بين سبورت (Bein Sport - مجموعة 1)",
+            "category_icon": "https://i.ibb.co/r21Wn0CP/file-00000000ddb871f49d15006216c6b519.png",
+            "channels": [
+                {
+                    "name": "Bein 1",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212313.ts"
+                },
+                {
+                    "name": "Bein 2",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212314.ts"
+                },
+                {
+                    "name": "Bein 3",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212315.ts"
+                },
+                {
+                    "name": "Bein 4",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212316.ts"
+                },
+                {
+                    "name": "Bein 5",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212317.ts"
+                },
+                {
+                    "name": "Bein 6",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212318.ts"
+                },
+                {
+                    "name": "Bein 7",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212319.ts"
+                },
+                {
+                    "name": "Bein 8",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212320.ts"
+                },
+                {
+                    "name": "Bein 9",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212321.ts"
+                },
+                {
+                    "name": "Bein 10",
+                    "url": "http://a.norzro.cfd/live/8667593288/2505245402/212322.ts"
+                }
+            ]
+        },
+        {
+            "category_name": "قنوات بين سبورت (Bein Sport - مجموعة 2)",
+            "category_icon": "https://i.ibb.co/r21Wn0CP/file-00000000ddb871f49d15006216c6b519.png",
+            "channels": [
+                {
+                    "name": "Bein HD 1",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/1.m3u8"
+                },
+                {
+                    "name": "Bein HD 2",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/2.m3u8"
+                },
+                {
+                    "name": "Bein HD 3",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/3.m3u8"
+                },
+                {
+                    "name": "Bein HD 4",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/4.m3u8"
+                },
+                {
+                    "name": "Bein HD 5",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/5.m3u8"
+                },
+                {
+                    "name": "Bein HD 6",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/6.m3u8"
+                },
+                {
+                    "name": "Bein HD 7",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/7.m3u8"
+                },
+                {
+                    "name": "Bein HD 8",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/8.m3u8"
+                },
+                {
+                    "name": "Bein HD 9",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/9.m3u8"
+                },
+                {
+                    "name": "Bein HD 10",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/10.m3u8"
+                },
+                {
+                    "name": "Bein HD 14",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/14.m3u8"
+                },
+                {
+                    "name": "Bein HD 15",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/15.m3u8"
+                },
+                {
+                    "name": "Bein HD 210",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/210.m3u8"
+                },
+                {
+                    "name": "Bein HD 211",
+                    "url": "http://cname1.elg-26.com:8080/live/Abdo20250505/hze7pmru27/211.m3u8"
+                }
+            ]
+        }
+    ]
 }
