@@ -1,141 +1,83 @@
 {
   "date": "2026-09-18",
+  "timezone": "Asia/Aden",
   "matches": [
-    {
-      "id": "brentford-chelsea",
-      "league": "الدوري الإنجليزي",
-      "time": "22:00",
-      "home": {
-        "name": "برينتفورد",
-        "name_en": "Brentford",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/337.png"
-      },
-      "away": {
-        "name": "تشيلسي",
-        "name_en": "Chelsea",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/363.png"
-      },
-      "channel": "beIN SPORTS 1",
-      "commentator": "علي سعيد الكعبي"
-    },
     {
       "id": "espanyol-elche",
       "league": "الدوري الإسباني",
+      "homeTeam": "إسبانيول",
+      "awayTeam": "إلتشي",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/88.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/3751.png",
       "time": "22:00",
-      "home": {
-        "name": "إسبانيول",
-        "name_en": "Espanyol",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/88.png"
-      },
-      "away": {
-        "name": "إلتشي",
-        "name_en": "Elche",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/3751.png"
-      },
       "channel": "beIN SPORTS 3",
       "commentator": "محمد فوزي"
     },
     {
+      "id": "brentford-chelsea",
+      "league": "الدوري الإنجليزي",
+      "homeTeam": "برينتفورد",
+      "awayTeam": "تشيلسي",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/337.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/363.png",
+      "time": "22:00",
+      "channel": "beIN SPORTS 1",
+      "commentator": "علي سعيد الكعبي"
+    },
+    {
       "id": "monza-sassuolo",
       "league": "الدوري الإيطالي",
+      "homeTeam": "مونزا",
+      "awayTeam": "ساسولو",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/4007.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/3997.png",
       "time": "21:45",
-      "home": {
-        "name": "مونزا",
-        "name_en": "Monza",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/4007.png"
-      },
-      "away": {
-        "name": "ساسولو",
-        "name_en": "Sassuolo",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/3997.png"
-      },
       "channel": "stc tv",
       "commentator": "محمد الشامسي"
     },
     {
       "id": "monaco-lens",
       "league": "الدوري الفرنسي",
+      "homeTeam": "موناكو",
+      "awayTeam": "لانس",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/174.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/175.png",
       "time": "21:45",
-      "home": {
-        "name": "موناكو",
-        "name_en": "AS Monaco",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/174.png"
-      },
-      "away": {
-        "name": "لانس",
-        "name_en": "Lens",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/175.png"
-      },
       "channel": "beIN SPORTS 4",
       "commentator": "محمد بركات"
     },
     {
       "id": "bayern-union-berlin",
       "league": "الدوري الألماني",
+      "homeTeam": "بايرن ميونخ",
+      "awayTeam": "أونيون برلين",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/132.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/598.png",
       "time": "21:30",
-      "home": {
-        "name": "بايرن ميونخ",
-        "name_en": "Bayern Munich",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/132.png"
-      },
-      "away": {
-        "name": "يونيون برلين",
-        "name_en": "Union Berlin",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/598.png"
-      },
       "channel": "MBC شاهد رياضة",
-      "commentator": "غير محدد"
+      "commentator": null
     },
     {
-      "id": "kasimpasa-konyaspor",
-      "league": "الدوري التركي",
-      "time": "20:00",
-      "home": {
-        "name": "قاسم باشا",
-        "name_en": "Kasimpasa",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/1160.png"
-      },
-      "away": {
-        "name": "قونيا سبور",
-        "name_en": "Konyaspor",
-        "logo": "https://a.espncdn.com/i/teamlogos/soccer/500/608.png"
-      },
-      "channel": "beIN SPORTS TR 1",
-      "commentator": "تعليق تركي"
-    },
-    {
-      "id": "altaee-albukayriyah",
+      "id": "al-tai-al-bukayriyah",
       "league": "دوري الدرجة الأولى السعودي",
+      "homeTeam": "الطائي",
+      "awayTeam": "البكيرية",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/1186.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10334.png",
       "time": "18:50",
-      "home": {
-        "name": "الطائي",
-        "name_en": "Al Tai",
-        "logo": ""
-      },
-      "away": {
-        "name": "البكيرية",
-        "name_en": "Al Bukayriyah",
-        "logo": ""
-      },
       "channel": "ثمانية",
-      "commentator": "غير محدد"
+      "commentator": null
     },
     {
-      "id": "jeddah-alsaqr",
+      "id": "jeddah-al-saqer",
       "league": "دوري الدرجة الأولى السعودي",
+      "homeTeam": "جدة",
+      "awayTeam": "الصقر",
+      "homeLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10178.png",
+      "awayLogo": "https://a.espncdn.com/i/teamlogos/soccer/500/10335.png",
       "time": "19:05",
-      "home": {
-        "name": "جدة",
-        "name_en": "Jeddah",
-        "logo": ""
-      },
-      "away": {
-        "name": "الصقر",
-        "name_en": "Al Sagr",
-        "logo": ""
-      },
       "channel": "ثمانية",
-      "commentator": "غير محدد"
+      "commentator": null
     }
   ]
 }
