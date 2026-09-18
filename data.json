@@ -5,6 +5,19 @@
       "team1": "الاتحاد",
       "team2": "الاهلي",
       "time": "9:00"
+    },
+    {
+      "tournamentLogo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTByNIii2UT3LvZ74Hv9oRNBUYWaczRTmpEprYMgb082EeBfU7hG7ojIJuHy7wTVnBZiYxTImhefoFqfOQuChsCfUUNlWHLpjit83X4y20&s=10",
+      "tournament": "الدوري السعودي",
+      "channel": "بين سبورت",
+      "team1Logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTByNIii2UT3LvZ74Hv9oRNBUYWaczRTmpEprYMgb082EeBfU7hG7ojIJuHy7wTVnBZiYxTImhefoFqfOQuChsCfUUNlWHLpjit83X4y20&s=10",
+      "team1": "الاتحاد",
+      "team2Logo": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTByNIii2UT3LvZ74Hv9oRNBUYWaczRTmpEprYMgb082EeBfU7hG7ojIJuHy7wTVnBZiYxTImhefoFqfOQuChsCfUUNlWHLpjit83X4y20&s=10",
+      "team2": "الاتحاد",
+      "time": "9:00",
+      "server1": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTByNIii2UT3LvZ74Hv9oRNBUYWaczRTmpEprYMgb082EeBfU7hG7ojIJuHy7wTVnBZiYxTImhefoFqfOQuChsCfUUNlWHLpjit83X4y20&s=10",
+      "server2": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTByNIii2UT3LvZ74Hv9oRNBUYWaczRTmpEprYMgb082EeBfU7hG7ojIJuHy7wTVnBZiYxTImhefoFqfOQuChsCfUUNlWHLpjit83X4y20&s=10",
+      "server3": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTByNIii2UT3LvZ74Hv9oRNBUYWaczRTmpEprYMgb082EeBfU7hG7ojIJuHy7wTVnBZiYxTImhefoFqfOQuChsCfUUNlWHLpjit83X4y20&s=10"
     }
   ]
 }
