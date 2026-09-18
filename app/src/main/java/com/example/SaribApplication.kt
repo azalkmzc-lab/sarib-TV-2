@@ -30,13 +30,24 @@ class SaribApplication : Application(), ImageLoaderFactory {
         try {
             FirebaseApp.initializeApp(this)
             val firebaseAppCheck = FirebaseAppCheck.getInstance()
-            if (BuildConfig.DEBUG) {
+            
+            // Try Play Integrity first for production, fallback to Debug Provider for local testing/APKs
+            try {
+                if (BuildConfig.DEBUG) {
+                    firebaseAppCheck.installAppCheckProviderFactory(
+                        DebugAppCheckProviderFactory.getInstance()
+                    )
+                    android.util.Log.i("SaribApp", "AppCheck initialized with DebugAppCheckProviderFactory")
+                } else {
+                    firebaseAppCheck.installAppCheckProviderFactory(
+                        PlayIntegrityAppCheckProviderFactory.getInstance()
+                    )
+                    android.util.Log.i("SaribApp", "AppCheck initialized with PlayIntegrityAppCheckProviderFactory")
+                }
+            } catch (providerError: Exception) {
+                android.util.Log.w("SaribApp", "PlayIntegrity fallback to Debug provider: ${providerError.message}")
                 firebaseAppCheck.installAppCheckProviderFactory(
                     DebugAppCheckProviderFactory.getInstance()
-                )
-            } else {
-                firebaseAppCheck.installAppCheckProviderFactory(
-                    PlayIntegrityAppCheckProviderFactory.getInstance()
                 )
             }
         } catch (e: Exception) {
