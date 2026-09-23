@@ -86,20 +86,20 @@ class SaribApplication : Application(), ImageLoaderFactory {
             android.util.Log.w("SaribApp", "WorkManager schedule error: ${e.message}")
         }
 
-        // 4. Subscribe to FCM topics for push notifications even when closed
+        // 4. Safely subscribe to FCM topics without throwing unhandled exceptions
         try {
             if (FirebaseApp.getApps(this).isNotEmpty()) {
-                val messaging = FirebaseMessaging.getInstance()
-                messaging.subscribeToTopic("all")
-                messaging.subscribeToTopic("notifications")
-                messaging.subscribeToTopic("broadcast")
-                messaging.subscribeToTopic("general")
-                messaging.subscribeToTopic("matches")
-                messaging.subscribeToTopic("news")
+                val playStatus = com.google.android.gms.common.GoogleApiAvailability.getInstance().isGooglePlayServicesAvailable(this)
+                if (playStatus == com.google.android.gms.common.ConnectionResult.SUCCESS) {
+                    val messaging = FirebaseMessaging.getInstance()
+                    listOf("all", "notifications", "broadcast", "general", "matches", "news").forEach { topic ->
+                        messaging.subscribeToTopic(topic).addOnFailureListener { err ->
+                            android.util.Log.d("SaribApp", "FCM topic $topic: ${err.message}")
+                        }
+                    }
+                }
             }
-        } catch (e: Exception) {
-            android.util.Log.w("SaribApp", "FCM topic subscription error: ${e.message}")
-        }
+        } catch (_: Throwable) {}
     }
 
     override fun newImageLoader(): ImageLoader {

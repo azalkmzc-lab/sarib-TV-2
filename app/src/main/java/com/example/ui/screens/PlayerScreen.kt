@@ -285,13 +285,13 @@ fun PlayerScreen(
     val exoPlayer = remember {
         val loadControl = DefaultLoadControl.Builder()
             .setBufferDurationsMs(
-                /* minBufferMs = */ if (isLive) 800 else 1500,
-                /* maxBufferMs = */ if (isLive) 30000 else 90000,
-                /* bufferForPlaybackMs = */ 100, // Starts immediately (100ms)
-                /* bufferForPlaybackAfterRebufferMs = */ 250
+                /* minBufferMs = */ if (isLive) 2500 else 5000,
+                /* maxBufferMs = */ if (isLive) 30000 else 60000,
+                /* bufferForPlaybackMs = */ 300,
+                /* bufferForPlaybackAfterRebufferMs = */ 1000
             )
-            .setBackBuffer(if (isLive) 3000 else 15000, true)
-            .setTargetBufferBytes(C.LENGTH_UNSET) // Unlimited buffer size to unleash full internet speed without throttling
+            .setBackBuffer(if (isLive) 2000 else 10000, true)
+            .setTargetBufferBytes(if (isLive) 8 * 1024 * 1024 else 25 * 1024 * 1024)
             .setPrioritizeTimeOverSizeThresholds(true)
             .build()
 
@@ -357,9 +357,12 @@ fun PlayerScreen(
     // Anti-VPN 3-Second Security Scanner state
     var isVpnDetectedInPlayer by remember { mutableStateOf(false) }
 
+    var currentUserAgentOverride by remember { mutableStateOf<String?>(null) }
+    var userAgentRetryIndex by remember { mutableIntStateOf(0) }
+
     // Function to play main stream cleanly using StreamUrlParser
-    val playStream: (String) -> Unit = remember(exoPlayer) {
-        { url ->
+    val playStream: (String, String?) -> Unit = remember(exoPlayer) {
+        { url, forcedUa ->
             if (url.isNotBlank()) {
                 isBuffering = true
                 hasError = false
@@ -367,9 +370,9 @@ fun PlayerScreen(
                     exoPlayer.stop()
                     exoPlayer.clearMediaItems()
 
-                    val parsed = StreamUrlParser.parse(url)
+                    val parsed = StreamUrlParser.parse(url, forcedUserAgent = forcedUa)
                     val httpDataSourceFactory = DefaultHttpDataSource.Factory()
-                        .setUserAgent(parsed.userAgent ?: StreamUrlParser.DEFAULT_USER_AGENT)
+                        .setUserAgent(parsed.userAgent ?: StreamUrlParser.DEFAULT_IPTV_USER_AGENT)
                         .setAllowCrossProtocolRedirects(true)
                         .setConnectTimeoutMs(8000)
                         .setReadTimeoutMs(15000)
@@ -517,7 +520,8 @@ fun PlayerScreen(
 
     // Play active url on main player
     LaunchedEffect(currentActiveUrl) {
-        playStream(currentActiveUrl)
+        userAgentRetryIndex = 0
+        playStream(currentActiveUrl, currentUserAgentOverride)
     }
 
     // Channel Switching Logic without exiting player
@@ -533,7 +537,9 @@ fun PlayerScreen(
             currentServersList = if (activeServers.isNotEmpty()) activeServers else listOf("سيرفر البث الرئيسي" to channel.streamUrl)
             selectedServerIndex = 0
             currentActiveUrl = channel.streamUrl
-            playStream(channel.streamUrl)
+            userAgentRetryIndex = 0
+            currentUserAgentOverride = null
+            playStream(channel.streamUrl, null)
             showInPlayerChannelDrawer = false
             Toast.makeText(context, "تم التحويل إلى: ${channel.name}", Toast.LENGTH_SHORT).show()
         }
@@ -597,17 +603,34 @@ fun PlayerScreen(
                     return
                 }
 
-                if (autoRetryCount < 3) {
-                    autoRetryCount++
+                // 1. Try alternate User-Agents for 403 Forbidden or network stream rejections
+                if (userAgentRetryIndex < StreamUrlParser.FALLBACK_USER_AGENTS.size - 1) {
+                    userAgentRetryIndex++
+                    val nextUa = StreamUrlParser.FALLBACK_USER_AGENTS[userAgentRetryIndex]
+                    currentUserAgentOverride = nextUa
                     coroutineScope.launch {
-                        delay(1200L)
-                        playStream(currentActiveUrl)
+                        delay(500L)
+                        playStream(currentActiveUrl, nextUa)
+                    }
+                    return
+                }
+
+                // 2. Normal retry
+                if (autoRetryCount < 2) {
+                    autoRetryCount++
+                    userAgentRetryIndex = 0
+                    coroutineScope.launch {
+                        delay(1000L)
+                        playStream(currentActiveUrl, null)
                     }
                 } else if (currentServersList.size > 1 && selectedServerIndex < currentServersList.size - 1) {
+                    // 3. Fallback to next server in list
                     autoRetryCount = 0
+                    userAgentRetryIndex = 0
+                    currentUserAgentOverride = null
                     selectedServerIndex = (selectedServerIndex + 1) % currentServersList.size
                     currentActiveUrl = currentServersList[selectedServerIndex].second
-                    Toast.makeText(context, "تم التحويل التلقائي للسيرفر الاحتياطي: ${currentServersList[selectedServerIndex].first}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "السيرفر الحالي غير متاح، تم التحويل للسيرفر: ${currentServersList[selectedServerIndex].first}", Toast.LENGTH_SHORT).show()
                 } else {
                     hasError = true
                     isBuffering = false
@@ -934,6 +957,97 @@ fun PlayerScreen(
                 contentAlignment = Alignment.Center
             ) {
                 SaribLoadingIndicator(size = 56.dp, label = "جاري البث بجودة فائقة...")
+            }
+        }
+
+        // Error Recovery Overlay
+        if (hasError) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xE6050A14)),
+                contentAlignment = Alignment.Center
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(16.dp),
+                    color = Color(0xF00A1120),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SaribLiveRed.copy(alpha = 0.5f)),
+                    modifier = Modifier
+                        .padding(24.dp)
+                        .widthIn(max = 420.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = SaribLiveRed,
+                            modifier = Modifier.size(44.dp)
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Text(
+                            text = "تعذر تشغيل هذا البث حالياً",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(
+                            text = "قد يكون السيرفر محمي أو متوقف مؤقتاً، يمكنك المحاولة مجدداً أو تجربة سيرفر بديل",
+                            color = SaribTextMuted,
+                            style = MaterialTheme.typography.bodySmall.copy(textAlign = TextAlign.Center)
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (currentServersList.size > 1) {
+                                Button(
+                                    onClick = {
+                                        hasError = false
+                                        selectedServerIndex = (selectedServerIndex + 1) % currentServersList.size
+                                        currentActiveUrl = currentServersList[selectedServerIndex].second
+                                        userAgentRetryIndex = 0
+                                        currentUserAgentOverride = null
+                                        playStream(currentActiveUrl, null)
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = SaribElectricBlue),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Text("سيرفر آخر", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+
+                            Button(
+                                onClick = {
+                                    hasError = false
+                                    userAgentRetryIndex = 0
+                                    currentUserAgentOverride = StreamUrlParser.DEFAULT_BROWSER_USER_AGENT
+                                    playStream(currentActiveUrl, StreamUrlParser.DEFAULT_BROWSER_USER_AGENT)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = SaribCyanAccent),
+                                shape = RoundedCornerShape(10.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("إعادة المحاولة", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Button(
+                            onClick = onBackClick,
+                            colors = ButtonDefaults.textButtonColors(),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("الرجوع للقائمة", color = SaribTextMuted, fontSize = 12.sp)
+                        }
+                    }
+                }
             }
         }
 
@@ -1407,7 +1521,7 @@ fun PlayerScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
                                 .clickable {
-                                    playStream(currentActiveUrl)
+                                    playStream(currentActiveUrl, currentUserAgentOverride)
                                     Toast.makeText(context, "جاري تحديث وإعادة تشغيل البث...", Toast.LENGTH_SHORT).show()
                                 }
                         ) {
@@ -1625,7 +1739,7 @@ fun PlayerScreen(
                                     selectedServerIndex = idx
                                     currentActiveUrl = srvUrl
                                     showServerDialog = false
-                                    playStream(srvUrl)
+                                    playStream(srvUrl, null)
                                     Toast.makeText(context, "تم التحويل إلى: $srvName", Toast.LENGTH_SHORT).show()
                                 }
                                 .padding(horizontal = 12.dp, vertical = 10.dp)

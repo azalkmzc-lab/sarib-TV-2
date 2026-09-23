@@ -1,9 +1,18 @@
 package com.example.data.local
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "channels")
+@Entity(
+    tableName = "channels",
+    indices = [
+        Index(value = ["categoryId"]),
+        Index(value = ["isEnabled"]),
+        Index(value = ["sortOrder"]),
+        Index(value = ["viewsCount"])
+    ]
+)
 data class ChannelEntity(
     @PrimaryKey val id: String,
     val name: String,
@@ -20,7 +29,12 @@ data class ChannelEntity(
     val viewsCount: Int
 )
 
-@Entity(tableName = "categories")
+@Entity(
+    tableName = "categories",
+    indices = [
+        Index(value = ["categoryType"])
+    ]
+)
 data class CategoryEntity(
     @PrimaryKey val id: String,
     val name: String,
@@ -31,7 +45,13 @@ data class CategoryEntity(
     val gradientColorHex: String
 )
 
-@Entity(tableName = "matches")
+@Entity(
+    tableName = "matches",
+    indices = [
+        Index(value = ["matchDate"]),
+        Index(value = ["isLive"])
+    ]
+)
 data class MatchEntity(
     @PrimaryKey val id: String,
     val leagueName: String,
@@ -50,7 +70,13 @@ data class MatchEntity(
     val isFavorite: Boolean
 )
 
-@Entity(tableName = "media_items")
+@Entity(
+    tableName = "media_items",
+    indices = [
+        Index(value = ["type"]),
+        Index(value = ["isTop"])
+    ]
+)
 data class MediaEntity(
     @PrimaryKey val id: String,
     val title: String,
@@ -70,7 +96,13 @@ data class MediaEntity(
     val isFavorite: Boolean
 )
 
-@Entity(tableName = "favorites")
+@Entity(
+    tableName = "favorites",
+    indices = [
+        Index(value = ["itemType"]),
+        Index(value = ["addedAt"])
+    ]
+)
 data class FavoriteEntity(
     @PrimaryKey val itemId: String,
     val itemType: String,
@@ -94,7 +126,12 @@ data class ApiSourceEntity(
     val lastChecked: String
 )
 
-@Entity(tableName = "watch_history")
+@Entity(
+    tableName = "watch_history",
+    indices = [
+        Index(value = ["watchedAt"])
+    ]
+)
 data class WatchHistoryEntity(
     @PrimaryKey val id: String,
     val title: String,
@@ -107,7 +144,13 @@ data class WatchHistoryEntity(
     val durationMs: Long = 0L
 )
 
-@Entity(tableName = "downloads")
+@Entity(
+    tableName = "downloads",
+    indices = [
+        Index(value = ["status"]),
+        Index(value = ["createdAt"])
+    ]
+)
 data class DownloadEntity(
     @PrimaryKey val id: String,
     val title: String,

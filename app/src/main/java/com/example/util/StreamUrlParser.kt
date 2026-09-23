@@ -32,7 +32,19 @@ data class ParsedStreamConfig(
 object StreamUrlParser {
 
     private const val TAG = "StreamUrlParser"
-    const val DEFAULT_USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    const val DEFAULT_IPTV_USER_AGENT = "IPTVSmartersPro/1.0.0 (Android; 14)"
+    const val DEFAULT_VLC_USER_AGENT = "VLC/3.0.18 LibVLC/3.0.18 (Android 14)"
+    const val DEFAULT_BROWSER_USER_AGENT = "Mozilla/5.0 (Linux; Android 14; SM-S928B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Mobile Safari/537.36"
+    const val DEFAULT_OKHTTP_USER_AGENT = "okhttp/4.12.0"
+
+    val FALLBACK_USER_AGENTS = listOf(
+        DEFAULT_IPTV_USER_AGENT,
+        DEFAULT_VLC_USER_AGENT,
+        DEFAULT_BROWSER_USER_AGENT,
+        DEFAULT_OKHTTP_USER_AGENT
+    )
+
+    const val DEFAULT_USER_AGENT = DEFAULT_IPTV_USER_AGENT
 
     /**
      * Parses IPTV, Cloudflare Worker proxies, and DRM stream URLs.
@@ -43,10 +55,10 @@ object StreamUrlParser {
      *    https://server.com/live.m3u8|User-Agent=Mozilla&Referer=https://site.com
      * 3. ClearKey & Widevine DRM parameter strings.
      */
-    fun parse(rawUrl: String): ParsedStreamConfig {
+    fun parse(rawUrl: String, forcedUserAgent: String? = null): ParsedStreamConfig {
         var cleanUrl = rawUrl.trim()
         val headers = mutableMapOf<String, String>()
-        var userAgent: String? = null
+        var userAgent: String? = forcedUserAgent
         var drmScheme: String? = null
         var clearKeyJson: String? = null
         var widevineLicenseUrl: String? = null
@@ -73,19 +85,21 @@ object StreamUrlParser {
                 val uri = Uri.parse(cleanUrl)
                 if (uri.isHierarchical) {
                     // Extract User-Agent from query parameters if present
-                    val uaParam = uri.getQueryParameter("ua")
-                        ?: uri.getQueryParameter("user_agent")
-                        ?: uri.getQueryParameter("user-agent")
-                        ?: uri.getQueryParameter("User-Agent")
-                        ?: uri.getQueryParameter("u-a")
-                    if (!uaParam.isNullOrBlank()) {
-                        val decodedUa = try {
-                            URLDecoder.decode(uaParam, "UTF-8")
-                        } catch (e: Exception) {
-                            uaParam
+                    if (userAgent == null) {
+                        val uaParam = uri.getQueryParameter("ua")
+                            ?: uri.getQueryParameter("user_agent")
+                            ?: uri.getQueryParameter("user-agent")
+                            ?: uri.getQueryParameter("User-Agent")
+                            ?: uri.getQueryParameter("u-a")
+                        if (!uaParam.isNullOrBlank()) {
+                            val decodedUa = try {
+                                URLDecoder.decode(uaParam, "UTF-8")
+                            } catch (e: Exception) {
+                                uaParam
+                            }
+                            userAgent = decodedUa
+                            headers["User-Agent"] = decodedUa
                         }
-                        userAgent = decodedUa
-                        headers["User-Agent"] = decodedUa
                     }
 
                     // Extract embedded target URL (e.g., ?url=https%3A%2F%2Fwww.maziikaaaaaa.shop...)
@@ -196,9 +210,11 @@ object StreamUrlParser {
                                 keyHex = value
                             }
                             key.equals("User-Agent", ignoreCase = true) || key.equals("user_agent", ignoreCase = true) || key.equals("ua", ignoreCase = true) -> {
-                                val decoded = try { URLDecoder.decode(value, "UTF-8") } catch (e: Exception) { value }
-                                userAgent = decoded
-                                headers["User-Agent"] = decoded
+                                if (forcedUserAgent == null) {
+                                    val decoded = try { URLDecoder.decode(value, "UTF-8") } catch (e: Exception) { value }
+                                    userAgent = decoded
+                                    headers["User-Agent"] = decoded
+                                }
                             }
                             key.equals("Referer", ignoreCase = true) || key.equals("referrer", ignoreCase = true) -> {
                                 headers["Referer"] = value
@@ -230,9 +246,19 @@ object StreamUrlParser {
             Log.e(TAG, "Error parsing stream URL: ${e.message}")
         }
 
-        // Set high-compatibility headers if not already set
-        val finalUserAgent = userAgent ?: DEFAULT_USER_AGENT
-        headers.putIfAbsent("User-Agent", finalUserAgent)
+        // Determine best default user agent if not explicitly defined
+        val resolvedUserAgent = userAgent ?: run {
+            val lower = cleanUrl.lowercase()
+            if (lower.contains("workers.dev") || lower.contains("/proxy") || lower.contains(".php") || lower.contains("maziika") || lower.contains("ostora")) {
+                DEFAULT_BROWSER_USER_AGENT
+            } else if (lower.contains("/live/") || lower.contains("/movie/") || lower.contains("/series/") || lower.contains(":2082") || lower.contains(":8080") || lower.contains(".m3u")) {
+                DEFAULT_IPTV_USER_AGENT
+            } else {
+                DEFAULT_IPTV_USER_AGENT
+            }
+        }
+
+        headers.putIfAbsent("User-Agent", resolvedUserAgent)
         headers.putIfAbsent("Accept", "*/*")
         headers.putIfAbsent("Accept-Language", "ar,en-US;q=0.9,en;q=0.8")
         headers.putIfAbsent("Connection", "keep-alive")
@@ -275,7 +301,7 @@ object StreamUrlParser {
             cleanUrl = cleanUrl,
             mimeType = mimeType,
             headers = headers,
-            userAgent = finalUserAgent,
+            userAgent = resolvedUserAgent,
             drmScheme = drmScheme,
             clearKeyJson = clearKeyJson,
             widevineLicenseUrl = widevineLicenseUrl,

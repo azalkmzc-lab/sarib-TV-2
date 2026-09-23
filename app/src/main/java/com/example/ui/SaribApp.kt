@@ -136,13 +136,6 @@ fun SaribApp(
     val realtimeDownloadProgress by viewModel.realtimeDownloadProgress.collectAsState()
     var pendingDownload by remember { mutableStateOf<PendingDownloadItem?>(null) }
 
-    val visitedTabs = remember { mutableStateListOf("home") }
-    LaunchedEffect(currentTab) {
-        if (!visitedTabs.contains(currentTab)) {
-            visitedTabs.add(currentTab)
-        }
-    }
-
     var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
     // Dialog state for Match Details, Movie Details, and Settings
@@ -390,19 +383,8 @@ fun SaribApp(
                                 .fillMaxSize()
                                 .padding(innerPadding)
                         ) {
-                            // Home Screen Tab
-                            if (visitedTabs.contains("home") || currentTab == "home") {
-                                val isVisible = currentTab == "home"
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .then(
-                                            if (isVisible) Modifier.zIndex(1f)
-                                            else Modifier
-                                                .size(0.dp)
-                                                .graphicsLayer { alpha = 0f }
-                                        )
-                                ) {
+                            when (currentTab) {
+                                "home" -> {
                                     HomeScreen(
                                         heroSliders = heroSliders,
                                         popularChannels = mostWatchedChannels,
@@ -465,21 +447,8 @@ fun SaribApp(
                                         showBars = false
                                     )
                                 }
-                            }
 
-                            // Channels Screen Tab
-                            if (visitedTabs.contains("channels") || currentTab == "channels") {
-                                val isVisible = currentTab == "channels"
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .then(
-                                            if (isVisible) Modifier.zIndex(1f)
-                                            else Modifier
-                                                .size(0.dp)
-                                                .graphicsLayer { alpha = 0f }
-                                        )
-                                ) {
+                                "channels" -> {
                                     ChannelsScreen(
                                         categories = categories,
                                         onCategoryClick = { viewModel.openCategory(it) },
@@ -504,21 +473,8 @@ fun SaribApp(
                                         }
                                     )
                                 }
-                            }
 
-                            // Matches Screen Tab
-                            if (visitedTabs.contains("matches") || currentTab == "matches") {
-                                val isVisible = currentTab == "matches"
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .then(
-                                            if (isVisible) Modifier.zIndex(1f)
-                                            else Modifier
-                                                .size(0.dp)
-                                                .graphicsLayer { alpha = 0f }
-                                        )
-                                ) {
+                                "matches" -> {
                                     MatchesScreen(
                                         matches = allMatches,
                                         selectedDate = selectedMatchDate,
@@ -536,21 +492,8 @@ fun SaribApp(
                                         showBars = false
                                     )
                                 }
-                            }
 
-                            // Entertainment Screen Tab
-                            if (visitedTabs.contains("entertainment") || currentTab == "entertainment") {
-                                val isVisible = currentTab == "entertainment"
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .then(
-                                            if (isVisible) Modifier.zIndex(1f)
-                                            else Modifier
-                                                .size(0.dp)
-                                                .graphicsLayer { alpha = 0f }
-                                        )
-                                ) {
+                                "entertainment" -> {
                                     EntertainmentScreen(
                                         movies = featuredMovies,
                                         series = featuredSeries,
@@ -586,21 +529,8 @@ fun SaribApp(
                                         showBars = false
                                     )
                                 }
-                            }
 
-                            // Favorites Screen Tab
-                            if (visitedTabs.contains("favorites") || currentTab == "favorites") {
-                                val isVisible = currentTab == "favorites"
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .then(
-                                            if (isVisible) Modifier.zIndex(1f)
-                                            else Modifier
-                                                .size(0.dp)
-                                                .graphicsLayer { alpha = 0f }
-                                        )
-                                ) {
+                                "favorites" -> {
                                     FavoritesScreen(
                                         favorites = favorites,
                                         onItemClick = { fav ->
@@ -631,21 +561,8 @@ fun SaribApp(
                                         showBars = false
                                     )
                                 }
-                            }
 
-                            // News Screen Tab
-                            if (visitedTabs.contains("news") || currentTab == "news") {
-                                val isVisible = currentTab == "news"
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .then(
-                                            if (isVisible) Modifier.zIndex(1f)
-                                            else Modifier
-                                                .size(0.dp)
-                                                .graphicsLayer { alpha = 0f }
-                                        )
-                                ) {
+                                "news" -> {
                                     NewsScreen(
                                         newsArticles = newsArticles,
                                         onRefresh = { viewModel.refreshNews() },

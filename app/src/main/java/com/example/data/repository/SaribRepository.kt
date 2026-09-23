@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -662,7 +663,7 @@ class SaribRepository(private val context: Context) {
             } else {
                 filtered
             }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getDefaultM3uUrl(): String {
@@ -716,81 +717,81 @@ class SaribRepository(private val context: Context) {
     fun getEntertainmentCategories(): Flow<List<ChannelCategory>> {
         return dao.getCategoriesByTypes(listOf("movies", "vod", "series", "entertainment", "anime")).map { list ->
             list.filter { it.name.isNotBlank() }.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getVodCategories(): Flow<List<ChannelCategory>> {
         return dao.getCategoriesByTypes(listOf("movies", "vod")).map { list ->
             list.filter { it.name.isNotBlank() }.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getSeriesCategories(): Flow<List<ChannelCategory>> {
         return dao.getCategoriesByType("series").map { list ->
             list.filter { it.name.isNotBlank() }.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getChannelsByCategory(categoryId: String): Flow<List<ChannelItem>> {
         return dao.getChannelsByCategory(categoryId).map { list ->
             list.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getMostWatchedChannels(): Flow<List<ChannelItem>> {
         return dao.getMostWatchedChannels().map { list ->
             list.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getAllChannels(): Flow<List<ChannelItem>> {
         return dao.getAllChannels().map { list ->
             list.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun searchChannels(query: String): Flow<List<ChannelItem>> {
         return dao.searchChannels(query).map { list ->
             list.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getAllMatches(): Flow<List<MatchItem>> {
         return dao.getAllMatches().map { list ->
             list.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getMatchesByDate(date: String): Flow<List<MatchItem>> {
         return dao.getMatchesByDate(date).map { list ->
             list.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getMediaByType(type: ContentType): Flow<List<MediaItem>> {
         return dao.getMediaByType(type.name).map { list ->
             list.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getTopMedia(): Flow<List<MediaItem>> {
         return dao.getTopMedia().map { list ->
             list.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun searchMedia(query: String): Flow<List<MediaItem>> {
         return dao.searchMedia(query).map { list ->
             list.map { it.toModel() }
-        }.flowOn(Dispatchers.IO)
+        }.distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getFavorites(): Flow<List<FavoriteEntity>> {
-        return dao.getAllFavorites().flowOn(Dispatchers.IO)
+        return dao.getAllFavorites().distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     fun getWatchHistory(): Flow<List<com.example.data.local.WatchHistoryEntity>> {
-        return dao.getWatchHistory().flowOn(Dispatchers.IO)
+        return dao.getWatchHistory().distinctUntilChanged().flowOn(Dispatchers.IO)
     }
 
     suspend fun addToWatchHistory(
