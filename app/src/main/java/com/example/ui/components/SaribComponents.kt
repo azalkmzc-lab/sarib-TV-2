@@ -1067,33 +1067,42 @@ fun HeroSliderVideoBackground(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    var exoPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
     var isPlayerReady by remember { mutableStateOf(false) }
 
-    val exoPlayer = remember(streamUrl) {
-        ExoPlayer.Builder(context).build().apply {
-            repeatMode = Player.REPEAT_MODE_ONE
-            playWhenReady = true
-            volume = if (isMuted) 0f else 1f
-            videoScalingMode = androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
-        }
+    LaunchedEffect(isMuted, exoPlayer) {
+        exoPlayer?.volume = if (isMuted) 0f else 1f
     }
 
-    // Update volume dynamically when isMuted changes
-    LaunchedEffect(isMuted) {
-        exoPlayer.volume = if (isMuted) 0f else 1f
-    }
-
-    // Prepare and play stream with StreamUrlParser (supports HLS, Dash, TS, Proxy worker streams)
     LaunchedEffect(streamUrl, isActive) {
         if (isActive && streamUrl.isNotBlank()) {
-            delay(3000) // Stay on poster for 3 seconds before auto-playing
+            delay(3500) // Stay on high-res poster smoothly before auto-playing
+            if (!isActive) return@LaunchedEffect
             try {
+                val player = ExoPlayer.Builder(context).build().apply {
+                    repeatMode = Player.REPEAT_MODE_ONE
+                    playWhenReady = true
+                    volume = if (isMuted) 0f else 1f
+                    videoScalingMode = androidx.media3.common.C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
+                }
+                val listener = object : Player.Listener {
+                    override fun onRenderedFirstFrame() {
+                        isPlayerReady = true
+                    }
+                    override fun onPlaybackStateChanged(playbackState: Int) {
+                        if (playbackState == Player.STATE_READY) {
+                            isPlayerReady = true
+                        }
+                    }
+                }
+                player.addListener(listener)
+
                 val parsed = StreamUrlParser.parse(streamUrl)
                 val httpFactory = DefaultHttpDataSource.Factory()
                     .setUserAgent(parsed.userAgent ?: StreamUrlParser.DEFAULT_USER_AGENT)
                     .setAllowCrossProtocolRedirects(true)
-                    .setConnectTimeoutMs(8000)
-                    .setReadTimeoutMs(8000)
+                    .setConnectTimeoutMs(6000)
+                    .setReadTimeoutMs(6000)
                 StreamUrlParser.configureHttpDataSource(httpFactory, parsed)
 
                 val mediaSourceFactory = DefaultMediaSourceFactory(httpFactory, StreamUrlParser.createExtractorsFactory())
@@ -1106,55 +1115,49 @@ fun HeroSliderVideoBackground(
                 parsed.mimeType?.let { mediaItemBuilder.setMimeType(it) }
 
                 val mediaSource = mediaSourceFactory.createMediaSource(mediaItemBuilder.build())
-                exoPlayer.setMediaSource(mediaSource)
-                exoPlayer.prepare()
-                exoPlayer.play()
+                player.setMediaSource(mediaSource)
+                player.prepare()
+                player.play()
+                exoPlayer = player
             } catch (e: Exception) {
-                // Fallback gracefully without breaking UI
+                isPlayerReady = false
             }
         } else {
-            exoPlayer.pause()
+            isPlayerReady = false
+            exoPlayer?.stop()
+            exoPlayer?.release()
+            exoPlayer = null
         }
     }
 
-    // Lifecycle cleanup
-    DisposableEffect(streamUrl) {
-        val listener = object : Player.Listener {
-            override fun onRenderedFirstFrame() {
-                isPlayerReady = true
-            }
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_READY) {
-                    isPlayerReady = true
-                }
-            }
-        }
-        exoPlayer.addListener(listener)
-
+    DisposableEffect(Unit) {
         onDispose {
-            exoPlayer.removeListener(listener)
-            exoPlayer.stop()
-            exoPlayer.release()
+            isPlayerReady = false
+            exoPlayer?.stop()
+            exoPlayer?.release()
+            exoPlayer = null
         }
     }
 
-    Box(modifier = modifier.alpha(if (isPlayerReady) 1f else 0f)) {
-        AndroidView(
-            factory = { ctx ->
-                PlayerView(ctx).apply {
-                    player = exoPlayer
-                    useController = false
-                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
-                    setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
-                }
-            },
-            update = { playerView ->
-                if (playerView.player != exoPlayer) {
-                    playerView.player = exoPlayer
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
+    if (exoPlayer != null) {
+        Box(modifier = modifier.alpha(if (isPlayerReady) 1f else 0f)) {
+            AndroidView(
+                factory = { ctx ->
+                    PlayerView(ctx).apply {
+                        player = exoPlayer
+                        useController = false
+                        resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+                        setShutterBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    }
+                },
+                update = { playerView ->
+                    if (playerView.player != exoPlayer) {
+                        playerView.player = exoPlayer
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 

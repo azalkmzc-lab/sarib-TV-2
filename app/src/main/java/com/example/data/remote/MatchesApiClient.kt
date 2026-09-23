@@ -431,7 +431,7 @@ class MatchesApiClient(
         return sdf.format(cal.time)
     }
 
-    private fun parseMatchesJson(jsonStr: String): List<MatchItem> {
+    fun parseMatchesJson(jsonStr: String): List<MatchItem> {
         val matchesList = mutableListOf<MatchItem>()
         try {
             val trimmed = jsonStr.trim()

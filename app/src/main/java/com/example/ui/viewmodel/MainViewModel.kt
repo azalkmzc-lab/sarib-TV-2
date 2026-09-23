@@ -80,42 +80,42 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val heroSliders: StateFlow<List<HeroBannerItem>> = repository.heroSliders
 
     val categories: StateFlow<List<ChannelCategory>> = repository.getAllCategories()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val entertainmentCategories: StateFlow<List<ChannelCategory>> = repository.getEntertainmentCategories()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val vodCategories: StateFlow<List<ChannelCategory>> = repository.getVodCategories()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val seriesCategories: StateFlow<List<ChannelCategory>> = repository.getSeriesCategories()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val mostWatchedChannels: StateFlow<List<ChannelItem>> = repository.getMostWatchedChannels()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val allChannels: StateFlow<List<ChannelItem>> = repository.getAllChannels()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val allMatches: StateFlow<List<MatchItem>> = repository.getAllMatches()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val newsList: StateFlow<List<NewsArticle>> = repository.newsList
 
     val featuredMovies: StateFlow<List<MediaItem>> = repository.getMediaByType(ContentType.MOVIE)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val featuredSeries: StateFlow<List<MediaItem>> = repository.getMediaByType(ContentType.SERIES)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val animePicks: StateFlow<List<MediaItem>> = repository.getMediaByType(ContentType.ANIME)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val favorites: StateFlow<List<FavoriteEntity>> = repository.getFavorites()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     val watchHistory: StateFlow<List<com.example.data.local.WatchHistoryEntity>> = repository.getWatchHistory()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     // Category Detail Screen State
     private val _selectedCategory = MutableStateFlow<ChannelCategory?>(null)

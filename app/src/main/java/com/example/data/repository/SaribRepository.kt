@@ -108,6 +108,9 @@ class SaribRepository(private val context: Context) {
 
     suspend fun initializeBackendConnection(): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
+            // 0. Load bundled offline assets immediately (0ms instant startup)
+            loadBundledAssets()
+
             // 1. Security Check
             val securityStatus = SecurityChecker.performSecurityAudit(context)
             if (!securityStatus.isSecure) {
@@ -206,7 +209,7 @@ class SaribRepository(private val context: Context) {
                     try {
                         // Xtream Live Categories
                         if (currentRemoteConfig.isLiveXtreamEnabled && currentRemoteConfig.liveXtreamAccount.serverHost.isNotBlank()) {
-                            liveXtreamClient.fetchLiveCategories(batchSize = 10) { bCats ->
+                            liveXtreamClient.fetchLiveCategories(batchSize = 50) { bCats ->
                                 if (bCats.isNotEmpty()) {
                                     dao.insertCategories(bCats.map { it.toEntity() })
                                 }
@@ -265,12 +268,12 @@ class SaribRepository(private val context: Context) {
                         if (customMovieCats.isNotEmpty()) {
                             dao.insertCategories(customMovieCats.map { it.toEntity() })
                         }
-                        vodXtreamClient.fetchVodCategories(batchSize = 10) { bCats ->
+                        vodXtreamClient.fetchVodCategories(batchSize = 50) { bCats ->
                             if (bCats.isNotEmpty()) {
                                 dao.insertCategories(bCats.map { it.toEntity() })
                             }
                         }
-                        seriesXtreamClient.fetchSeriesCategories(batchSize = 10) { bCats ->
+                        seriesXtreamClient.fetchSeriesCategories(batchSize = 50) { bCats ->
                             if (bCats.isNotEmpty()) {
                                 dao.insertCategories(bCats.map { it.toEntity() })
                             }
@@ -881,6 +884,75 @@ class SaribRepository(private val context: Context) {
         }
 
         detail ?: mainDetail
+    }
+
+    suspend fun loadBundledAssets() = withContext(Dispatchers.IO) {
+        try {
+            // 1. Load bundled channels.json
+            try {
+                val channelsJson = context.assets.open("channels.json").bufferedReader().use { it.readText() }
+                val rootObj = org.json.JSONObject(channelsJson)
+                val channelsArray = rootObj.optJSONArray("channels")
+                if (channelsArray != null && channelsArray.length() > 0) {
+                    val channelsList = mutableListOf<ChannelItem>()
+                    val categoriesMap = mutableMapOf<String, ChannelCategory>()
+                    for (i in 0 until channelsArray.length()) {
+                        val obj = channelsArray.optJSONObject(i) ?: continue
+                        val name = obj.optString("name", "")
+                        val logo = obj.optString("logo", "")
+                        val group = obj.optString("group", "كاس الخليج")
+                        val url = obj.optString("url", "")
+                        if (name.isNotBlank() && url.isNotBlank()) {
+                            val catId = "bundled_cat_${group.hashCode()}"
+                            categoriesMap[catId] = ChannelCategory(
+                                id = catId,
+                                name = group,
+                                subtitle = "باقة مدمجة",
+                                channelCount = 0,
+                                iconUrl = logo,
+                                categoryType = "sports",
+                                gradientColorHex = "#FF5500"
+                            )
+                            channelsList.add(
+                                ChannelItem(
+                                    id = "bundled_ch_$i",
+                                    name = name,
+                                    streamUrl = url,
+                                    logoUrl = logo,
+                                    categoryId = catId,
+                                    categoryName = group,
+                                    country = "الخليج العربي",
+                                    isEnabled = true
+                                )
+                            )
+                        }
+                    }
+                    if (categoriesMap.isNotEmpty()) {
+                        dao.insertCategories(categoriesMap.values.map { it.toEntity() })
+                    }
+                    if (channelsList.isNotEmpty()) {
+                        dao.insertChannels(channelsList.map { it.toEntity() })
+                    }
+                    Log.i("SaribRepository", "Successfully loaded ${channelsList.size} bundled channels from channels.json")
+                }
+            } catch (e: Exception) {
+                Log.d("SaribRepository", "Bundled channels.json note: ${e.message}")
+            }
+
+            // 2. Load bundled data.json (Matches)
+            try {
+                val dataJson = context.assets.open("data.json").bufferedReader().use { it.readText() }
+                val parsedMatches = matchesClient.parseMatchesJson(dataJson)
+                if (parsedMatches.isNotEmpty()) {
+                    dao.insertMatches(parsedMatches.map { it.toEntity() })
+                    Log.i("SaribRepository", "Successfully loaded ${parsedMatches.size} matches from data.json")
+                }
+            } catch (e: Exception) {
+                Log.d("SaribRepository", "Bundled data.json note: ${e.message}")
+            }
+        } catch (e: Exception) {
+            Log.w("SaribRepository", "Error loading bundled assets: ${e.message}")
+        }
     }
 
     suspend fun clearAllCache() = withContext(Dispatchers.IO) {
