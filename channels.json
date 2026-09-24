@@ -1,13 +1,1 @@
-{
-  "channels": [
-    {"name": "Alkass 1 - الكأس 1", "logo": "https://i.ibb.co/SXryYSrV/file-00000000ddb871f49d15006216c6b519.png", "group": "كاس الخليج", "url": "https://liveeu-gcps.alkassdigital.net/alkass1-p/main.m3u8?hdnts=exp=1789719666~hmac=59bda74c793b93ee51f91be49185cd71d3cfc5bf95ca3858f381f5e6fe95c46f"},
-    {"name": "Alkass 2 - الكأس 2", "logo": "https://i.ibb.co/SXryYSrV/file-00000000ddb871f49d15006216c6b519.png", "group": "كاس الخليج", "url": "https://liveeu-gcps.alkassdigital.net/alkass2-p/main.m3u8?hdnts=exp=1789719748~hmac=2f746557cea50f2f3cefad36ea3d8404adb7382983ac178041d72602628b1f1d"},
-    {"name": "Alkass 3 - الكأس 3", "logo": "https://i.ibb.co/SXryYSrV/file-00000000ddb871f49d15006216c6b519.png", "group": "كاس الخليج", "url": "https://liveeu-gcps.alkassdigital.net/alkass3-p/main.m3u8?hdnts=exp=1789720179~hmac=50ef66165beb7f943d42274e6fd1de19adbd25db77eeda5428ad88ff3d784f94"},
-    {"name": "Alkass 4 - الكأس 4", "logo": "https://i.ibb.co/SXryYSrV/file-00000000ddb871f49d15006216c6b519.png", "group": "كاس الخليج", "url": "https://liveeu-gcps.alkassdigital.net/alkass4-p/main.m3u8?hdnts=exp=1789720285~hmac=e37b6fb8a31747f9f77f552cb045d7c90dcab98b85502c2f72e6eedbb42f3ed6"},
-    {"name": "Bahrain Sports 1 - البحرين الرياضية 1", "logo": "https://i.ibb.co/SXryYSrV/file-00000000ddb871f49d15006216c6b519.png", "group": "كاس الخليج", "url": "https://5c7b683162943.streamlock.net/live/ngrp:sportsone_all/playlist.m3u8"},
-    {"name": "Bahrain Sports 2 - البحرين الرياضية 2", "logo": "https://i.ibb.co/SXryYSrV/file-00000000ddb871f49d15006216c6b519.png", "group": "كاس الخليج", "url": "https://5c7b683162943.streamlock.net/live/ngrp:bahrainsportstwo_all/playlist.m3u8"},
-    {"name": "Kuwait Sports 1 - الكويت الرياضية 1", "logo": "https://i.ibb.co/SXryYSrV/file-00000000ddb871f49d15006216c6b519.png", "group": "كاس الخليج", "url": "https://kwtspta.cdn.mangomolo.com/sp/smil:sp.stream.smil/chunklist.m3u8"},
-    {"name": "Kuwait Sports 2 - الكويت الرياضية 2", "logo": "https://i.ibb.co/SXryYSrV/file-00000000ddb871f49d15006216c6b519.png", "group": "كاس الخليج", "url": "https://kwtsplta.cdn.mangomolo.com/spl/smil:spl.stream.smil/chunklist.m3u8"},
-    {"name": "Oman Sports - عمان الرياضية", "logo": "https://i.ibb.co/SXryYSrV/file-00000000ddb871f49d15006216c6b519.png", "group": "كاس الخليج", "url": "https://partneta.cdn.mgmlcdn.com/omsport/smil:omsport.stream.smil/chunklist.m3u8"}
-  ]
-}
+
