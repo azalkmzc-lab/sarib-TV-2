@@ -1,629 +1,547 @@
-{
-  "ok": true,
-  "data": [
-    {
-      "id": "5749683",
-      "homeTeam": "فيورنتينا",
-      "awayTeam": "نابولي",
-      "date": "2026-09-20",
-      "time": "01:30 م",
-      "league": "الدوري الإيطالي",
-      "broadcastChannel": "stc tv",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/1231690283002.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/9521720636634.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/6281692568873.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "stc tv",
-          "channel": "stc tv"
-        }
-      ]
-    },
-    {
-      "id": "5868076",
-      "homeTeam": "خيتافي",
-      "awayTeam": "ملقا",
-      "date": "2026-09-20",
-      "time": "03:00 م",
-      "league": "الدوري الإسباني",
-      "broadcastChannel": "beIN SPORTS 9",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/3451691957863.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/1171690458315.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/8641690196626.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 9",
-          "channel": "beIN SPORTS 9"
-        }
-      ]
-    },
-    {
-      "id": "5802938",
-      "homeTeam": "أوكسير",
-      "awayTeam": "بريست",
-      "date": "2026-09-20",
-      "time": "04:00 م",
-      "league": "الدوري الفرنسي",
-      "broadcastChannel": "beIN SPORTS 6",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/8671690370530.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/7551690287380.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/9551719862665.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 6",
-          "channel": "beIN SPORTS 6"
-        }
-      ]
-    },
-    {
-      "id": "5749684",
-      "homeTeam": "فروزينوني",
-      "awayTeam": "كومو",
-      "date": "2026-09-20",
-      "time": "04:00 م",
-      "league": "الدوري الإيطالي",
-      "broadcastChannel": "stc tv",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/5761690283004.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/8641690823614.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/6281692568873.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "stc tv",
-          "channel": "stc tv"
-        }
-      ]
-    },
-    {
-      "id": "5749687",
-      "homeTeam": "بارما",
-      "awayTeam": "جنوى",
-      "date": "2026-09-20",
-      "time": "04:00 م",
-      "league": "الدوري الإيطالي",
-      "broadcastChannel": "stc tv",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/4061690823331.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/1891690283004.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/6281692568873.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "stc tv",
-          "channel": "stc tv"
-        }
-      ]
-    },
-    {
-      "id": "5795455",
-      "homeTeam": "بورنموث",
-      "awayTeam": "ليفربول",
-      "date": "2026-09-20",
-      "time": "04:00 م",
-      "league": "الدوري الإنجليزي",
-      "broadcastChannel": "beIN SPORTS 2",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/7651690118769.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/4081724601375.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/3411694791422.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 2",
-          "channel": "beIN SPORTS 2"
-        }
-      ]
-    },
-    {
-      "id": "5795460",
-      "homeTeam": "ليدز يونايتد",
-      "awayTeam": "كريستال بالاس",
-      "date": "2026-09-20",
-      "time": "04:00 م",
-      "league": "الدوري الإنجليزي",
-      "broadcastChannel": "beIN SPORTS 5",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/4691690458244.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/6121690118883.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/3411694791422.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 5",
-          "channel": "beIN SPORTS 5"
-        }
-      ]
-    },
-    {
-      "id": "5795461",
-      "homeTeam": "مان سيتي",
-      "awayTeam": "سندرلاند",
-      "date": "2026-09-20",
-      "time": "04:00 م",
-      "league": "الدوري الإنجليزي",
-      "broadcastChannel": "beIN SPORTS 3",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/4481690118308.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/10001690823905.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/3411694791422.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 3",
-          "channel": "beIN SPORTS 3"
-        }
-      ]
-    },
-    {
-      "id": "5881170",
-      "homeTeam": "باير ليفركوزن",
-      "awayTeam": "لايبزيج",
-      "date": "2026-09-20",
-      "time": "04:30 م",
-      "league": "الدوري الألماني",
-      "broadcastChannel": "MBC شاهد رياضة",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/7151690288816.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/8361734715237.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/6171690288722.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "MBC شاهد رياضة",
-          "channel": "MBC شاهد رياضة"
-        }
-      ]
-    },
-    {
-      "id": "5904755",
-      "homeTeam": "فنربخشة",
-      "awayTeam": "أيوب سبور",
-      "date": "2026-09-20",
-      "time": "05:00 م",
-      "league": "الدوري التركي",
-      "broadcastChannel": "beIN SPORTS",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/681690127723.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/891700669405.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/7571723239230.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS",
-          "channel": "beIN SPORTS"
-        }
-      ]
-    },
-    {
-      "id": "5868072",
-      "homeTeam": "أتلتيكو مدريد",
-      "awayTeam": "ريال مدريد",
-      "date": "2026-09-20",
-      "time": "05:15 م",
-      "league": "الدوري الإسباني",
-      "broadcastChannel": "beIN SPORTS 1",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/1431719588699.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/1871690196746.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/8641690196626.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 1",
-          "channel": "beIN SPORTS 1"
-        }
-      ]
-    },
-    {
-      "id": "5802942",
-      "homeTeam": "نيس",
-      "awayTeam": "نادي ليل",
-      "date": "2026-09-20",
-      "time": "06:15 م",
-      "league": "الدوري الفرنسي",
-      "broadcastChannel": "beIN SPORTS 5",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/7361690287672.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/381690287334.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/9551719862665.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 5",
-          "channel": "beIN SPORTS 5"
-        }
-      ]
-    },
-    {
-      "id": "5881176",
-      "homeTeam": "شالكه",
-      "awayTeam": "إلفيرسبيرج",
-      "date": "2026-09-20",
-      "time": "06:30 م",
-      "league": "الدوري الألماني",
-      "broadcastChannel": "MBC شاهد رياضة",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/7011690370555.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/9101690370517.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/6171690288722.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "MBC شاهد رياضة",
-          "channel": "MBC شاهد رياضة"
-        }
-      ]
-    },
-    {
-      "id": "5795459",
-      "homeTeam": "فولهام",
-      "awayTeam": "مان يونايتد",
-      "date": "2026-09-20",
-      "time": "06:30 م",
-      "league": "الدوري الإنجليزي",
-      "broadcastChannel": "beIN SPORTS 2",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/4711690118927.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/4871690119302.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/3411694791422.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 2",
-          "channel": "beIN SPORTS 2"
-        }
-      ]
-    },
-    {
-      "id": "56963128",
-      "homeTeam": "ضمك",
-      "awayTeam": "العدالة",
-      "date": "2026-09-20",
-      "time": "06:45 م",
-      "league": "دوري الدرجة الأولى السعودي",
-      "broadcastChannel": "ثمانية 2",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/5631690299255.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/7331691930420.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/4661694112676.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "ثمانية 2",
-          "channel": "ثمانية 2"
-        }
-      ]
-    },
-    {
-      "id": "19075581",
-      "homeTeam": "الجندل",
-      "awayTeam": "الوحدة",
-      "date": "2026-09-20",
-      "time": "06:55 م",
-      "league": "دوري الدرجة الأولى السعودي",
-      "broadcastChannel": "تطبيق ثمانية",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/2821724146928.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/6451690292495.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/4661694112676.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "تطبيق ثمانية",
-          "channel": "تطبيق ثمانية"
-        }
-      ]
-    },
-    {
-      "id": "60847518",
-      "homeTeam": "الجبلين",
-      "awayTeam": "العروبة",
-      "date": "2026-09-20",
-      "time": "06:55 م",
-      "league": "دوري الدرجة الأولى السعودي",
-      "broadcastChannel": "ثمانية 3",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/7651691930547.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/7481755420969.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/4661694112676.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "ثمانية 3",
-          "channel": "ثمانية 3"
-        }
-      ]
-    },
-    {
-      "id": "5749685",
-      "homeTeam": "يوفنتوس",
-      "awayTeam": "أتالانتا",
-      "date": "2026-09-20",
-      "time": "07:00 م",
-      "league": "الدوري الإيطالي",
-      "broadcastChannel": "stc tv",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/9331690283003.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/17795813126107.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/6281692568873.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "stc tv",
-          "channel": "stc tv"
-        }
-      ]
-    },
-    {
-      "id": "28527917",
-      "homeTeam": "الجزيرة",
-      "awayTeam": "الوحدة",
-      "date": "2026-09-20",
-      "time": "07:15 م",
-      "league": "كأس مصرف أبوظبي",
-      "broadcastChannel": "أبوظبي الرياضية",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/4171716154082.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/8811690300661.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/5111706707171.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "أبوظبي الرياضية",
-          "channel": "أبوظبي الرياضية"
-        }
-      ]
-    },
-    {
-      "id": "35354018",
-      "homeTeam": "الظفرة",
-      "awayTeam": "بني ياس",
-      "date": "2026-09-20",
-      "time": "07:15 م",
-      "league": "كأس مصرف أبوظبي",
-      "broadcastChannel": "أبوظبي الرياضية",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/7361755293874.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/211690300900.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/5111706707171.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "أبوظبي الرياضية",
-          "channel": "أبوظبي الرياضية"
-        }
-      ]
-    },
-    {
-      "id": "5868074",
-      "homeTeam": "لاكورونيا",
-      "awayTeam": "ريال بيتيس",
-      "date": "2026-09-20",
-      "time": "07:30 م",
-      "league": "الدوري الإسباني",
-      "broadcastChannel": "beIN SPORTS 4",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/2961698772258.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/17645945054618.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/8641690196626.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 4",
-          "channel": "beIN SPORTS 4"
-        }
-      ]
-    },
-    {
-      "id": "5868080",
-      "homeTeam": "فياريال",
-      "awayTeam": "ليفانتي",
-      "date": "2026-09-20",
-      "time": "07:30 م",
-      "league": "الدوري الإسباني",
-      "broadcastChannel": "beIN SPORTS 3",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/7121690196747.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/2601690370530.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/8641690196626.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 3",
-          "channel": "beIN SPORTS 3"
-        }
-      ]
-    },
-    {
-      "id": "5887641",
-      "homeTeam": "بورتو",
-      "awayTeam": "بنفيكا",
-      "date": "2026-09-20",
-      "time": "10:30 م",
-      "league": "الدوري البرتغالي الممتاز",
-      "broadcastChannel": "Sport TV",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/4801690385949.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/4491690386690.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/7301690383928.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "Sport TV",
-          "channel": "Sport TV"
-        }
-      ]
-    },
-    {
-      "id": "5802945",
-      "homeTeam": "مارسيليا",
-      "awayTeam": "باريس",
-      "date": "2026-09-20",
-      "time": "09:45 م",
-      "league": "الدوري الفرنسي",
-      "broadcastChannel": "beIN SPORTS 1",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/17816370094121.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/4461690287785.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/9551719862665.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 1",
-          "channel": "beIN SPORTS 1"
-        }
-      ]
-    },
-    {
-      "id": "5749680",
-      "homeTeam": "ميلان",
-      "awayTeam": "ليتشي",
-      "date": "2026-09-20",
-      "time": "09:45 م",
-      "league": "الدوري الإيطالي",
-      "broadcastChannel": "stc tv",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/3181690283002.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/9031690283003.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/6281692568873.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "stc tv",
-          "channel": "stc tv"
-        }
-      ]
-    },
-    {
-      "id": "5868079",
-      "homeTeam": "فالنسيا",
-      "awayTeam": "ريال سوسيداد",
-      "date": "2026-09-20",
-      "time": "10:00 م",
-      "league": "الدوري الإسباني",
-      "broadcastChannel": "beIN SPORTS 2",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://imgs.ysscores.com/teams/64/7881690196747.png",
-      "awayLogo": "https://imgs.ysscores.com/teams/64/9441690196745.png",
-      "leagueLogo": "https://imgs.ysscores.com/championship/48/8641690196626.png",
-      "status": "0",
-      "linkedChannels": [
-        {
-          "name": "beIN SPORTS 2",
-          "channel": "beIN SPORTS 2"
-        }
-      ]
-    }
-  ]
-        }
+[
+  {
+    "id": 1,
+    "homeTeam": "الإمارات",
+    "awayTeam": "اليمن",
+    "date": "2026-09-24",
+    "time": "18:55",
+    "league": "خليجي 27",
+    "broadcastChannel": "الشارقة الرياضية",
+    "homeLogo": "https://flagcdn.com/w320/ae.png",
+    "awayLogo": "https://flagcdn.com/w320/ye.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 2,
+    "homeTeam": "قطر",
+    "awayTeam": "البحرين",
+    "date": "2026-09-24",
+    "time": "21:00",
+    "league": "خليجي 27",
+    "broadcastChannel": "الكأس 1",
+    "homeLogo": "https://flagcdn.com/w320/qa.png",
+    "awayLogo": "https://flagcdn.com/w320/bh.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+
+  {
+    "id": 3,
+    "homeTeam": "أندورا",
+    "awayTeam": "مالطا",
+    "date": "2026-09-24",
+    "time": "19:00",
+    "league": "دوري الأمم الأوروبية",
+    "broadcastChannel": "beIN Sports 3",
+    "homeLogo": "https://flagcdn.com/w320/ad.png",
+    "awayLogo": "https://flagcdn.com/w320/mt.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 4,
+    "homeTeam": "كوسوفو",
+    "awayTeam": "أيرلندا",
+    "date": "2026-09-24",
+    "time": "21:45",
+    "league": "دوري الأمم الأوروبية",
+    "broadcastChannel": "beIN Sports 5",
+    "homeLogo": "https://flagcdn.com/w320/xk.png",
+    "awayLogo": "https://flagcdn.com/w320/ie.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 5,
+    "homeTeam": "هولندا",
+    "awayTeam": "ألمانيا",
+    "date": "2026-09-24",
+    "time": "21:45",
+    "league": "دوري الأمم الأوروبية",
+    "broadcastChannel": "beIN Sports 2",
+    "homeLogo": "https://flagcdn.com/w320/nl.png",
+    "awayLogo": "https://flagcdn.com/w320/de.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 6,
+    "homeTeam": "صربيا",
+    "awayTeam": "اليونان",
+    "date": "2026-09-24",
+    "time": "21:45",
+    "league": "دوري الأمم الأوروبية",
+    "broadcastChannel": "beIN Sports 6",
+    "homeLogo": "https://flagcdn.com/w320/rs.png",
+    "awayLogo": "https://flagcdn.com/w320/gr.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 7,
+    "homeTeam": "النرويج",
+    "awayTeam": "الدنمارك",
+    "date": "2026-09-24",
+    "time": "21:45",
+    "league": "دوري الأمم الأوروبية",
+    "broadcastChannel": "beIN Sports 4",
+    "homeLogo": "https://flagcdn.com/w320/no.png",
+    "awayLogo": "https://flagcdn.com/w320/dk.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 8,
+    "homeTeam": "البرتغال",
+    "awayTeam": "ويلز",
+    "date": "2026-09-24",
+    "time": "21:45",
+    "league": "دوري الأمم الأوروبية",
+    "broadcastChannel": "beIN Sports 3",
+    "homeLogo": "https://flagcdn.com/w320/pt.png",
+    "awayLogo": "https://flagcdn.com/w320/gb-wls.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 9,
+    "homeTeam": "النمسا",
+    "awayTeam": "إسرائيل",
+    "date": "2026-09-24",
+    "time": "21:45",
+    "league": "دوري الأمم الأوروبية",
+    "broadcastChannel": "beIN Sports ENG 2",
+    "homeLogo": "https://flagcdn.com/w320/at.png",
+    "awayLogo": "https://flagcdn.com/w320/il.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 10,
+    "homeTeam": "ليشتنشتاين",
+    "awayTeam": "ليتوانيا",
+    "date": "2026-09-24",
+    "time": "21:45",
+    "league": "دوري الأمم الأوروبية",
+    "broadcastChannel": "beIN Xtra 1",
+    "homeLogo": "https://flagcdn.com/w320/li.png",
+    "awayLogo": "https://flagcdn.com/w320/lt.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+
+  {
+    "id": 11,
+    "homeTeam": "ناميبيا",
+    "awayTeam": "الكونغو",
+    "date": "2026-09-24",
+    "time": "16:00",
+    "league": "تصفيات أمم أفريقيا 2027",
+    "broadcastChannel": null,
+    "homeLogo": "https://flagcdn.com/w320/na.png",
+    "awayLogo": "https://flagcdn.com/w320/cg.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 12,
+    "homeTeam": "الكونغو الديمقراطية",
+    "awayTeam": "غينيا الاستوائية",
+    "date": "2026-09-24",
+    "time": "19:00",
+    "league": "تصفيات أمم أفريقيا 2027",
+    "broadcastChannel": "beIN Sports 2",
+    "homeLogo": "https://flagcdn.com/w320/cd.png",
+    "awayLogo": "https://flagcdn.com/w320/gq.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 13,
+    "homeTeam": "ليبيا",
+    "awayTeam": "بوتسوانا",
+    "date": "2026-09-24",
+    "time": "19:00",
+    "league": "تصفيات أمم أفريقيا 2027",
+    "broadcastChannel": "beIN Sports 1",
+    "homeLogo": "https://flagcdn.com/w320/ly.png",
+    "awayLogo": "https://flagcdn.com/w320/bw.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 14,
+    "homeTeam": "موريتانيا",
+    "awayTeam": "أفريقيا الوسطى",
+    "date": "2026-09-24",
+    "time": "19:00",
+    "league": "تصفيات أمم أفريقيا 2027",
+    "broadcastChannel": "beIN Sports 2",
+    "homeLogo": "https://flagcdn.com/w320/mr.png",
+    "awayLogo": "https://flagcdn.com/w320/cf.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 15,
+    "homeTeam": "سيراليون",
+    "awayTeam": "زيمبابوي",
+    "date": "2026-09-24",
+    "time": "22:00",
+    "league": "تصفيات أمم أفريقيا 2027",
+    "broadcastChannel": "beIN CONNECT",
+    "homeLogo": "https://flagcdn.com/w320/sl.png",
+    "awayLogo": "https://flagcdn.com/w320/zw.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 16,
+    "homeTeam": "الكاميرون",
+    "awayTeam": "جزر القمر",
+    "date": "2026-09-24",
+    "time": "22:00",
+    "league": "تصفيات أمم أفريقيا 2027",
+    "broadcastChannel": "beIN Sports 8",
+    "homeLogo": "https://flagcdn.com/w320/cm.png",
+    "awayLogo": "https://flagcdn.com/w320/km.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 17,
+    "homeTeam": "تونس",
+    "awayTeam": "أوغندا",
+    "date": "2026-09-24",
+    "time": "22:00",
+    "league": "تصفيات أمم أفريقيا 2027",
+    "broadcastChannel": "beIN Sports 1",
+    "homeLogo": "https://flagcdn.com/w320/tn.png",
+    "awayLogo": "https://flagcdn.com/w320/ug.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 18,
+    "homeTeam": "كوت ديفوار",
+    "awayTeam": "غانا",
+    "date": "2026-09-24",
+    "time": "22:00",
+    "league": "تصفيات أمم أفريقيا 2027",
+    "broadcastChannel": "beIN Sports 7",
+    "homeLogo": "https://flagcdn.com/w320/ci.png",
+    "awayLogo": "https://flagcdn.com/w320/gh.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+
+  {
+    "id": 19,
+    "homeTeam": "النصر",
+    "awayTeam": "السكة الحديد",
+    "date": "2026-09-24",
+    "time": "16:30",
+    "league": "دوري المحترفين المصري",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 20,
+    "homeTeam": "تيم إف سي",
+    "awayTeam": "الداخلية",
+    "date": "2026-09-24",
+    "time": "16:30",
+    "league": "دوري المحترفين المصري",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 21,
+    "homeTeam": "مالية كفر الزيات",
+    "awayTeam": "المنصورة",
+    "date": "2026-09-24",
+    "time": "16:30",
+    "league": "دوري المحترفين المصري",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 22,
+    "homeTeam": "مسار",
+    "awayTeam": "بروكسي",
+    "date": "2026-09-24",
+    "time": "16:30",
+    "league": "دوري المحترفين المصري",
+    "broadcastChannel": "ON Sport Plus",
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 23,
+    "homeTeam": "كهرباء الإسماعيلية",
+    "awayTeam": "فاركو",
+    "date": "2026-09-24",
+    "time": "16:30",
+    "league": "دوري المحترفين المصري",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+
+  {
+    "id": 24,
+    "homeTeam": "أمل تزنيت",
+    "awayTeam": "اتحاد طنجة",
+    "date": "2026-09-24",
+    "time": "18:00",
+    "league": "الدوري المغربي",
+    "broadcastChannel": "SNRT Live",
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 25,
+    "homeTeam": "الدفاع الحسني الجديدي",
+    "awayTeam": "المكناسي",
+    "date": "2026-09-24",
+    "time": "18:00",
+    "league": "الدوري المغربي",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 26,
+    "homeTeam": "الجيش الملكي",
+    "awayTeam": "الرجاء البيضاوي",
+    "date": "2026-09-24",
+    "time": "18:00",
+    "league": "الدوري المغربي",
+    "broadcastChannel": "SNRT Live",
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 27,
+    "homeTeam": "الكوكب المراكشي",
+    "awayTeam": "حسنية أكادير",
+    "date": "2026-09-24",
+    "time": "18:00",
+    "league": "الدوري المغربي",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 28,
+    "homeTeam": "المغرب الفاسي",
+    "awayTeam": "نهضة الزمامرة",
+    "date": "2026-09-24",
+    "time": "18:00",
+    "league": "الدوري المغربي",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 29,
+    "homeTeam": "المغرب التطواني",
+    "awayTeam": "نهضة بركان",
+    "date": "2026-09-24",
+    "time": "18:00",
+    "league": "الدوري المغربي",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 30,
+    "homeTeam": "اتحاد تواركة",
+    "awayTeam": "الفتح الرباطي",
+    "date": "2026-09-24",
+    "time": "18:00",
+    "league": "الدوري المغربي",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 31,
+    "homeTeam": "الوداد الرياضي",
+    "awayTeam": "وداد تمارة",
+    "date": "2026-09-24",
+    "time": "18:00",
+    "league": "الدوري المغربي",
+    "broadcastChannel": null,
+    "homeLogo": null,
+    "awayLogo": null,
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+
+  {
+    "id": 32,
+    "homeTeam": "فلسطين",
+    "awayTeam": "نيوزيلندا",
+    "date": "2026-09-24",
+    "time": "12:30",
+    "league": "مباراة ودية",
+    "broadcastChannel": null,
+    "homeLogo": "https://flagcdn.com/w320/ps.png",
+    "awayLogo": "https://flagcdn.com/w320/nz.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 33,
+    "homeTeam": "اليابان",
+    "awayTeam": "أوروغواي",
+    "date": "2026-09-24",
+    "time": "13:05",
+    "league": "مباراة ودية",
+    "broadcastChannel": null,
+    "homeLogo": "https://flagcdn.com/w320/jp.png",
+    "awayLogo": "https://flagcdn.com/w320/uy.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 34,
+    "homeTeam": "كوريا الجنوبية",
+    "awayTeam": "الإكوادور",
+    "date": "2026-09-24",
+    "time": "14:00",
+    "league": "مباراة ودية",
+    "broadcastChannel": null,
+    "homeLogo": "https://flagcdn.com/w320/kr.png",
+    "awayLogo": "https://flagcdn.com/w320/ec.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 35,
+    "homeTeam": "الصين",
+    "awayTeam": "جزر المالديف",
+    "date": "2026-09-24",
+    "time": "14:35",
+    "league": "مباراة ودية",
+    "broadcastChannel": null,
+    "homeLogo": "https://flagcdn.com/w320/cn.png",
+    "awayLogo": "https://flagcdn.com/w320/mv.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  },
+  {
+    "id": 36,
+    "homeTeam": "أوزبكستان",
+    "awayTeam": "إيران",
+    "date": "2026-09-24",
+    "time": "17:00",
+    "league": "مباراة ودية",
+    "broadcastChannel": null,
+    "homeLogo": "https://flagcdn.com/w320/uz.png",
+    "awayLogo": "https://flagcdn.com/w320/ir.png",
+    "isLive": false,
+    "homeScore": 0,
+    "awayScore": 0,
+    "status": "لم تبدأ"
+  }
+]
