@@ -2,7 +2,15 @@
   "categories": [
     {
       "name": "قنوات الڪاس",
-      "channels": []
+      "channels": [
+        {
+          "name": "الكاس 2",
+          "logo": "",
+          "servers": [
+            "https://storage.googleapis.com/livealkass-eu/alkass2-p/main.m3u8"
+          ]
+        }
+      ]
     }
   ]
 }
