@@ -365,16 +365,10 @@ fun CategoryChipsRow(
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(categories) { category ->
+        items(categories, key = { it }) { category ->
             val isSelected = category == selectedCategory
-            val bgColor by animateColorAsState(
-                targetValue = if (isSelected) SaribElectricBlue else SaribCardBg,
-                label = "chipBg"
-            )
-            val textColor by animateColorAsState(
-                targetValue = if (isSelected) Color.White else SaribTextSecondary,
-                label = "chipText"
-            )
+            val bgColor = if (isSelected) SaribElectricBlue else SaribCardBg
+            val textColor = if (isSelected) Color.White else SaribTextSecondary
             val borderColor = if (isSelected) SaribCyanAccent else SaribCardBorderSubtle
 
             Box(
@@ -382,7 +376,10 @@ fun CategoryChipsRow(
                     .clip(RoundedCornerShape(16.dp))
                     .background(bgColor)
                     .border(1.dp, borderColor, RoundedCornerShape(16.dp))
-                    .clickable { onCategorySelected(category) }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
+                    ) { onCategorySelected(category) }
                     .padding(horizontal = 16.dp, vertical = 7.dp)
             ) {
                 Text(
@@ -1166,13 +1163,15 @@ fun MainCategoriesRoundGrid(
     onCategoryClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val items = listOf(
-        Triple("القنوات", Icons.Default.Tv, "channels"),
-        Triple("المباريات", Icons.Default.SportsSoccer, "matches"),
-        Triple("الأخبار", Icons.AutoMirrored.Filled.Article, "news"),
-        Triple("الأفلام", Icons.Default.Movie, "movies"),
-        Triple("المسلسلات", Icons.Default.VideoLibrary, "series")
-    )
+    val items = remember {
+        listOf(
+            Triple("القنوات", Icons.Default.Tv, "channels"),
+            Triple("المباريات", Icons.Default.SportsSoccer, "matches"),
+            Triple("الأخبار", Icons.AutoMirrored.Filled.Article, "news"),
+            Triple("الأفلام", Icons.Default.Movie, "movies"),
+            Triple("المسلسلات", Icons.Default.VideoLibrary, "series")
+        )
+    }
 
     Row(
         modifier = modifier
@@ -1186,13 +1185,15 @@ fun MainCategoriesRoundGrid(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
-                    .clickable { onCategoryClick(route) }
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
+                    ) { onCategoryClick(route) }
                     .padding(2.dp)
             ) {
                 Box(
                     modifier = Modifier
                         .size(50.dp)
-                        .shadow(8.dp, CircleShape)
                         .clip(CircleShape)
                         .background(
                             Brush.linearGradient(
@@ -1405,26 +1406,16 @@ fun MatchCardItem(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.02f else 1.0f,
-        animationSpec = tween(durationMillis = 150),
-        label = "matchCardScale"
-    )
-    val borderColor by animateColorAsState(
-        targetValue = if (isFocused) SaribCyanAccent else if (match.isLive) SaribLiveRed.copy(alpha = 0.5f) else SaribCardBorder,
-        animationSpec = tween(durationMillis = 150),
-        label = "matchCardBorder"
-    )
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
             .clip(RoundedCornerShape(22.dp))
-            .border(if (isFocused || match.isLive) 1.5.dp else 1.dp, borderColor, RoundedCornerShape(22.dp))
+            .border(
+                width = if (isFocused || match.isLive) 1.5.dp else 1.dp,
+                color = if (isFocused) SaribCyanAccent else if (match.isLive) SaribLiveRed.copy(alpha = 0.5f) else SaribCardBorder,
+                shape = RoundedCornerShape(22.dp)
+            )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
             .onKeyEvent { keyEvent ->
@@ -1438,7 +1429,10 @@ fun MatchCardItem(
                     true
                 } else false
             }
-            .clickable { onClick(match) },
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
+            ) { onClick(match) },
         colors = CardDefaults.cardColors(
             containerColor = if (isFocused) SaribCardBgSecondary else SaribCardBg
         )
@@ -1755,27 +1749,16 @@ fun MediaCardItem(
 ) {
     val displayImageUrl = item.posterUrl.ifBlank { item.backdropUrl }
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.08f else 1.0f,
-        animationSpec = tween(durationMillis = 150),
-        label = "mediaCardScale"
-    )
-    val borderColor by animateColorAsState(
-        targetValue = if (isFocused) SaribCyanAccent else SaribCardBorder,
-        animationSpec = tween(durationMillis = 150),
-        label = "mediaCardBorder"
-    )
-    val borderWidth = if (isFocused) 2.5.dp else 1.dp
 
     Card(
         modifier = modifier
             .width(135.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
             .clip(RoundedCornerShape(18.dp))
-            .border(borderWidth, borderColor, RoundedCornerShape(18.dp))
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                color = if (isFocused) SaribCyanAccent else SaribCardBorder,
+                shape = RoundedCornerShape(18.dp)
+            )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
             .onKeyEvent { keyEvent ->
@@ -1789,7 +1772,10 @@ fun MediaCardItem(
                     true
                 } else false
             }
-            .clickable { onClick(item) },
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
+            ) { onClick(item) },
         colors = CardDefaults.cardColors(
             containerColor = if (isFocused) SaribCardBgSecondary else SaribCardBg
         )
@@ -1944,27 +1930,16 @@ fun LargeChannelCategoryCard(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.04f else 1.0f,
-        animationSpec = tween(durationMillis = 150),
-        label = "catCardScale"
-    )
-    val borderColor by animateColorAsState(
-        targetValue = if (isFocused) SaribCyanAccent else SaribCardBorder,
-        animationSpec = tween(durationMillis = 150),
-        label = "catCardBorder"
-    )
-    val borderWidth = if (isFocused) 2.dp else 1.dp
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
             .clip(RoundedCornerShape(20.dp))
-            .border(borderWidth, borderColor, RoundedCornerShape(20.dp))
+            .border(
+                width = if (isFocused) 2.dp else 1.dp,
+                color = if (isFocused) SaribCyanAccent else SaribCardBorder,
+                shape = RoundedCornerShape(20.dp)
+            )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
             .onKeyEvent { keyEvent ->
@@ -1978,7 +1953,10 @@ fun LargeChannelCategoryCard(
                     true
                 } else false
             }
-            .clickable { onClick(category) },
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
+            ) { onClick(category) },
         colors = CardDefaults.cardColors(
             containerColor = if (isFocused) SaribCardBgSecondary else SaribCardBg
         )
@@ -2211,33 +2189,15 @@ fun ActionButtonCard(
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.05f else 1.0f,
-        animationSpec = tween(durationMillis = 150),
-        label = "actionBtnScale"
-    )
-    val borderColor by animateColorAsState(
-        targetValue = when {
-            isFocused -> SaribCyanAccent
-            isActive -> SaribCyanAccent
-            else -> SaribCardBorder
-        },
-        animationSpec = tween(durationMillis = 150),
-        label = "actionBtnBorder"
-    )
 
     androidx.compose.material3.Card(
         modifier = modifier
             .height(58.dp)
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
             .clip(RoundedCornerShape(16.dp))
             .border(
-                if (isFocused) 2.dp else 1.dp,
-                borderColor,
-                RoundedCornerShape(16.dp)
+                width = if (isFocused) 2.dp else 1.dp,
+                color = if (isFocused || isActive) SaribCyanAccent else SaribCardBorder,
+                shape = RoundedCornerShape(16.dp)
             )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
@@ -2252,7 +2212,10 @@ fun ActionButtonCard(
                     true
                 } else false
             }
-            .clickable { onClick() },
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
+            ) { onClick() },
         colors = androidx.compose.material3.CardDefaults.cardColors(
             containerColor = if (isFocused) SaribCardBgSecondary else if (isActive) SaribElectricBlue.copy(alpha = 0.15f) else SaribCardBg
         )

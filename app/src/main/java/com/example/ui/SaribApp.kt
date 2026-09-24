@@ -385,11 +385,13 @@ fun SaribApp(
                         ) {
                             when (currentTab) {
                                 "home" -> {
+                                    val homeMovies = remember(featuredMovies) { featuredMovies.take(10) }
+                                    val homeSeries = remember(featuredSeries) { featuredSeries.take(10) }
                                     HomeScreen(
                                         heroSliders = heroSliders,
                                         popularChannels = mostWatchedChannels,
-                                        movies = featuredMovies.take(5),
-                                        series = featuredSeries.take(5),
+                                        movies = homeMovies,
+                                        series = homeSeries,
                                         selectedChip = selectedHomeChip,
                                         onChipSelected = { viewModel.selectHomeChip(it) },
                                         onMenuClick = { scope.launch { drawerState.open() } },
