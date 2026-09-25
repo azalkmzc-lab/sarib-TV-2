@@ -1,3 +1,11 @@
 {
-  "apps": []
+  "apps": [
+    {
+      "name": "بث مباشر",
+      "icon": "",
+      "description": "",
+      "screenshots": [],
+      "downloadUrl": "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json"
+    }
+  ]
 }
