@@ -1,86 +1,264 @@
-[
-  {
-    "match": "جنوب السودان × مصر",
-    "time": "16:00",
-    "channel": "beIN SPORTS 1",
-    "channel_id": "6040215"
-  },
-  {
-    "match": "بوروندي × الجزائر",
-    "time": "16:00",
-    "channel": "beIN SPORTS 2",
-    "channel_id": "9897979"
-  },
-  {
-    "match": "ليسوتو × المغرب",
-    "time": "16:00",
-    "channel": "beIN SPORTS 3",
-    "channel_id": "6183636"
-  },
-  {
-    "match": "موزمبيق × السودان",
-    "time": "16:00",
-    "channel": "beIN SPORTS 4",
-    "channel_id": "8889768"
-  },
-  {
-    "match": "إثيوبيا × السنغال",
-    "time": "16:00",
-    "channel": "beIN SPORTS 5",
-    "channel_id": "103867"
-  },
-  {
-    "match": "غانا × جامبيا",
-    "time": "19:00",
-    "channel": "beIN SPORTS 2",
-    "channel_id": "9897979"
-  },
-  {
-    "match": "أوغندا × ليبيا",
-    "time": "19:00",
-    "channel": "beIN SPORTS 1",
-    "channel_id": "6040215"
-  },
-  {
-    "match": "غينيا بيساو × نيجيريا",
-    "time": "19:00",
-    "channel": "beIN SPORTS 4",
-    "channel_id": "8889768"
-  },
-  {
-    "match": "فنلندا × بيلاروسيا",
-    "time": "19:00",
-    "channel": "beIN SPORTS 5",
-    "channel_id": "103867"
-  },
-  {
-    "match": "الصومال × كوت ديفوار",
-    "time": "22:00",
-    "channel": "beIN SPORTS 3",
-    "channel_id": "6183636"
-  },
-  {
-    "match": "التشيك × إنجلترا",
-    "time": "21:45",
-    "channel": "beIN SPORTS 3",
-    "channel_id": "6183636"
-  },
-  {
-    "match": "إسبانيا × كرواتيا",
-    "time": "21:45",
-    "channel": "beIN SPORTS 2",
-    "channel_id": "9897979"
-  },
-  {
-    "match": "إسكتلندا × سويسرا",
-    "time": "21:45",
-    "channel": "beIN SPORTS 4",
-    "channel_id": "8889768"
-  },
-  {
-    "match": "لوكسمبورج × آيسلندا",
-    "time": "21:45",
-    "channel": "beIN SPORTS 5",
-    "channel_id": "103867"
-  }
-]
+{
+  "ok": true,
+  "data": [
+    {
+      "id": "6040202",
+      "homeTeam": "ليسوتو",
+      "awayTeam": "المغرب",
+      "date": "2026-09-29",
+      "time": "04:00 م",
+      "league": "تصفيات كأس أمم أفريقيا",
+      "broadcastChannel": "beIN Sports 3",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/3191763082345.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/6291763083538.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9081693915622.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "6183636",
+          "name": "beIN Sports 3"
+        }
+      ]
+    },
+    {
+      "id": "6040215",
+      "homeTeam": "جنوب السودان",
+      "awayTeam": "مصر",
+      "date": "2026-09-29",
+      "time": "04:00 م",
+      "league": "تصفيات كأس أمم أفريقيا",
+      "broadcastChannel": "beIN Sports 1",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/3441763087125.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/9301763071949.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9081693915622.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "6040215",
+          "name": "beIN Sports 1"
+        }
+      ]
+    },
+    {
+      "id": "6040358",
+      "homeTeam": "بوروندي",
+      "awayTeam": "الجزائر",
+      "date": "2026-09-29",
+      "time": "04:00 م",
+      "league": "تصفيات كأس أمم أفريقيا",
+      "broadcastChannel": "beIN Sports 2",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/5171763070406.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/2341763066345.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9081693915622.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "9897979",
+          "name": "beIN Sports 2"
+        }
+      ]
+    },
+    {
+      "id": "6040398",
+      "homeTeam": "إثيوبيا",
+      "awayTeam": "السنغال",
+      "date": "2026-09-29",
+      "time": "04:00 م",
+      "league": "تصفيات كأس أمم أفريقيا",
+      "broadcastChannel": "beIN Sports 5",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/2851763077732.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/1831763086441.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9081693915622.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "103867",
+          "name": "beIN Sports 5"
+        }
+      ]
+    },
+    {
+      "id": "6040399",
+      "homeTeam": "موزمبيق",
+      "awayTeam": "السودان",
+      "date": "2026-09-29",
+      "time": "04:00 م",
+      "league": "تصفيات كأس أمم أفريقيا",
+      "broadcastChannel": "beIN Sports 4",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/9651763083639.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/6511763087361.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9081693915622.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "8889768",
+          "name": "beIN Sports 4"
+        }
+      ]
+    },
+    {
+      "id": "6040237",
+      "homeTeam": "غانا",
+      "awayTeam": "جامبيا",
+      "date": "2026-09-29",
+      "time": "07:00 م",
+      "league": "تصفيات كأس أمم أفريقيا",
+      "broadcastChannel": "",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/4491763078443.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/7771763078200.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9081693915622.png",
+      "status": "0",
+      "linkedChannels": []
+    },
+    {
+      "id": "6040347",
+      "homeTeam": "أوغندا",
+      "awayTeam": "ليبيا",
+      "date": "2026-09-29",
+      "time": "07:00 م",
+      "league": "تصفيات كأس أمم أفريقيا",
+      "broadcastChannel": "beIN Sports 1",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/2921763117370.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/3741763082470.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9081693915622.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "6040215",
+          "name": "beIN Sports 1"
+        }
+      ]
+    },
+    {
+      "id": "5181896",
+      "homeTeam": "فنلندا",
+      "awayTeam": "روسيا البيضاء",
+      "date": "2026-09-29",
+      "time": "07:00 م",
+      "league": "دوري الأمم الأوروبية",
+      "broadcastChannel": "beIN Sports 5",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/5611763077960.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/7071763068899.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9861719588148.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "103867",
+          "name": "beIN Sports 5"
+        }
+      ]
+    },
+    {
+      "id": "5181778",
+      "homeTeam": "إسكتلندا",
+      "awayTeam": "سويسرا",
+      "date": "2026-09-29",
+      "time": "09:45 م",
+      "league": "دوري الأمم الأوروبية",
+      "broadcastChannel": "beIN Sports 4",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/8131763086386.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/1011763087595.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9861719588148.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "8889768",
+          "name": "beIN Sports 4"
+        }
+      ]
+    },
+    {
+      "id": "5181851",
+      "homeTeam": "التشيك",
+      "awayTeam": "إنجلترا",
+      "date": "2026-09-29",
+      "time": "09:45 م",
+      "league": "دوري الأمم الأوروبية",
+      "broadcastChannel": "beIN Sports 3",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/1641763071555.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/5831763072178.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9861719588148.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "6183636",
+          "name": "beIN Sports 3"
+        }
+      ]
+    },
+    {
+      "id": "5181852",
+      "homeTeam": "إسبانيا",
+      "awayTeam": "كرواتيا",
+      "date": "2026-09-29",
+      "time": "09:45 م",
+      "league": "دوري الأمم الأوروبية",
+      "broadcastChannel": "beIN Sports 2",
+      "isLive": false,
+      "homeScore": 0,
+      "awayScore": 0,
+      "streamUrl": "",
+      "streamType": "TS",
+      "homeLogo": "https://imgs.ysscores.com/teams/64/6231763087210.png",
+      "awayLogo": "https://imgs.ysscores.com/teams/64/7661763071283.png",
+      "leagueLogo": "https://imgs.ysscores.com/championship/48/9861719588148.png",
+      "status": "0",
+      "linkedChannels": [
+        {
+          "id": "9897979",
+          "name": "beIN Sports 2"
+        }
+      ]
+    }
+  ]
+}
