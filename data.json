@@ -1,1 +1,86 @@
-
+[
+  {
+    "match": "جنوب السودان × مصر",
+    "time": "16:00",
+    "channel": "beIN SPORTS 1",
+    "channel_id": "6040215"
+  },
+  {
+    "match": "بوروندي × الجزائر",
+    "time": "16:00",
+    "channel": "beIN SPORTS 2",
+    "channel_id": "9897979"
+  },
+  {
+    "match": "ليسوتو × المغرب",
+    "time": "16:00",
+    "channel": "beIN SPORTS 3",
+    "channel_id": "6183636"
+  },
+  {
+    "match": "موزمبيق × السودان",
+    "time": "16:00",
+    "channel": "beIN SPORTS 4",
+    "channel_id": "8889768"
+  },
+  {
+    "match": "إثيوبيا × السنغال",
+    "time": "16:00",
+    "channel": "beIN SPORTS 5",
+    "channel_id": "103867"
+  },
+  {
+    "match": "غانا × جامبيا",
+    "time": "19:00",
+    "channel": "beIN SPORTS 2",
+    "channel_id": "9897979"
+  },
+  {
+    "match": "أوغندا × ليبيا",
+    "time": "19:00",
+    "channel": "beIN SPORTS 1",
+    "channel_id": "6040215"
+  },
+  {
+    "match": "غينيا بيساو × نيجيريا",
+    "time": "19:00",
+    "channel": "beIN SPORTS 4",
+    "channel_id": "8889768"
+  },
+  {
+    "match": "فنلندا × بيلاروسيا",
+    "time": "19:00",
+    "channel": "beIN SPORTS 5",
+    "channel_id": "103867"
+  },
+  {
+    "match": "الصومال × كوت ديفوار",
+    "time": "22:00",
+    "channel": "beIN SPORTS 3",
+    "channel_id": "6183636"
+  },
+  {
+    "match": "التشيك × إنجلترا",
+    "time": "21:45",
+    "channel": "beIN SPORTS 3",
+    "channel_id": "6183636"
+  },
+  {
+    "match": "إسبانيا × كرواتيا",
+    "time": "21:45",
+    "channel": "beIN SPORTS 2",
+    "channel_id": "9897979"
+  },
+  {
+    "match": "إسكتلندا × سويسرا",
+    "time": "21:45",
+    "channel": "beIN SPORTS 4",
+    "channel_id": "8889768"
+  },
+  {
+    "match": "لوكسمبورج × آيسلندا",
+    "time": "21:45",
+    "channel": "beIN SPORTS 5",
+    "channel_id": "103867"
+  }
+]
