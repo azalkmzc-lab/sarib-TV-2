@@ -289,7 +289,7 @@
     },
 
     {
-      "id": "den-por-20261001",
+      "id": "20261001",
       "homeTeam": "الدنمارك",
       "awayTeam": "البرتغال",
       "date": "2026-10-01",
@@ -478,7 +478,7 @@
 
     {
       "id": "isr-kos-20261001",
-      "homeTeam": "إسرائيل",
+      "homeTeam": "إكيان صهاينة عيال الكلب",
       "awayTeam": "كوسوفو",
       "date": "2026-10-01",
       "time": "09:45 م",
@@ -558,7 +558,7 @@
       },
       "streamUrl": "",
       "streamType": "TS",
-      "homeLogo": "https://flagcdn.com/w160/il.png",
+      "homeLogo": "",
       "awayLogo": "https://flagcdn.com/w160/xk.png",
       "leagueLogo": "",
       "status": "0",
