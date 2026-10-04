@@ -8,6 +8,7 @@ import androidx.room.PrimaryKey
     tableName = "channels",
     indices = [
         Index(value = ["categoryId"]),
+        Index(value = ["categoryName"]),
         Index(value = ["isEnabled"]),
         Index(value = ["sortOrder"]),
         Index(value = ["viewsCount"])

@@ -513,9 +513,14 @@
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-top: 10px;">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label style="color:#00d2ff; font-weight:bold;">⚽ رابط ملف JSON المباشر لجدول المباريات (Path: stream_config/matches_json_url):</label>
+                    <input type="text" id="stream-matches-json-url" placeholder="https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json">
+                </div>
+
                 <div class="form-group">
-                    <label>⚽ رابط API جدول المباريات (Matches API Base URL):</label>
-                    <input type="text" id="stream-matches-url" placeholder="https://bab-elmoshahd.online/api/index.php?path=matches&day=">
+                    <label>⚽ رابط API جدول المباريات البديل (Matches API Base URL):</label>
+                    <input type="text" id="stream-matches-url" placeholder="https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json">
                 </div>
 
                 <div class="form-group">
@@ -860,6 +865,59 @@
             <button class="btn-delete" id="btn-cancel-slider" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetSliderForm()">إلغاء التعديل</button>
         </div>
 
+        <!-- ============================================================== -->
+        <!-- 🔗 ربط روابط وسيرفرات البث المباشر بالـ Match ID (Path: match_streams) -->
+        <!-- ============================================================== -->
+        <div class="admin-panel full-width" style="border: 1.5px solid #00d2ff; background: linear-gradient(180deg, #0b1f3a 0%, #0d1527 100%);">
+            <h3 id="match-stream-panel-title" style="color: #00d2ff;">🔗 ربط وإضافة روابط وسيرفرات البث المباشر بالـ Match ID (Path: match_streams)</h3>
+            <p style="font-size:12px; color:#cbd5e1; margin-bottom:14px;">يتم جلب جدول المباريات تلقائياً من رابط الـ JSON، ومن هنا يمكنك وضع ID المباراة (الموجود في data.json مثل m_1 أو رقم المباراة أو اسم الفريق) وإضافة سيرفرات البث المباشر الخمسة ليتم ربطها فورياً وتشغيلها عند نقر المستخدم على المباراة.</p>
+            <input type="hidden" id="match-stream-edit-key">
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px;">
+                <div class="form-group">
+                    <label style="color:#00d2ff; font-weight:bold;">معرّف المباراة (Match ID / Key) *:</label>
+                    <input type="text" id="match-stream-id" placeholder="مثال: m_1 أو 12345 أو ريال مدريد">
+                </div>
+
+                <div class="form-group">
+                    <label>عنوان / وصف المباراة:</label>
+                    <input type="text" id="match-stream-title" placeholder="مثال: ريال مدريد ضد برشلونة">
+                </div>
+
+                <div class="form-group">
+                    <label>القناة الناقلة (Channel):</label>
+                    <input type="text" id="match-stream-channel" placeholder="beIN SPORTS 1 HD">
+                </div>
+
+                <div class="form-group">
+                    <label>المعلق الرياضي (Commentator):</label>
+                    <input type="text" id="match-stream-commentator" placeholder="عصام الشوالي">
+                </div>
+
+                <div class="form-group">
+                    <label>حالة البث:</label>
+                    <select id="match-stream-status">
+                        <option value="مباشر LIVE">🔴 جارية الآن (مباشر LIVE)</option>
+                        <option value="لم تبدأ">لم تبدأ بعد</option>
+                        <option value="انتهت">انتهت المباراة</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- سيرفرات البث الخمسة للمباراة -->
+            <label style="font-size:12px; color:#00d2ff; font-weight:bold; margin-top:8px; margin-bottom:6px; display:block;">📡 خوادم وسيرفرات البث المباشر (5 سيرفرات للمباراة):</label>
+            <div class="servers-grid">
+                <input type="text" id="ms-server1" placeholder="🔴 سيرفر 1 (الرئيسي FHD / m3u8)">
+                <input type="text" id="ms-server2" placeholder="🟠 سيرفر 2 (احتياطي HD)">
+                <input type="text" id="ms-server3" placeholder="🟡 سيرفر 3 (سريع CDN)">
+                <input type="text" id="ms-server4" placeholder="🟢 سيرفر 4 (توفير بيانات SD)">
+                <input type="text" id="ms-server5" placeholder="🔵 سيرفر 5 (بث بديل M3U8)">
+            </div>
+
+            <button class="btn-submit" id="btn-save-match-stream" onclick="saveMatchStreamOverride()">حفظ وربط سيرفرات البث بالـ Match ID فورياً</button>
+            <button class="btn-delete" id="btn-cancel-match-stream" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetMatchStreamForm()">إلغاء التعديل</button>
+        </div>
+
         <!-- ============================================== -->
         <!-- ⚽ إدارة جدول وتفاصيل المباريات (Path: matches) -->
         <!-- ============================================== -->
@@ -1015,6 +1073,9 @@
     <!-- ========================= -->
     <!-- المعاينة المباشرة للعناصر -->
     <!-- ========================= -->
+    <div class="section-title" style="color: #00d2ff; border-color: rgba(0, 210, 255, 0.3);">🔗 روابط وسيرفرات البث المباشر المربوطة بالـ Match ID (Path: match_streams)</div>
+    <div id="match-streams-container" class="matches-grid"></div>
+
     <div class="section-title" style="color: #b388ff; border-color: rgba(179, 136, 255, 0.3);">📺 حسابات Xtream المخصصة لأقسام المسلسلات (Path: series_categories_accounts)</div>
     <div id="series-categories-accounts-container" class="accounts-grid"></div>
 
@@ -1062,6 +1123,7 @@
 
         const database = firebase.database();
         const streamConfigRef = database.ref('stream_config');
+        const matchStreamsRef = database.ref('match_streams');
         const seriesCatAccountsRef = database.ref('series_categories_accounts');
         const vodCatAccountsRef = database.ref('vod_categories_accounts');
         const m3uPlaylistsRef = database.ref('m3u_playlists');
@@ -1082,6 +1144,7 @@
            1. حفظ بيانات سيرفر البث ورابط M3U والسيرفرات المخصصة (stream_config)
         ========================================= */
         function saveStreamConfig() {
+            const matchesJsonUrl = document.getElementById('stream-matches-json-url').value.trim() || 'https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json';
             const data = {
                 // الحساب الرئيسي العام
                 server_host: document.getElementById('stream-server-host').value.trim() || 'http://cliccck52258.club:2082',
@@ -1101,7 +1164,9 @@
                 vod_password: document.getElementById('stream-vod-password').value.trim() || document.getElementById('stream-password').value.trim(),
                 movies_password: document.getElementById('stream-vod-password').value.trim() || document.getElementById('stream-password').value.trim(),
 
-                matches_api_url: document.getElementById('stream-matches-url').value.trim() || "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
+                matches_json_url: matchesJsonUrl,
+                matchesJsonUrl: matchesJsonUrl,
+                matches_api_url: document.getElementById('stream-matches-url').value.trim() || matchesJsonUrl,
                 telegram_link: document.getElementById('stream-telegram-link').value.trim() || "https://t.me/sarib_tv",
                 announcement: document.getElementById('stream-announcement').value.trim(),
                 m3u_playlist_url: document.getElementById('stream-m3u-url').value.trim() || "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
@@ -1114,7 +1179,7 @@
             };
 
             streamConfigRef.set(data).then(() => {
-                alert('✅ تم حفظ وتحديث بيانات البث والخوادم المخصصة وروابط M3U بنجاح!');
+                alert('✅ تم حفظ وتحديث بيانات البث ورابط جدول المباريات السحابي بنجاح!');
             }).catch(err => alert('خطأ: ' + err.message));
         }
 
@@ -1133,13 +1198,147 @@
                 document.getElementById('stream-vod-username').value = d.vod_username || d.movies_username || d.username || 'khaledsliman';
                 document.getElementById('stream-vod-password').value = d.vod_password || d.movies_password || d.password || '755246419856';
 
-                document.getElementById('stream-matches-url').value = d.matches_api_url || 'https://bab-elmoshahd.online/api/index.php?path=matches&day=';
+                document.getElementById('stream-matches-json-url').value = d.matches_json_url || d.matchesJsonUrl || 'https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json';
+                document.getElementById('stream-matches-url').value = d.matches_api_url || 'https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json';
                 document.getElementById('stream-telegram-link').value = d.telegram_link || 'https://t.me/sarib_tv';
                 document.getElementById('stream-announcement').value = d.announcement || '';
                 document.getElementById('stream-m3u-url').value = d.m3u_playlist_url || d.m3u_url || 'https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U';
                 document.getElementById('stream-movies-api-url').value = d.movies_api_url || d.movies_api || '';
                 document.getElementById('stream-m3u-movies-url').value = d.m3u_movies_url || d.movies_m3u_url || '';
             }
+        });
+
+        /* ==============================================================
+           1.0 ربط روابط وسيرفرات البث بالـ Match ID (Path: match_streams)
+        ============================================================== */
+        function saveMatchStreamOverride() {
+            const editKey = document.getElementById('match-stream-edit-key').value.trim();
+            const matchId = document.getElementById('match-stream-id').value.trim();
+            const title = document.getElementById('match-stream-title').value.trim();
+            const channel = document.getElementById('match-stream-channel').value.trim();
+            const commentator = document.getElementById('match-stream-commentator').value.trim();
+            const status = document.getElementById('match-stream-status').value;
+            const s1 = document.getElementById('ms-server1').value.trim();
+            const s2 = document.getElementById('ms-server2').value.trim();
+            const s3 = document.getElementById('ms-server3').value.trim();
+            const s4 = document.getElementById('ms-server4').value.trim();
+            const s5 = document.getElementById('ms-server5').value.trim();
+
+            if (!matchId) {
+                alert('يرجى كتابة معرّف أو رقم المباراة (Match ID / Key) مثل m_1 أو اسم الفريق');
+                return;
+            }
+            if (!s1 && !s2 && !s3 && !s4 && !s5) {
+                alert('يرجى إدخال سيرفر بث مباشر واحد على الأقل للمباراة');
+                return;
+            }
+
+            const targetKey = editKey || matchId.replace(/[\/\.\#\$\[\]]/g, '_');
+            const streamData = {
+                matchKey: matchId,
+                match_key: matchId,
+                matchId: matchId,
+                title: title,
+                channelName: channel,
+                channel_name: channel,
+                channel: channel,
+                commentator: commentator,
+                status: status,
+                server1: s1, server2: s2, server3: s3, server4: s4, server5: s5,
+                streamUrl: s1 || s2 || s3 || s4 || s5,
+                url: s1 || s2 || s3 || s4 || s5,
+                isEnabled: true,
+                is_enabled: true,
+                updatedAt: Date.now()
+            };
+
+            matchStreamsRef.child(targetKey).set(streamData).then(() => {
+                // Also duplicate under match_stream_overrides for seamless fallback compatibility
+                database.ref('match_stream_overrides').child(targetKey).set(streamData);
+                alert('✅ تم ربط وحفظ سيرفرات البث بالـ Match ID بنجاح! ستعمل المباراة فوراً بالتطبيق.');
+                resetMatchStreamForm();
+            }).catch(err => alert('خطأ: ' + err.message));
+        }
+
+        function editMatchStreamOverride(key, item) {
+            document.getElementById('match-stream-edit-key').value = key;
+            document.getElementById('match-stream-id').value = item.matchKey || item.match_key || item.matchId || key;
+            document.getElementById('match-stream-title').value = item.title || '';
+            document.getElementById('match-stream-channel').value = item.channelName || item.channel_name || item.channel || '';
+            document.getElementById('match-stream-commentator').value = item.commentator || '';
+            document.getElementById('match-stream-status').value = item.status || 'مباشر LIVE';
+            document.getElementById('ms-server1').value = item.server1 || item.streamUrl || item.url || '';
+            document.getElementById('ms-server2').value = item.server2 || '';
+            document.getElementById('ms-server3').value = item.server3 || '';
+            document.getElementById('ms-server4').value = item.server4 || '';
+            document.getElementById('ms-server5').value = item.server5 || '';
+
+            document.getElementById('match-stream-panel-title').innerText = 'تعديل سيرفرات بث المباراة (ID: ' + (item.matchKey || key) + ')';
+            document.getElementById('btn-save-match-stream').innerText = 'تحديث سيرفرات بث المباراة';
+            document.getElementById('btn-cancel-match-stream').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteMatchStreamOverride(key) {
+            if (confirm('هل أنت متأكد من حذف رابط وسيرفرات البث لهذه المباراة؟')) {
+                matchStreamsRef.child(key).remove().then(() => {
+                    database.ref('match_stream_overrides').child(key).remove();
+                    alert('تم حذف سيرفرات البث للمباراة');
+                });
+            }
+        }
+
+        function resetMatchStreamForm() {
+            document.getElementById('match-stream-edit-key').value = '';
+            document.getElementById('match-stream-id').value = '';
+            document.getElementById('match-stream-title').value = '';
+            document.getElementById('match-stream-channel').value = '';
+            document.getElementById('match-stream-commentator').value = '';
+            document.getElementById('match-stream-status').value = 'مباشر LIVE';
+            document.getElementById('ms-server1').value = '';
+            document.getElementById('ms-server2').value = '';
+            document.getElementById('ms-server3').value = '';
+            document.getElementById('ms-server4').value = '';
+            document.getElementById('ms-server5').value = '';
+
+            document.getElementById('match-stream-panel-title').innerText = '🔗 ربط وإضافة روابط وسيرفرات البث المباشر بالـ Match ID (Path: match_streams)';
+            document.getElementById('btn-save-match-stream').innerText = 'حفظ وربط سيرفرات البث بالـ Match ID فورياً';
+            document.getElementById('btn-cancel-match-stream').style.display = 'none';
+        }
+
+        matchStreamsRef.on('value', (snap) => {
+            const el = document.getElementById('match-streams-container');
+            el.innerHTML = '';
+            const data = snap.val();
+            if (!data) {
+                el.innerHTML = '<div style="color:#94a3b8; padding:15px; grid-column:1/-1;">لا توجد روابط بث مباريات مربوطة بالـ ID حالياً. يمكنك ربط أي مباراة في جدول data.json بكتابة الـ ID الخاص بها وإضافة روابط البث.</div>';
+                return;
+            }
+            Object.keys(data).forEach((key) => {
+                const item = data[key];
+                const card = document.createElement('div');
+                card.className = 'match-card';
+                card.style.borderColor = '#00d2ff';
+                card.innerHTML = `
+                    <div style="font-size:14px; font-weight:bold; color:#00d2ff; margin-bottom:6px;">⚽ Match ID: <span style="color:#fff;">${escapeHtml(item.matchKey || key)}</span></div>
+                    ${item.title ? `<div style="font-size:13px; font-weight:bold; color:#fff; margin-bottom:4px;">${escapeHtml(item.title)}</div>` : ''}
+                    <div class="match-info">
+                        <div>📺 القناة: ${escapeHtml(item.channelName || item.channel || 'غير محددة')}</div>
+                        <div>🎤 المعلق: ${escapeHtml(item.commentator || 'غير محدد')}</div>
+                        <div style="color:#00e676; font-weight:bold;">${escapeHtml(item.status || 'مباشر LIVE')}</div>
+                    </div>
+                    <div style="font-size:11px; color:#94a3b8; background:#060a12; padding:6px; border-radius:6px; margin-bottom:8px; word-break:break-all;">
+                        🔴 سيرفر 1: <span style="color:#00d2ff;">${escapeHtml(item.server1 || item.streamUrl || 'غير محدد')}</span>
+                        ${item.server2 ? `<br>🟠 سيرفر 2: ${escapeHtml(item.server2)}` : ''}
+                        ${item.server3 ? `<br>🟡 سيرفر 3: ${escapeHtml(item.server3)}` : ''}
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-edit" onclick='editMatchStreamOverride("${key}", ${JSON.stringify(item).replace(/'/g, "&apos;")})'>تعديل</button>
+                        <button class="btn-delete" onclick='deleteMatchStreamOverride("${key}")'>حذف</button>
+                    </div>
+                `;
+                el.appendChild(card);
+            });
         });
 
         /* =========================================

@@ -53,7 +53,8 @@ data class RemoteStreamConfig(
     val isNewsApiEnabled: Boolean = false,
     val seriesCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
     val vodCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
-    val matchesApiUrl: String = "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
+    val matchesJsonUrl: String = "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json",
+    val matchesApiUrl: String = "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json",
     val apiFootballKey: String = "0f0396f63d80f2bad18ec0e706985c88",
     val m3uPlaylistUrl: String = "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
     val m3uMoviesUrl: String = "",
@@ -174,7 +175,12 @@ class FirebaseStreamManager(private val context: Context) {
                         isChannelsApiEnabled = isChannelsApiEnabled,
                         newsApiUrl = newsApiUrl,
                         isNewsApiEnabled = isNewsApiEnabled,
-                        matchesApiUrl = docSnapshot.getString("matches_api_url") ?: "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
+                        matchesJsonUrl = docSnapshot.getString("matches_json_url") 
+                            ?: docSnapshot.getString("matchesJsonUrl")
+                            ?: "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json",
+                        matchesApiUrl = docSnapshot.getString("matches_json_url")
+                            ?: docSnapshot.getString("matches_api_url")
+                            ?: "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json",
                         apiFootballKey = docSnapshot.getString("api_football_key") 
                             ?: docSnapshot.getString("football_api_key") 
                             ?: docSnapshot.getString("matches_api_key") 
@@ -277,7 +283,8 @@ class FirebaseStreamManager(private val context: Context) {
                             isChannelsApiEnabled = isChannelsApiEnabled,
                             newsApiUrl = newsApiUrl,
                             isNewsApiEnabled = isNewsApiEnabled,
-                            matchesApiUrl = targetObj.optString("matches_api_url", baseConfig.matchesApiUrl),
+                            matchesJsonUrl = targetObj.optString("matches_json_url", targetObj.optString("matchesJsonUrl", "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json")),
+                            matchesApiUrl = targetObj.optString("matches_json_url", targetObj.optString("matches_api_url", "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json")),
                             apiFootballKey = targetObj.optString("api_football_key", targetObj.optString("football_api_key", targetObj.optString("matches_api_key", targetObj.optString("rapidapi_key", baseConfig.apiFootballKey)))),
                             m3uPlaylistUrl = targetObj.optString("m3u_playlist_url", targetObj.optString("m3u_url", baseConfig.m3uPlaylistUrl)),
                             m3uMoviesUrl = targetObj.optString("m3u_movies_url", targetObj.optString("movies_m3u_url", baseConfig.m3uMoviesUrl)),
@@ -1441,44 +1448,7 @@ class FirebaseStreamManager(private val context: Context) {
     }
 
     private fun getDefaultNewsArticles(): List<com.example.data.model.NewsArticle> {
-        return listOf(
-            com.example.data.model.NewsArticle(
-                id = "default_news_1",
-                title = "تغطية شاملة ومباشرة لقمة دوري أبطال أوروبا على قنوات SARIB TV VIP",
-                content = "استمتع بمشاهدة أحدث مباريات القمة العالمية بجودة عالية FHD وبدون تقطيع مع توفير 5 سيرفرات بث مباشر ومعلقين عرب متميزين.",
-                imageUrl = "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=800&q=80",
-                category = "رياضة",
-                date = "اليوم",
-                source = "SARIB Sports",
-                isBreaking = true,
-                isManual = true,
-                viewsCount = 3840
-            ),
-            com.example.data.model.NewsArticle(
-                id = "default_news_2",
-                title = "إطلاق باقة أفلام ومسلسلات 2025 الحصرية مع سيرفرات متعددة عالية السرعة",
-                content = "تمت إضافة أحدث الأعمال السينمائية والمسلسلات العربية والأجنبية مع ترجمة احترافية ودعم جودات 4K و 1080p لتجربة مشاهدة سينمائية متكاملة.",
-                imageUrl = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800&q=80",
-                category = "سينما ومسلسلات",
-                date = "منذ ساعات",
-                source = "SARIB Cinema",
-                isBreaking = false,
-                isManual = true,
-                viewsCount = 2190
-            ),
-            com.example.data.model.NewsArticle(
-                id = "default_news_3",
-                title = "تحديثات تقنية متقدمة للمشغل الداخلي لدعم البث المباشر وبث الشاشة اللاسلكي",
-                content = "تم تعزيز المشغل بميزات جديدة تشمل استقرار الاتصال، وخيارات السيرفرات البديلة، وميزة بث الشاشة على أجهزة التلفاز الذكية Smart TV بدون تقطيع.",
-                imageUrl = "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=800&q=80",
-                category = "تقنية",
-                date = "اليوم",
-                source = "فريق الدعم الفني",
-                isBreaking = false,
-                isManual = true,
-                viewsCount = 1750
-            )
-        )
+        return emptyList()
     }
 
     /**

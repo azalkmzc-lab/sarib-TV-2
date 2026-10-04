@@ -1,9 +1,6 @@
 package com.example.ui.screens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -28,10 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material3.Icon
@@ -51,9 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -61,7 +53,6 @@ import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.local.tr
@@ -71,28 +62,18 @@ import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribTopHeader
 import com.example.ui.components.SectionHeader
 import com.example.ui.theme.SaribCardBg
-import com.example.ui.theme.SaribCardBgSecondary
 import com.example.ui.theme.SaribCardBorder
 import com.example.ui.theme.SaribCardBorderSubtle
 import com.example.ui.theme.SaribCyanAccent
-import com.example.ui.theme.SaribDarkBackground
 import com.example.ui.theme.SaribElectricBlue
 import com.example.ui.theme.SaribLiveRed
 import com.example.ui.theme.SaribTextMuted
 import com.example.ui.theme.SaribTextPrimary
 import com.example.ui.theme.SaribTextSecondary
 
-data class MatchDateFilter(
-    val dayName: String,
-    val dateLabel: String,
-    val offset: Int
-)
-
 @Composable
 fun MatchesScreen(
     matches: List<MatchItem>,
-    selectedDate: String,
-    onDateSelected: (String, Int) -> Unit,
     onMatchClick: (MatchItem) -> Unit,
     onMenuClick: () -> Unit,
     onTelegramClick: () -> Unit,
@@ -104,13 +85,6 @@ fun MatchesScreen(
     showBars: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val dateFilters = listOf(
-        MatchDateFilter("أمس", "مباريات الأمس", -1),
-        MatchDateFilter("اليوم", "مباريات اليوم", 0),
-        MatchDateFilter("غداً", "مباريات الغد", 1),
-        MatchDateFilter("بعد غد", "بعد يومين", 2)
-    )
-
     var selectedLeagueFilter by remember { mutableStateOf("الكل") }
     var matchSearchQuery by remember { mutableStateOf("") }
     var showSearchBar by remember { mutableStateOf(false) }
@@ -185,11 +159,11 @@ fun MatchesScreen(
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
                                 Text(
-                                    text = "مركز المباريات والبطولات",
+                                    text = "جدول المباريات المباشرة",
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, color = Color.White)
                                 )
                                 Text(
-                                    text = if (liveMatchesCount > 0) "🔴 $liveMatchesCount مباريات جارية الآن مباشرة" else "جدول المباريات والتشكيلات الحقيقية",
+                                    text = if (liveMatchesCount > 0) "🔴 $liveMatchesCount مباريات جارية الآن مباشرة" else "${matches.size} مباراة متوفرة في الجدول",
                                     style = MaterialTheme.typography.labelSmall.copy(color = if (liveMatchesCount > 0) SaribLiveRed else SaribTextMuted)
                                 )
                             }
@@ -249,119 +223,10 @@ fun MatchesScreen(
                 }
             }
 
-            // Date Selector Header Row
-            item {
-                Spacer(modifier = Modifier.height(14.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.CalendarMonth,
-                            contentDescription = null,
-                            tint = SaribCyanAccent,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Text(
-                            text = tr("todays_matches"),
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onBackground
-                            )
-                        )
-                    }
-
-                    Text(
-                        text = "تحديث فوري",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = SaribCyanAccent,
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                // Date Pills with TV Focus
-                LazyRow(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(horizontal = 14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(dateFilters, key = { it.dayName + it.dateLabel }, contentType = { "date_filter" }) { filter ->
-                        val isSelected = filter.dayName == selectedDate || filter.dateLabel == selectedDate
-                        var isDateFocused by remember { mutableStateOf(false) }
-
-                        val scale by animateFloatAsState(
-                            targetValue = if (isDateFocused) 1.05f else 1.0f,
-                            animationSpec = tween(150),
-                            label = "datePillScale"
-                        )
-                        val borderColor by animateColorAsState(
-                            targetValue = if (isDateFocused) SaribCyanAccent else if (isSelected) SaribCyanAccent else SaribCardBorderSubtle,
-                            animationSpec = tween(150),
-                            label = "datePillBorder"
-                        )
-
-                        Box(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    scaleX = scale
-                                    scaleY = scale
-                                }
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(if (isSelected) SaribElectricBlue else SaribCardBg)
-                                .border(
-                                    if (isDateFocused) 2.dp else 1.dp,
-                                    borderColor,
-                                    RoundedCornerShape(16.dp)
-                                )
-                                .onFocusChanged { isDateFocused = it.isFocused }
-                                .focusable()
-                                .onKeyEvent { keyEvent ->
-                                    if (keyEvent.type == KeyEventType.KeyUp && (
-                                        keyEvent.key == Key.DirectionCenter ||
-                                        keyEvent.key == Key.Enter ||
-                                        keyEvent.key == Key.NumPadEnter ||
-                                        keyEvent.key == Key.ButtonA
-                                    )) {
-                                        onDateSelected(filter.dayName, filter.offset)
-                                        true
-                                    } else false
-                                }
-                                .clickable { onDateSelected(filter.dayName, filter.offset) }
-                                .padding(horizontal = 18.dp, vertical = 8.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = filter.dayName,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        color = if (isSelected) Color.White.copy(alpha = 0.85f) else SaribTextMuted
-                                    )
-                                )
-                                Text(
-                                    text = filter.dateLabel,
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        color = if (isSelected) Color.White else SaribTextPrimary,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
-
             // League Filter Tabs Row
             if (availableLeagues.size > 1) {
                 item {
+                    Spacer(modifier = Modifier.height(12.dp))
                     LazyRow(
                         modifier = Modifier.fillMaxWidth(),
                         contentPadding = PaddingValues(horizontal = 14.dp),
@@ -406,14 +271,14 @@ fun MatchesScreen(
                             }
                         }
                     }
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
             }
 
             // Matches List Header
             item {
                 SectionHeader(
-                    title = if (selectedLeagueFilter == "الكل") "مباريات الدوريات والبطولات" else selectedLeagueFilter,
+                    title = if (selectedLeagueFilter == "الكل") "جدول المباريات والبطولات" else selectedLeagueFilter,
                     onViewAllClick = { }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
@@ -436,7 +301,7 @@ fun MatchesScreen(
                             )
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
-                                text = if (matchSearchQuery.isNotBlank()) "لم يتم العثور على مباريات مطابقة للبحث" else "لا توجد مباريات متوفرة حالياً لهذا التاريخ",
+                                text = if (matchSearchQuery.isNotBlank()) "لم يتم العثور على مباريات مطابقة للبحث" else "لا توجد مباريات متوفرة حالياً",
                                 style = MaterialTheme.typography.bodyMedium.copy(color = SaribTextMuted)
                             )
                         }
@@ -480,4 +345,3 @@ fun MatchesScreen(
         content(Modifier)
     }
 }
-

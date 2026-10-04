@@ -30,10 +30,13 @@ data class ParsedM3uResult(
 object M3uPlaylistParser {
 
     private const val TAG = "M3uPlaylistParser"
+    private val YEAR_PATTERN: Pattern = Pattern.compile("\\b(19\\d{2}|20\\d{2})\\b")
+    private val BRACKETS_PATTERN: Pattern = Pattern.compile("[()]|\\[\\]")
+    private val PRESET_COLORS = listOf("#0088FF", "#00C8FF", "#2563EB", "#7C3AED", "#DC2626", "#059669", "#D97706", "#EC4899")
 
     /**
      * Builds an OkHttpClient with permissive SSL/TLS compatibility for older Android releases
-     * (Android 5.0 - 7.1.1) and Android TV boxes that lack modern Let's Encrypt or Cloudflare root CAs.
+     * and Android TV boxes.
      */
     private val httpClient: OkHttpClient by lazy {
         createCompatibleHttpClient()
@@ -72,16 +75,27 @@ object M3uPlaylistParser {
     }
 
     /**
-     * Extracts an attribute value from an M3U/M3U8 line supporting:
-     * attr="value", attr='value', and attr=value
+     * Fast zero-allocation attribute extractor from M3U / M3U8 tags.
+     * Supports attr="value", attr='value', and attr=value without compiling regex per line.
      */
     private fun extractAttribute(line: String, attrName: String): String {
-        val regex = Pattern.compile("(?i)\\b$attrName\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)'|([^,\\s>]+))")
-        val matcher = regex.matcher(line)
-        if (matcher.find()) {
-            return (matcher.group(1) ?: matcher.group(2) ?: matcher.group(3) ?: "").trim()
+        val key = "$attrName="
+        val idx = line.indexOf(key, ignoreCase = true)
+        if (idx == -1) return ""
+        var start = idx + key.length
+        if (start >= line.length) return ""
+        val quote = line[start]
+        return if (quote == '"' || quote == '\'') {
+            start++
+            val end = line.indexOf(quote, start)
+            if (end != -1) line.substring(start, end).trim() else line.substring(start).trim()
+        } else {
+            var end = start
+            while (end < line.length && line[end] != ' ' && line[end] != ',' && line[end] != '>') {
+                end++
+            }
+            line.substring(start, end).trim()
         }
-        return ""
     }
 
     /**
@@ -114,13 +128,12 @@ object M3uPlaylistParser {
 
     /**
      * Downloads and parses an M3U / M3U8 playlist from a remote URL with PROGRESSIVE STREAMING.
-     * Yields batches of parsed categories, channels, and movies immediately as lines are read,
-     * allowing the UI to populate progressively without waiting for the full file to download.
+     * Yields batches of parsed categories, channels, and movies immediately as lines are read.
      */
     suspend fun parseFromUrlStreaming(
         playlistUrl: String,
         defaultGroupName: String = "باقة القنوات المباشرة",
-        batchSize: Int = 25,
+        batchSize: Int = 150,
         onBatchParsed: suspend (categories: List<ChannelCategory>, channels: List<ChannelItem>, movieCategories: List<ChannelCategory>, movies: List<MediaItem>) -> Unit = { _, _, _, _ -> }
     ): ParsedM3uResult = withContext(Dispatchers.IO) {
         val categoriesMap = mutableMapOf<String, ChannelCategory>()
@@ -141,9 +154,8 @@ object M3uPlaylistParser {
         try {
             val request = Request.Builder()
                 .url(cleanUrl)
-                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36")
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
                 .header("Accept", "*/*")
-                .header("Accept-Language", "ar,en-US;q=0.9,en;q=0.8")
                 .build()
 
             val response = httpClient.newCall(request).execute()
@@ -153,8 +165,8 @@ object M3uPlaylistParser {
             }
 
             val body = response.body ?: return@withContext ParsedM3uResult(emptyList(), emptyList(), emptyList(), emptyList())
+            val reader = BufferedReader(InputStreamReader(body.byteStream(), Charsets.UTF_8), 32768)
 
-            val reader = BufferedReader(InputStreamReader(body.byteStream(), Charsets.UTF_8))
             var currentName = ""
             var currentGroup = defaultGroupName
             var currentLogo = ""
@@ -162,8 +174,6 @@ object M3uPlaylistParser {
             var isHlsVariant = false
             var channelIndex = 0
             var movieIndex = 0
-
-            val colors = listOf("#0088FF", "#00C8FF", "#2563EB", "#7C3AED", "#DC2626", "#059669", "#D97706", "#EC4899")
 
             suspend fun flushBatch() {
                 if (pendingChannels.isNotEmpty() || pendingCategories.isNotEmpty() || pendingMovies.isNotEmpty() || pendingMovieCategories.isNotEmpty()) {
@@ -181,28 +191,23 @@ object M3uPlaylistParser {
 
             var rawLine = reader.readLine()
             while (rawLine != null) {
-                // Strip BOM and whitespace
                 val line = rawLine.replace("\uFEFF", "").trim()
                 if (line.isNotEmpty()) {
                     // 1. Check for standard #EXTINF
                     if (line.startsWith("#EXTINF", ignoreCase = true)) {
                         isHlsVariant = false
 
-                        // Extract group-title
                         val group = extractAttribute(line, "group-title").ifBlank {
                             extractAttribute(line, "group")
                         }
                         currentGroup = if (group.isNotBlank()) group else defaultGroupName
 
-                        // Extract tvg-logo
                         currentLogo = extractAttribute(line, "tvg-logo").ifBlank {
                             extractAttribute(line, "logo")
                         }
 
-                        // Extract tvg-id
                         currentTvgId = extractAttribute(line, "tvg-id")
 
-                        // Extract channel name: standard M3U places title after the FIRST comma on the #EXTINF line
                         val commaIdx = line.indexOf(',')
                         currentName = if (commaIdx != -1 && commaIdx < line.length - 1) {
                             line.substring(commaIdx + 1).trim()
@@ -237,58 +242,7 @@ object M3uPlaylistParser {
                         }
                         currentGroup = defaultGroupName
                     }
-                    // 4. Check for HLS multi-media program: #EXT-X-MEDIA
-                    else if (line.startsWith("#EXT-X-MEDIA", ignoreCase = true)) {
-                        val mediaType = extractAttribute(line, "TYPE")
-                        val mediaUri = extractAttribute(line, "URI")
-                        val mediaName = extractAttribute(line, "NAME")
-                        val mediaGroup = extractAttribute(line, "GROUP-ID").ifBlank { defaultGroupName }
-
-                        if (mediaUri.isNotBlank() && (mediaType.equals("VIDEO", ignoreCase = true) || mediaType.isBlank())) {
-                            val fullStreamUrl = resolveUrl(cleanUrl, mediaUri)
-                            val catId = "m3u_cat_" + Math.abs(mediaGroup.trim().hashCode())
-
-                            val existingCat = categoriesMap[catId]
-                            val newCount = (existingCat?.channelCount ?: 0) + 1
-                            val category = ChannelCategory(
-                                id = catId,
-                                name = mediaGroup,
-                                subtitle = "بث مباشر سريع CDN",
-                                channelCount = newCount,
-                                iconUrl = "",
-                                categoryType = "live",
-                                gradientColorHex = colors[categoriesMap.size % colors.size]
-                            )
-                            categoriesMap[catId] = category
-                            if (existingCat == null) {
-                                pendingCategories.add(category)
-                            }
-
-                            val ch = ChannelItem(
-                                id = "m3u_media_${channelIndex}_${Math.abs(fullStreamUrl.hashCode())}",
-                                name = mediaName.ifBlank { "قناة ${channelIndex + 1}" },
-                                categoryId = catId,
-                                categoryName = mediaGroup,
-                                logoUrl = "",
-                                streamUrl = fullStreamUrl,
-                                backupUrl = "",
-                                country = "سحابي Cloud",
-                                language = "العربية",
-                                isFavorite = false,
-                                isEnabled = true,
-                                sortOrder = channelIndex,
-                                viewsCount = (300..2500).random()
-                            )
-                            channels.add(ch)
-                            pendingChannels.add(ch)
-                            channelIndex++
-
-                            if (pendingChannels.size >= batchSize || pendingCategories.size >= 10) {
-                                flushBatch()
-                            }
-                        }
-                    }
-                    // 5. Stream URL line (non-comment line)
+                    // 4. Stream URL line (non-comment line)
                     else if (!line.startsWith("#")) {
                         val streamUrl = resolveUrl(cleanUrl, line)
 
@@ -327,16 +281,16 @@ object M3uPlaylistParser {
                                     channelCount = newCount,
                                     iconUrl = currentLogo,
                                     categoryType = "movies",
-                                    gradientColorHex = colors[movieCategoriesMap.size % colors.size]
+                                    gradientColorHex = PRESET_COLORS[movieCategoriesMap.size % PRESET_COLORS.size]
                                 )
                                 movieCategoriesMap[categoryId] = mCat
                                 if (existingCat == null) {
                                     pendingMovieCategories.add(mCat)
                                 }
 
-                                val yearRegex = "\\b(19\\d{2}|20\\d{2})\\b".toRegex()
-                                val year = yearRegex.find(currentName)?.value ?: "2024"
-                                val cleanTitle = currentName.replace(yearRegex, "").replace("[()]|\\[\\]".toRegex(), "").trim()
+                                val matcher = YEAR_PATTERN.matcher(currentName)
+                                val year = if (matcher.find()) matcher.group() else "2024"
+                                val cleanTitle = BRACKETS_PATTERN.matcher(currentName.replace(YEAR_PATTERN.pattern().toRegex(), "")).replaceAll("").trim()
 
                                 val movieId = if (currentTvgId.isNotBlank()) {
                                     "m3u_mov_${currentTvgId}_$movieIndex"
@@ -364,7 +318,7 @@ object M3uPlaylistParser {
                                 pendingMovies.add(mov)
                                 movieIndex++
 
-                                if (pendingMovies.size >= batchSize || pendingMovieCategories.size >= 10) {
+                                if (pendingMovies.size >= batchSize || pendingMovieCategories.size >= 25) {
                                     flushBatch()
                                 }
                             } else {
@@ -378,7 +332,7 @@ object M3uPlaylistParser {
                                     channelCount = newCount,
                                     iconUrl = currentLogo,
                                     categoryType = "live",
-                                    gradientColorHex = colors[categoriesMap.size % colors.size]
+                                    gradientColorHex = PRESET_COLORS[categoriesMap.size % PRESET_COLORS.size]
                                 )
                                 categoriesMap[categoryId] = category
                                 if (existingCat == null) {
@@ -404,19 +358,18 @@ object M3uPlaylistParser {
                                     isFavorite = false,
                                     isEnabled = true,
                                     sortOrder = channelIndex,
-                                    viewsCount = (300..2500).random()
+                                    viewsCount = 1200
                                 )
                                 channels.add(ch)
                                 pendingChannels.add(ch)
                                 channelIndex++
 
-                                if (pendingChannels.size >= batchSize || pendingCategories.size >= 10) {
+                                if (pendingChannels.size >= batchSize || pendingCategories.size >= 25) {
                                     flushBatch()
                                 }
                             }
                         }
 
-                        // Reset temporary fields
                         currentName = ""
                         currentGroup = defaultGroupName
                         currentLogo = ""
@@ -427,10 +380,8 @@ object M3uPlaylistParser {
                 rawLine = reader.readLine()
             }
 
-            // Flush any remaining items in buffer
             flushBatch()
 
-            // Fallback: If no #EXTINF was found but this is a direct M3U8/MPD/TS stream link
             if (channels.isEmpty() && moviesList.isEmpty() && (cleanUrl.contains(".m3u8", ignoreCase = true) || cleanUrl.contains(".mpd", ignoreCase = true) || cleanUrl.contains(".ts", ignoreCase = true))) {
                 val catId = "m3u_cat_" + Math.abs(defaultGroupName.trim().hashCode())
                 val category = ChannelCategory(
@@ -462,7 +413,7 @@ object M3uPlaylistParser {
                 onBatchParsed(listOf(category), listOf(ch), emptyList(), emptyList())
             }
 
-            Log.i(TAG, "Parsed ${channels.size} channels, ${moviesList.size} movies across ${categoriesMap.size} categories from $cleanUrl")
+            Log.i(TAG, "Parsed ${channels.size} channels, ${moviesList.size} movies from $cleanUrl")
         } catch (e: Exception) {
             Log.e(TAG, "Error fetching/parsing M3U playlist from $cleanUrl: ${e.message}", e)
         }
@@ -475,17 +426,11 @@ object M3uPlaylistParser {
         )
     }
 
-    /**
-     * Downloads and parses an M3U / M3U8 playlist from a remote URL.
-     */
     suspend fun parseFromUrl(
         playlistUrl: String,
         defaultGroupName: String = "باقة القنوات المباشرة"
-    ): ParsedM3uResult = parseFromUrlStreaming(playlistUrl, defaultGroupName, batchSize = 1000) { _, _, _, _ -> }
+    ): ParsedM3uResult = parseFromUrlStreaming(playlistUrl, defaultGroupName, batchSize = 500) { _, _, _, _ -> }
 
-    /**
-     * Parses an M3U playlist specifically dedicated to movies and VOD streams.
-     */
     suspend fun parseMoviesFromUrl(
         playlistUrl: String,
         defaultGroupName: String = "أفلام سينما سحابية"
@@ -496,8 +441,8 @@ object M3uPlaylistParser {
         }
 
         val convertedMovies = result.channels.mapIndexed { index, ch ->
-            val yearRegex = "\\b(19\\d{2}|20\\d{2})\\b".toRegex()
-            val year = yearRegex.find(ch.name)?.value ?: "2024"
+            val matcher = YEAR_PATTERN.matcher(ch.name)
+            val year = if (matcher.find()) matcher.group() else "2024"
             MediaItem(
                 id = "m3u_mov_conv_${index}_${Math.abs(ch.streamUrl.hashCode())}",
                 title = ch.name,
@@ -535,10 +480,6 @@ object M3uPlaylistParser {
         )
     }
 
-    /**
-     * Ultra-fast lightweight category extractor: parses ONLY category names and groups from M3U
-     * without instantiating thousands of channel objects, providing instant category lists.
-     */
     suspend fun parseCategoriesOnlyFromUrlStreaming(
         playlistUrl: String,
         defaultGroupName: String = "باقة القنوات المباشرة",
@@ -558,10 +499,9 @@ object M3uPlaylistParser {
             if (!response.isSuccessful) return@withContext
             val body = response.body ?: return@withContext
 
-            val reader = BufferedReader(InputStreamReader(body.byteStream(), Charsets.UTF_8))
+            val reader = BufferedReader(InputStreamReader(body.byteStream(), Charsets.UTF_8), 32768)
             val seenCategories = mutableSetOf<String>()
             val pendingCategories = mutableListOf<ChannelCategory>()
-            val colors = listOf("#0088FF", "#00C8FF", "#2563EB", "#7C3AED", "#DC2626", "#059669", "#D97706", "#EC4899")
 
             var rawLine = reader.readLine()
             while (rawLine != null) {
@@ -580,10 +520,10 @@ object M3uPlaylistParser {
                             channelCount = 0,
                             iconUrl = "",
                             categoryType = "live",
-                            gradientColorHex = colors[seenCategories.size % colors.size]
+                            gradientColorHex = PRESET_COLORS[seenCategories.size % PRESET_COLORS.size]
                         )
                         pendingCategories.add(category)
-                        if (pendingCategories.size >= 5) {
+                        if (pendingCategories.size >= 40) {
                             val chunk = pendingCategories.toList()
                             pendingCategories.clear()
                             onCategoryBatch(chunk)
@@ -601,10 +541,10 @@ object M3uPlaylistParser {
                                 channelCount = 0,
                                 iconUrl = "",
                                 categoryType = "live",
-                                gradientColorHex = colors[seenCategories.size % colors.size]
+                                gradientColorHex = PRESET_COLORS[seenCategories.size % PRESET_COLORS.size]
                             )
                             pendingCategories.add(category)
-                            if (pendingCategories.size >= 5) {
+                            if (pendingCategories.size >= 40) {
                                 val chunk = pendingCategories.toList()
                                 pendingCategories.clear()
                                 onCategoryBatch(chunk)

@@ -78,7 +78,6 @@ fun SaribDrawerContent(
     onNavigateToEntertainment: () -> Unit,
     onNavigateToFavorites: () -> Unit,
     onNavigateToDownloads: () -> Unit = {},
-    onSettingsClick: () -> Unit,
     onTelegramClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -212,15 +211,6 @@ fun SaribDrawerContent(
                         title = "التنزيلات والتحميلات",
                         tint = SaribCyanAccent,
                         onClick = onNavigateToDownloads
-                    )
-                }
-
-                item {
-                    DrawerItem(
-                        icon = Icons.Default.Settings,
-                        title = tr("settings"),
-                        tint = SaribCyanAccent,
-                        onClick = onSettingsClick
                     )
                 }
 

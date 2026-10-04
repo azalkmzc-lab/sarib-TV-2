@@ -328,61 +328,32 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         _selectedCategory.value = category
-        _categoryChannels.value = emptyList() // Immediately clear previous category channels!
+        _categoryChannels.value = emptyList()
         
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.CategoryDetail) {
             backStack.add(curr)
         }
         _currentScreen.value = AppScreen.CategoryDetail(category)
-        
-        // Exact category matching for channels
-        val instantChannels = if (category.id == "all" || category.id == "custom" || category.id.isBlank()) {
-            allChannels.value
-        } else {
-            allChannels.value.filter {
-                it.categoryId.equals(category.id, ignoreCase = true) ||
-                it.categoryName.equals(category.name, ignoreCase = true)
-            }
-        }
+        _isCategoryLoading.value = true
 
-        if (instantChannels.isNotEmpty() && !forceRefresh) {
-            _categoryChannels.value = instantChannels
-            _isCategoryLoading.value = false
-        } else {
-            _categoryChannels.value = emptyList()
-            _isCategoryLoading.value = true
-        }
-
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val currentList = instantChannels.toMutableList()
                 val channels = repository.getChannelsForCategoryOnDemand(
                     categoryId = category.id,
+                    categoryName = category.name,
                     forceRefresh = forceRefresh
                 ) { batch ->
-                    val existingIds = currentList.map { it.id }.toSet()
-                    val newItems = batch.filter { it.id !in existingIds }
-                    if (newItems.isNotEmpty()) {
-                        currentList.addAll(newItems)
-                        _categoryChannels.value = currentList.toList()
+                    if (batch.isNotEmpty()) {
+                        _categoryChannels.value = batch
                         _isCategoryLoading.value = false
                     }
                 }
                 if (channels.isNotEmpty()) {
-                    val existingIds = currentList.map { it.id }.toSet()
-                    val newItems = channels.filter { it.id !in existingIds }
-                    if (newItems.isNotEmpty()) {
-                        currentList.addAll(newItems)
-                    }
-                    _categoryChannels.value = currentList.toList()
-                } else if (_categoryChannels.value.isEmpty() && instantChannels.isNotEmpty()) {
-                    _categoryChannels.value = instantChannels
+                    _categoryChannels.value = channels
                 }
             } catch (e: Exception) {
-                if (_categoryChannels.value.isEmpty() && instantChannels.isNotEmpty()) {
-                    _categoryChannels.value = instantChannels
-                }
+                android.util.Log.w("MainViewModel", "Error fetching channels for ${category.name}: ${e.message}")
             } finally {
                 _isCategoryLoading.value = false
             }
@@ -398,82 +369,39 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         _selectedCategory.value = category
-        _categoryMediaList.value = emptyList() // Immediately clear previous category media!
+        _categoryMediaList.value = emptyList()
 
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.MediaCategoryDetail) {
             backStack.add(curr)
         }
         _currentScreen.value = AppScreen.MediaCategoryDetail(category)
+        _isCategoryLoading.value = true
 
         val isSeries = category.categoryType == "series"
-        val cleanCatId = category.id.removePrefix("series_").removePrefix("vod_").removePrefix("m3u_mov_cat_")
 
-        // Exact memory render for Movies & Series
-        val instantMedia = if (isSeries) {
-            featuredSeries.value.filter {
-                category.id == "all" || category.id == "all_series" ||
-                it.genre.equals(category.id, ignoreCase = true) ||
-                it.genre.equals("series_$cleanCatId", ignoreCase = true) ||
-                (cleanCatId.isNotBlank() && it.genre.equals(cleanCatId, ignoreCase = true)) ||
-                it.genre.equals(category.name, ignoreCase = true)
-            }
-        } else {
-            featuredMovies.value.filter {
-                category.id == "all" || category.id == "all_movies" ||
-                it.genre.equals(category.id, ignoreCase = true) ||
-                it.genre.equals("vod_$cleanCatId", ignoreCase = true) ||
-                (cleanCatId.isNotBlank() && it.genre.equals(cleanCatId, ignoreCase = true)) ||
-                it.genre.equals(category.name, ignoreCase = true)
-            }
-        }
-
-        if (instantMedia.isNotEmpty() && !forceRefresh) {
-            _categoryMediaList.value = instantMedia
-            _isCategoryLoading.value = false
-        } else {
-            _categoryMediaList.value = emptyList()
-            _isCategoryLoading.value = true
-        }
-
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
             try {
-                val currentMedia = instantMedia.toMutableList()
                 val media = if (isSeries) {
                     repository.getSeriesForCategoryOnDemand(category.id) { batch ->
-                        val existingIds = currentMedia.map { it.id }.toSet()
-                        val newItems = batch.filter { it.id !in existingIds }
-                        if (newItems.isNotEmpty()) {
-                            currentMedia.addAll(newItems)
-                            _categoryMediaList.value = currentMedia.toList()
+                        if (batch.isNotEmpty()) {
+                            _categoryMediaList.value = batch
                             _isCategoryLoading.value = false
                         }
                     }
                 } else {
                     repository.getMoviesForCategoryOnDemand(category.id) { batch ->
-                        val existingIds = currentMedia.map { it.id }.toSet()
-                        val newItems = batch.filter { it.id !in existingIds }
-                        if (newItems.isNotEmpty()) {
-                            currentMedia.addAll(newItems)
-                            _categoryMediaList.value = currentMedia.toList()
+                        if (batch.isNotEmpty()) {
+                            _categoryMediaList.value = batch
                             _isCategoryLoading.value = false
                         }
                     }
                 }
                 if (media.isNotEmpty()) {
-                    val existingIds = currentMedia.map { it.id }.toSet()
-                    val newItems = media.filter { it.id !in existingIds }
-                    if (newItems.isNotEmpty()) {
-                        currentMedia.addAll(newItems)
-                    }
-                    _categoryMediaList.value = currentMedia.toList()
-                } else if (_categoryMediaList.value.isEmpty() && instantMedia.isNotEmpty()) {
-                    _categoryMediaList.value = instantMedia
+                    _categoryMediaList.value = media
                 }
             } catch (e: Exception) {
-                if (_categoryMediaList.value.isEmpty() && instantMedia.isNotEmpty()) {
-                    _categoryMediaList.value = instantMedia
-                }
+                android.util.Log.w("MainViewModel", "Error fetching media for ${category.name}: ${e.message}")
             } finally {
                 _isCategoryLoading.value = false
             }

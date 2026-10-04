@@ -19,19 +19,61 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 class MatchesApiClient(
-    var apiUrlBase: String = "https://bab-elmoshahd.online/api/index.php?path=matches&day=",
+    var apiUrlBase: String = "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json",
     var apiFootballKey: String = "0f0396f63d80f2bad18ec0e706985c88"
 ) {
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(15, TimeUnit.SECONDS)
-        .readTimeout(20, TimeUnit.SECONDS)
+        .connectTimeout(12, TimeUnit.SECONDS)
+        .readTimeout(15, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
         .build()
+
+    suspend fun fetchMatchesFromUrl(url: String): List<MatchItem> = withContext(Dispatchers.IO) {
+        val cleanUrl = url.trim()
+        if (cleanUrl.isBlank()) return@withContext emptyList()
+        try {
+            val request = Request.Builder()
+                .url(cleanUrl)
+                .addHeader("User-Agent", "Mozilla/5.0 (Android; SARIB TV App)")
+                .addHeader("Accept", "application/json")
+                .build()
+
+            val response = client.newCall(request).execute()
+            val body = response.body?.string().orEmpty()
+            if (body.isNotBlank()) {
+                val parsed = parseMatchesJson(body)
+                if (parsed.isNotEmpty()) {
+                    Log.i("MatchesApiClient", "Successfully fetched ${parsed.size} matches from URL: $cleanUrl")
+                    return@withContext parsed
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MatchesApiClient", "Error fetching matches from URL $cleanUrl: ${e.message}")
+        }
+        emptyList()
+    }
 
     suspend fun fetchMatches(day: Int = 0): List<MatchItem> = withContext(Dispatchers.IO) {
         val matchesList = mutableListOf<MatchItem>()
 
-        // 1. Try API-Football v3 first with direct official API Key
+        // 1. Fetch from custom/configured JSON URL (e.g. GitHub data.json)
+        if (apiUrlBase.isNotBlank()) {
+            val url = if (apiUrlBase.contains("raw.githubusercontent") || apiUrlBase.endsWith(".json")) {
+                apiUrlBase
+            } else if (apiUrlBase.contains("day=")) {
+                apiUrlBase.replace(Regex("day=[-0-9]+"), "day=$day")
+            } else {
+                "${apiUrlBase.trimEnd('&', '?')}&day=$day"
+            }
+
+            val fromUrl = fetchMatchesFromUrl(url)
+            if (fromUrl.isNotEmpty()) {
+                return@withContext fromUrl
+            }
+        }
+
+        // 2. Try API-Football v3 if needed
         try {
             val dateStr = getDateString(day)
             val url = "https://v3.football.api-sports.io/fixtures?date=$dateStr"
@@ -48,63 +90,10 @@ class MatchesApiClient(
                 val parsed = parseApiFootballFixtures(jsonStr, dateStr)
                 if (parsed.isNotEmpty()) {
                     matchesList.addAll(parsed)
-                    Log.d("MatchesApiClient", "Fetched ${parsed.size} fixtures from API-Football for date $dateStr")
                 }
             }
         } catch (e: Exception) {
-            Log.w("MatchesApiClient", "API-Football fetch error: ${e.message}")
-        }
-
-        // 2. Fetch from secondary/legacy stream API (bab-elmoshahd or custom stream_config URL)
-        try {
-            val url = if (apiUrlBase.endsWith("=") || apiUrlBase.endsWith("&day=")) {
-                "$apiUrlBase$day"
-            } else if (apiUrlBase.contains("day=")) {
-                apiUrlBase.replace(Regex("day=[-0-9]+"), "day=$day")
-            } else {
-                "${apiUrlBase.trimEnd('&', '?')}&day=$day"
-            }
-
-            val request = Request.Builder()
-                .url(url)
-                .addHeader("User-Agent", "Mozilla/5.0 (Android; SARIB TV App)")
-                .addHeader("Accept", "application/json")
-                .build()
-
-            val response = client.newCall(request).execute()
-            val jsonStr = response.body?.string().orEmpty()
-            if (jsonStr.isNotBlank()) {
-                val customMatches = parseMatchesJson(jsonStr)
-                if (matchesList.isEmpty()) {
-                    matchesList.addAll(customMatches)
-                } else {
-                    // Enrich API-Football fixtures with streaming links and commentator info from secondary API
-                    for (cm in customMatches) {
-                        val matchedIndex = matchesList.indexOfFirst {
-                            (it.homeTeam.contains(cm.homeTeam, ignoreCase = true) || cm.homeTeam.contains(it.homeTeam, ignoreCase = true)) &&
-                            (it.awayTeam.contains(cm.awayTeam, ignoreCase = true) || cm.awayTeam.contains(it.awayTeam, ignoreCase = true))
-                        }
-                        if (matchedIndex >= 0) {
-                            val existing = matchesList[matchedIndex]
-                            matchesList[matchedIndex] = existing.copy(
-                                streamUrl = if (cm.streamUrl.isNotBlank()) cm.streamUrl else existing.streamUrl,
-                                server1 = if (cm.server1.isNotBlank()) cm.server1 else existing.server1,
-                                server2 = if (cm.server2.isNotBlank()) cm.server2 else existing.server2,
-                                server3 = if (cm.server3.isNotBlank()) cm.server3 else existing.server3,
-                                server4 = if (cm.server4.isNotBlank()) cm.server4 else existing.server4,
-                                server5 = if (cm.server5.isNotBlank()) cm.server5 else existing.server5,
-                                commentator = if (cm.commentator.isNotBlank()) cm.commentator else existing.commentator,
-                                channelName = if (cm.channelName.isNotBlank()) cm.channelName else existing.channelName,
-                                isLive = existing.isLive || cm.isLive
-                            )
-                        } else {
-                            matchesList.add(cm)
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.w("MatchesApiClient", "Secondary matches API fetch error: ${e.message}")
+            Log.w("MatchesApiClient", "API-Football fallback note: ${e.message}")
         }
 
         matchesList.distinctBy { it.id }
@@ -478,29 +467,106 @@ class MatchesApiClient(
 
     private fun parseMatchObject(obj: JSONObject, index: Int): MatchItem? {
         val id = obj.optString("id", obj.optString("match_id", "m_$index"))
-        val homeTeam = obj.optString("home_team", obj.optString("team1", obj.optString("homeTeam", obj.optString("team_home", obj.optString("first_team", "الفريق المضيف")))))
-        val awayTeam = obj.optString("away_team", obj.optString("team2", obj.optString("awayTeam", obj.optString("team_away", obj.optString("second_team", "الفريق الضيف")))))
+
+        // Extract Home Team (support nested and flat)
+        var homeTeam = ""
+        var homeLogo = ""
+        val homeObj = obj.optJSONObject("homeTeam") ?: obj.optJSONObject("team1") ?: obj.optJSONObject("home_team")
+        if (homeObj != null) {
+            homeTeam = homeObj.optString("name", homeObj.optString("shortName", ""))
+            homeLogo = homeObj.optString("logo", homeObj.optString("logoUrl", ""))
+        } else {
+            homeTeam = obj.optString("home_team", obj.optString("team1", obj.optString("homeTeam", obj.optString("team_home", obj.optString("first_team", "")))))
+            homeLogo = obj.optString("home_logo", obj.optString("team1_logo", obj.optString("home_icon", obj.optString("team_home_logo", ""))))
+        }
+
+        // Extract Away Team (support nested and flat)
+        var awayTeam = ""
+        var awayLogo = ""
+        val awayObj = obj.optJSONObject("awayTeam") ?: obj.optJSONObject("team2") ?: obj.optJSONObject("away_team")
+        if (awayObj != null) {
+            awayTeam = awayObj.optString("name", awayObj.optString("shortName", ""))
+            awayLogo = awayObj.optString("logo", awayObj.optString("logoUrl", ""))
+        } else {
+            awayTeam = obj.optString("away_team", obj.optString("team2", obj.optString("awayTeam", obj.optString("team_away", obj.optString("second_team", "")))))
+            awayLogo = obj.optString("away_logo", obj.optString("team2_logo", obj.optString("away_icon", obj.optString("team_away_logo", ""))))
+        }
 
         if (homeTeam.isBlank() && awayTeam.isBlank()) return null
 
-        val league = obj.optString("league", obj.optString("championship", obj.optString("league_name", obj.optString("tournament", "مباريات اليوم"))))
-        val leagueIcon = obj.optString("league_icon", obj.optString("league_logo", obj.optString("championship_logo", "")))
+        // League
+        var league = "مباريات اليوم"
+        var leagueIcon = ""
+        val leagueObj = obj.optJSONObject("league")
+        if (leagueObj != null) {
+            league = leagueObj.optString("name", "مباريات اليوم")
+            leagueIcon = leagueObj.optString("logo", "")
+        } else {
+            league = obj.optString("league", obj.optString("championship", obj.optString("league_name", obj.optString("tournament", "مباريات اليوم"))))
+            leagueIcon = obj.optString("league_icon", obj.optString("league_logo", obj.optString("championship_logo", "")))
+        }
 
-        val homeLogo = obj.optString("home_logo", obj.optString("team1_logo", obj.optString("home_icon", obj.optString("team_home_logo", ""))))
-        val awayLogo = obj.optString("away_logo", obj.optString("team2_logo", obj.optString("away_icon", obj.optString("team_away_logo", ""))))
-
-        val time = obj.optString("match_time", obj.optString("time", obj.optString("start_time", "09:00 م")))
-        val date = obj.optString("match_date", obj.optString("date", "اليوم"))
+        val time = obj.optString("time", obj.optString("match_time", obj.optString("start_time", "09:00 م")))
+        val date = obj.optString("date", obj.optString("match_date", "اليوم"))
 
         val rawStatus = obj.optString("status", obj.optString("match_status", "لم تبدأ"))
-        val homeScore = obj.optInt("home_score", obj.optInt("team1_score", obj.optInt("score1", 0)))
-        val awayScore = obj.optInt("away_score", obj.optInt("team2_score", obj.optInt("score2", 0)))
 
-        val stadium = obj.optString("stadium", obj.optString("venue", obj.optString("ground", "الملعب الرئيسي")))
-        val commentator = obj.optString("commentator", obj.optString("voice", obj.optString("speaker", "المعلق المعتمد")))
-        val channelName = obj.optString("channel", obj.optString("tv", obj.optString("channel_name", "beIN SPORTS HD")))
+        // Score
+        var homeScore = 0
+        var awayScore = 0
+        val scoreObj = obj.optJSONObject("score")
+        if (scoreObj != null) {
+            homeScore = if (!scoreObj.isNull("home")) scoreObj.optInt("home", 0) else 0
+            awayScore = if (!scoreObj.isNull("away")) scoreObj.optInt("away", 0) else 0
+        } else {
+            homeScore = obj.optInt("home_score", obj.optInt("team1_score", obj.optInt("score1", 0)))
+            awayScore = obj.optInt("away_score", obj.optInt("team2_score", obj.optInt("score2", 0)))
+        }
 
-        val isLive = rawStatus.contains("مباشر", ignoreCase = true) ||
+        // Stadium
+        var stadium = "الملعب الرئيسي"
+        val stadiumObj = obj.optJSONObject("stadium")
+        if (stadiumObj != null) {
+            stadium = stadiumObj.optString("name", "الملعب الرئيسي")
+        } else {
+            stadium = obj.optString("stadium", obj.optString("venue", obj.optString("ground", "الملعب الرئيسي")))
+        }
+
+        // Broadcast (Channels & Commentator)
+        var commentator = "المعلق المعتمد"
+        var channelName = "beIN SPORTS HD"
+        val broadcastObj = obj.optJSONObject("broadcast")
+        if (broadcastObj != null) {
+            val commArr = broadcastObj.optJSONArray("commentator")
+            if (commArr != null && commArr.length() > 0) {
+                val list = mutableListOf<String>()
+                for (c in 0 until commArr.length()) {
+                    val s = commArr.optString(c, "")
+                    if (s.isNotBlank() && s != "null") list.add(s)
+                }
+                if (list.isNotEmpty()) commentator = list.joinToString(" • ")
+            } else if (broadcastObj.has("commentator")) {
+                commentator = broadcastObj.optString("commentator", "المعلق المعتمد")
+            }
+
+            val chArr = broadcastObj.optJSONArray("channels")
+            if (chArr != null && chArr.length() > 0) {
+                val list = mutableListOf<String>()
+                for (c in 0 until chArr.length()) {
+                    val s = chArr.optString(c, "")
+                    if (s.isNotBlank() && s != "null") list.add(s)
+                }
+                if (list.isNotEmpty()) channelName = list.joinToString(" • ")
+            } else if (broadcastObj.has("channels")) {
+                channelName = broadcastObj.optString("channels", "beIN SPORTS HD")
+            }
+        } else {
+            commentator = obj.optString("commentator", obj.optString("voice", obj.optString("speaker", "المعلق المعتمد")))
+            channelName = obj.optString("channel", obj.optString("tv", obj.optString("channel_name", "beIN SPORTS HD")))
+        }
+
+        val isLive = obj.optBoolean("isLive", obj.optBoolean("is_live", false)) ||
+                rawStatus.contains("مباشر", ignoreCase = true) ||
                 rawStatus.contains("live", ignoreCase = true) ||
                 rawStatus.contains("شوط", ignoreCase = true) ||
                 rawStatus.contains("دقيقة", ignoreCase = true) ||
@@ -509,6 +575,7 @@ class MatchesApiClient(
         val status = when {
             isLive -> "$homeScore - $awayScore"
             rawStatus.contains("انتهت", ignoreCase = true) || rawStatus.contains("ft", ignoreCase = true) || rawStatus.contains("ended", ignoreCase = true) -> "$homeScore - $awayScore"
+            rawStatus.isNotBlank() -> rawStatus
             else -> "لم تبدأ"
         }
 
@@ -518,7 +585,7 @@ class MatchesApiClient(
         val s4 = obj.optString("server4", obj.optString("server_4", ""))
         val s5 = obj.optString("server5", obj.optString("server_5", ""))
 
-        val rawStream = obj.optString("stream_url", obj.optString("live_url", obj.optString("server", obj.optString("link", obj.optString("url", "")))))
+        val rawStream = obj.optString("streamUrl", obj.optString("stream_url", obj.optString("live_url", obj.optString("server", obj.optString("link", obj.optString("url", ""))))))
         val streamUrl = listOf(rawStream, s1, s2, s3).firstOrNull { it.isNotBlank() } ?: ""
 
         return MatchItem(

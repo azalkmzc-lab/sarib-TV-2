@@ -46,7 +46,6 @@ import com.example.ui.components.MovieDetailsDialog
 import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribDrawerContent
 import com.example.ui.components.SaribTopHeader
-import com.example.ui.components.SettingsDialog
 import com.example.ui.components.VpnBlockedDialog
 import com.example.ui.screens.CategoryDetailScreen
 import com.example.ui.screens.DownloadsScreen
@@ -138,10 +137,9 @@ fun SaribApp(
 
     var lastBackPressTime by remember { mutableLongStateOf(0L) }
 
-    // Dialog state for Match Details, Movie Details, and Settings
+    // Dialog state for Match Details and Movie Details
     var selectedMatchForDetails by remember { mutableStateOf<MatchItem?>(null) }
     var selectedMovieForDetails by remember { mutableStateOf<com.example.data.model.MediaItem?>(null) }
-    var showSettingsDialog by remember { mutableStateOf(false) }
 
     val openTelegram: () -> Unit = {
         try {
@@ -179,8 +177,6 @@ fun SaribApp(
             selectedMovieForDetails = null
         } else if (selectedMatchForDetails != null) {
             selectedMatchForDetails = null
-        } else if (showSettingsDialog) {
-            showSettingsDialog = false
         } else {
             val handled = viewModel.popBack()
             if (!handled) {
@@ -254,16 +250,6 @@ fun SaribApp(
         )
     }
 
-    // SETTINGS DIALOG (Theme, Language, Cache)
-    if (showSettingsDialog) {
-        SettingsDialog(
-            onDismissRequest = { showSettingsDialog = false },
-            onClearCache = {
-                viewModel.clearDatabaseCache()
-            }
-        )
-    }
-
     // DOWNLOAD SELECTION DIALOG
     pendingDownload?.let { item ->
         DownloadDialog(
@@ -329,10 +315,6 @@ fun SaribApp(
                     onNavigateToDownloads = {
                         scope.launch { drawerState.close() }
                         viewModel.navigateToDownloads()
-                    },
-                    onSettingsClick = {
-                        scope.launch { drawerState.close() }
-                        showSettingsDialog = true
                     },
                     onTelegramClick = {
                         scope.launch { drawerState.close() }
@@ -479,8 +461,6 @@ fun SaribApp(
                                 "matches" -> {
                                     MatchesScreen(
                                         matches = allMatches,
-                                        selectedDate = selectedMatchDate,
-                                        onDateSelected = { date, offset -> viewModel.selectMatchDate(date, offset) },
                                         onMatchClick = { match ->
                                             viewModel.openMatchDetail(match)
                                         },
