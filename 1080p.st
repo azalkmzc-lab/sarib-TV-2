@@ -1,1 +1,1 @@
-https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/1080p.m3u8
+http://het2.2depannage.cyou/222231/tracks-v1a1/mono.m3u8
