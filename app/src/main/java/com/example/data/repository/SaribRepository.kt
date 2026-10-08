@@ -327,6 +327,7 @@ class SaribRepository(private val context: Context) {
 
     suspend fun getChannelsForCategoryOnDemand(
         categoryId: String,
+        categoryName: String = "",
         forceRefresh: Boolean = false,
         onBatchLoaded: suspend (List<ChannelItem>) -> Unit = {}
     ): List<ChannelItem> = withContext(Dispatchers.IO) {
@@ -377,7 +378,8 @@ class SaribRepository(private val context: Context) {
             val allLocal = dao.getAllChannelsList()
             val matched = allLocal.filter {
                 it.categoryId.equals(categoryId, ignoreCase = true) ||
-                it.categoryName.equals(categoryId, ignoreCase = true)
+                it.categoryName.equals(categoryId, ignoreCase = true) ||
+                (categoryName.isNotBlank() && it.categoryName.equals(categoryName, ignoreCase = true))
             }
             if (matched.isNotEmpty()) {
                 val mapped = matched.map { it.toModel() }
