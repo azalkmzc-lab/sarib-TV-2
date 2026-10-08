@@ -22,14 +22,14 @@ jobs:
 
       - name: Verify Java environment
         run: |
-          echo "JAVA_HOME: $JAVA_HOME"
           java -version
+          echo "JAVA_HOME: $JAVA_HOME"
           JAVA_MAJOR_VERSION=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}' | cut -d'.' -f1)
           if [ -z "$JAVA_MAJOR_VERSION" ] || [ "$JAVA_MAJOR_VERSION" -lt 17 ]; then
             echo "Error: Java major version must be 17 or newer. Detected: $JAVA_MAJOR_VERSION"
             exit 1
           fi
-          echo "Java verification passed: Major version is $JAVA_MAJOR_VERSION."
+          echo "Active Java major version is $JAVA_MAJOR_VERSION (17 or newer confirmed)."
 
       - name: Set up Gradle 9.3.1
         uses: gradle/actions/setup-gradle@v4
@@ -39,8 +39,8 @@ jobs:
       - name: Create temporary debug keystore
         run: |
           if [ ! -f ./debug.keystore ]; then
-            echo "Generating temporary debug keystore..."
-            keytool -genkeypair \
+            echo "Temporary debug keystore missing. Generating with Java 17 keytool..."
+            "$JAVA_HOME/bin/keytool" -genkeypair \
               -v \
               -keystore ./debug.keystore \
               -storepass android \
@@ -51,14 +51,14 @@ jobs:
               -keysize 2048 \
               -validity 10000
           else
-            echo "debug.keystore already exists."
+            echo "./debug.keystore already exists."
           fi
 
           if [ ! -f ./debug.keystore ]; then
-            echo "Error: ./debug.keystore could not be found or created."
+            echo "Error: Failed to create or find ./debug.keystore."
             exit 1
           fi
-          echo "Debug keystore check passed."
+          echo "Temporary debug keystore verified."
 
       - name: Build Debug APK
         run: gradle :app:assembleDebug --stacktrace --no-daemon
@@ -67,12 +67,12 @@ jobs:
         run: |
           TARGET_APK="app/build/outputs/apk/debug/app-debug.apk"
           if [ ! -f "$TARGET_APK" ]; then
-            echo "Error: $TARGET_APK does not exist."
-            echo "Searching for APKs inside app/build/outputs/apk:"
-            find app/build/outputs/apk -name "*.apk" 2>/dev/null || true
+            echo "Error: Debug APK not found at $TARGET_APK"
+            echo "Searching only inside app/build/outputs/apk for discovered APK paths:"
+            find app/build/outputs/apk -maxdepth 4 -name "*.apk" 2>/dev/null || true
             exit 1
           fi
-          echo "Found debug APK at $TARGET_APK"
+          echo "Debug APK confirmed at $TARGET_APK"
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
