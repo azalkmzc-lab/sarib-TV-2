@@ -1,0 +1,8 @@
+​​​​​​#EXTTS
+#EXT-X-VERSION:3
+
+#EXT-X-STREAM-INF:BANDWIDTH=800000,RESOLUTION=854x480
+http://marveliptv.life/live/abdelgawwadusa/3038194491045/214574.ts
+
+#EXT-X-STREAM-INF:BANDWIDTH=3000000,RESOLUTION=1920x1080
+http://marveliptv.life/live/abdelgawwadusa/3038194491045/214584.ts
