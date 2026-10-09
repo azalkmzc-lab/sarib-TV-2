@@ -1,378 +1,3024 @@
 {
   "ok": true,
-  "date": "2026-10-09",
-  "matches": [
+  "date": "2026-10-10",
+  "timezone": "Asia/Aden",
+  "data": [
     {
       "id": 1,
-      "homeTeam": "الخلود",
-      "awayTeam": "القادسية",
-      "date": "2026-10-09",
-      "time": "16:50",
-      "league": "دوري روشن السعودي",
-      "round": "الجولة 6",
-      "stadium": "ملعب نادي الحزم (الرس)",
-      "broadcastChannels": ["قنوات ثمانية / تطبيق ثمانية"],
-      "broadcastChannel": "قنوات ثمانية / تطبيق ثمانية",
-      "commentator": "مشعل الشمري",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "referee": "غير محدد رسميًا",
+      "homeTeam": "جنتشلربيرليجي",
+      "awayTeam": "آميد سبورتيف",
+      "date": "2026-10-10",
+      "time": "13:30",
+      "league": "الدوري التركي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
       "assistantReferees": [],
       "fourthOfficial": "",
       "varReferee": "",
       "assistantVar": "",
-      "headToHead": {
-        "matches": 0,
-        "homeWins": 0,
-        "draws": 0,
-        "awayWins": 0
-      },
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/7/15/Genclerbirligi2021_7_15_16_19.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/5/Amed%20SFK2026_8_5_15_14.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Super-Lig113-2-2021-3-39-5.png",
       "players": {
-        "home": [
-          {"name": "مارسيلو غروهي", "position": "حارس مرمى", "photo": ""},
-          {"name": "وليد الأحمد", "position": "مدافع", "photo": ""},
-          {"name": "ويليام تروست-إيكونغ", "position": "مدافع", "photo": ""},
-          {"name": "حمد آل جييزان", "position": "مدافع", "photo": ""},
-          {"name": "نبريز أليوسكي", "position": "مدافع", "photo": ""},
-          {"name": "أليو ديانغ", "position": "وسط", "photo": ""},
-          {"name": "عبد الفتاح عسيري", "position": "وسط", "photo": ""},
-          {"name": "كولينز فاي", "position": "وسط", "photo": ""},
-          {"name": "أليكس كولادو", "position": "وسط", "photo": ""},
-          {"name": "مازين سويلان", "position": "مهاجم", "photo": ""},
-          {"name": "جاكسون موليكا", "position": "مهاجم", "photo": ""}
-        ],
-        "away": [
-          {"name": "كاستيلس", "position": "حارس مرمى", "photo": ""},
-          {"name": "جهاد ذكري", "position": "مدافع", "photo": ""},
-          {"name": "قاسم لاجامي", "position": "مدافع", "photo": ""},
-          {"name": "إغناسيو ناتشو", "position": "مدافع", "photo": ""},
-          {"name": "محمد أبو الشامات", "position": "مدافع", "photo": ""},
-          {"name": "إيزيكيل فيرنانديز", "position": "وسط", "photo": ""},
-          {"name": "كاميرون بويرتاس", "position": "وسط", "photo": ""},
-          {"name": "تركي العمار", "position": "وسط", "photo": ""},
-          {"name": "جوليان كينونيس", "position": "مهاجم", "photo": ""},
-          {"name": "بيير-إيميريك أوباميانغ", "position": "مهاجم", "photo": ""},
-          {"name": "غابرييل سواريس", "position": "مهاجم", "photo": ""}
-        ]
+        "home": [],
+        "away": []
       },
       "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://upload.wikimedia.org/wikipedia/en/thumb/e/e8/Al_Kholood_Club_logo.svg/200px-Al_Kholood_Club_logo.svg.png",
-      "awayLogo": "https://upload.wikimedia.org/wikipedia/en/thumb/5/52/Al_Qadsiah_FC_logo.svg/200px-Al_Qadsiah_FC_logo.svg.png",
-      "leagueLogo": "",
-      "status": "0",
+      "streamType": "m3u8",
       "linkedChannels": []
     },
     {
       "id": 2,
-      "homeTeam": "الفتح",
-      "awayTeam": "الأهلي",
-      "date": "2026-10-09",
-      "time": "17:55",
-      "league": "دوري روشن السعودي",
-      "round": "الجولة 6",
-      "stadium": "ملعب نادي الفتح (الأحساء)",
-      "broadcastChannels": ["قنوات ثمانية / تطبيق ثمانية"],
-      "broadcastChannel": "قنوات ثمانية / تطبيق ثمانية",
-      "commentator": "جعفر الصليح / خالد المديفر",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "referee": "غير محدد رسميًا",
+      "homeTeam": "أرسنال",
+      "awayTeam": "ليدز يونايتد",
+      "date": "2026-10-10",
+      "time": "14:30",
+      "league": "الدوري الإنجليزي",
+      "round": "",
+      "stadium": "ملعب الإمارات",
+      "broadcastChannels": [
+        "بى ان سبورت 1HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 1HD",
+      "commentator": "",
+      "referee": "",
       "assistantReferees": [],
       "fourthOfficial": "",
       "varReferee": "",
       "assistantVar": "",
-      "headToHead": {
-        "matches": 0,
-        "homeWins": 0,
-        "draws": 0,
-        "awayWins": 0
-      },
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/9/5/Arsenal2021_9_5_14_15.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2019/1/20/LeedsUnited2019_1_20_14_7.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Premier-League-Symbol%20(1)28-01-2025-12-24-46.webp",
       "players": {
         "home": [
-          {"name": "أميني بوبكر", "position": "حارس مرمى", "photo": ""},
-          {"name": "سعيد باعطية", "position": "مدافع", "photo": ""},
-          {"name": "مروان سعدان", "position": "مدافع", "photo": ""},
-          {"name": "فهد الحربي", "position": "مدافع", "photo": ""},
-          {"name": "توفيق بو حيمد", "position": "مدافع", "photo": ""},
-          {"name": "سفيان بن دبكة", "position": "وسط", "photo": ""},
-          {"name": "مختار علي", "position": "وسط", "photo": ""},
-          {"name": "مراد باتنا", "position": "وسط", "photo": ""},
-          {"name": "لوكاس زيلارايان", "position": "وسط", "photo": ""},
-          {"name": "عثمان العثمان", "position": "مهاجم", "photo": ""},
-          {"name": "دجانيني تفاريس", "position": "مهاجم", "photo": ""}
+          {
+            "name": "David Raya",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Jurrien Timber",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Cristhian Mosquera",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Gabriel Magalhães",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Riccardo Calafiori",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Declan Rice",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Myles Lewis-Skelly",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Bukayo Saka",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Martin Ødegaard",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Eberechi Eze",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Viktor Gyökeres",
+            "position": "ATT",
+            "photo": ""
+          }
         ],
         "away": [
-          {"name": "إدوارد ميندي", "position": "حارس مرمى", "photo": ""},
-          {"name": "علي مجرشي", "position": "مدافع", "photo": ""},
-          {"name": "روجر إيبانيز", "position": "مدافع", "photo": ""},
-          {"name": "ميريح دميرال", "position": "مدافع", "photo": ""},
-          {"name": "بسّام الحريجي", "position": "مدافع", "photo": ""},
-          {"name": "فرانك كيسي", "position": "وسط", "photo": ""},
-          {"name": "زياد الجهني", "position": "وسط", "photo": ""},
-          {"name": "رياض محرز", "position": "وسط", "photo": ""},
-          {"name": "جابري فيجا", "position": "وسط", "photo": ""},
-          {"name": "روبرتو فيرمينو", "position": "مهاجم", "photo": ""},
-          {"name": "إيفان توني", "position": "مهاجم", "photo": ""}
+          {
+            "name": "James Trafford",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "James Justin",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Nico Elvedi",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Tarik Muharemović",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Jayden Bogle",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Ethan Ampadu",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Ao Tanaka",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Gabriel Gudmundsson",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Anton Stach",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Dominic Calvert-Lewin",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Noah Okafor",
+            "position": "ATT",
+            "photo": ""
+          }
         ]
       },
       "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://upload.wikimedia.org/wikipedia/en/thumb/0/01/Al_Fateh_SC_logo.svg/200px-Al_Fateh_SC_logo.svg.png",
-      "awayLogo": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0d/Al-Ahli_Saudi_FC_logo.svg/200px-Al-Ahli_Saudi_FC_logo.svg.png",
-      "leagueLogo": "",
-      "status": "0",
+      "streamType": "m3u8",
       "linkedChannels": []
     },
     {
       "id": 3,
-      "homeTeam": "النصر",
-      "awayTeam": "الدرعية",
-      "date": "2026-10-09",
-      "time": "21:00",
-      "league": "دوري روشن السعودي",
-      "round": "الجولة 6",
-      "stadium": "الأول بارك (الرياض)",
-      "broadcastChannels": ["قنوات ثمانية / تطبيق ثمانية"],
-      "broadcastChannel": "قنوات ثمانية / تطبيق ثمانية",
-      "commentator": "فهد العتيبي / سليمان الشريف",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "referee": "غير محدد رسميًا",
+      "homeTeam": "رايو فاييكانو",
+      "awayTeam": "أتلتيك بلباو",
+      "date": "2026-10-10",
+      "time": "15:00",
+      "league": "الدوري الإسباني",
+      "round": "",
+      "stadium": "ملعب فاييكاس",
+      "broadcastChannels": [
+        "بى ان سبورت 5 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 5 HD",
+      "commentator": "",
+      "referee": "",
       "assistantReferees": [],
       "fourthOfficial": "",
       "varReferee": "",
       "assistantVar": "",
-      "headToHead": {
-        "matches": 0,
-        "homeWins": 0,
-        "draws": 0,
-        "awayWins": 0
-      },
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/9/5/RayoVallecano2021_9_5_14_18.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/AthleticBilbao2018_7_29_14_44.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/354466675_177497535300975_2290177074408202728_n3-7-2023-21-58-53.png",
       "players": {
-        "home": [
-          {"name": "بينتو", "position": "حارس مرمى", "photo": ""},
-          {"name": "سلطان الغنام", "position": "مدافع", "photo": ""},
-          {"name": "محمد سيماكان", "position": "مدافع", "photo": ""},
-          {"name": "إيمريك لابورت", "position": "مدافع", "photo": ""},
-          {"name": "نواف بوشل", "position": "مدافع", "photo": ""},
-          {"name": "مارسيلو بروزوفيتش", "position": "وسط", "photo": ""},
-          {"name": "عبدالله الخيبري", "position": "وسط", "photo": ""},
-          {"name": "أوتافيو", "position": "وسط", "photo": ""},
-          {"name": "أنجيلو جابرييل", "position": "وسط", "photo": ""},
-          {"name": "ساديو ماني", "position": "مهاجم", "photo": ""},
-          {"name": "كريستيانو رونالدو", "position": "مهاجم", "photo": ""}
-        ],
-        "away": [
-          {"name": "أحمد مصطفى", "position": "حارس مرمى", "photo": ""},
-          {"name": "محمد العتيبي", "position": "مدافع", "photo": ""},
-          {"name": "فهد الدوسري", "position": "مدافع", "photo": ""},
-          {"name": "سلطان الحربي", "position": "مدافع", "photo": ""},
-          {"name": "خالد السبيعي", "position": "مدافع", "photo": ""},
-          {"name": "عمر السحيمي", "position": "وسط", "photo": ""},
-          {"name": "عبدالعزيز المجدل", "position": "وسط", "photo": ""},
-          {"name": "راكان شملان", "position": "وسط", "photo": ""},
-          {"name": "ماجد النجراني", "position": "وسط", "photo": ""},
-          {"name": "تركي هزازي", "position": "مهاجم", "photo": ""},
-          {"name": "سليمان السعيد", "position": "مهاجم", "photo": ""}
-        ]
+        "home": [],
+        "away": []
       },
       "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://upload.wikimedia.org/wikipedia/en/thumb/2/23/Al_Nassr_FC_logo.svg/200px-Al_Nassr_FC_logo.svg.png",
-      "awayLogo": "https://upload.wikimedia.org/wikipedia/ar/d/d3/Diriyah_Club_logo.png",
-      "leagueLogo": "",
-      "status": "0",
+      "streamType": "m3u8",
       "linkedChannels": []
     },
     {
       "id": 4,
-      "homeTeam": "بوروسيا دورتموند",
-      "awayTeam": "فيردر بريمن",
-      "date": "2026-10-09",
-      "time": "21:30",
-      "league": "الدوري الألماني (Bundesliga)",
-      "round": "الجولة 7",
-      "stadium": "سيغنال إيدونا بارك (دورتموند)",
-      "broadcastChannels": ["MBC شاهد رياضة", "Sky Sport Germany"],
-      "broadcastChannel": "MBC شاهد رياضة",
-      "commentator": "غير محدد",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "referee": "غير محدد رسميًا",
+      "homeTeam": "ألانيا سبور",
+      "awayTeam": "إيرزوروم سبور",
+      "date": "2026-10-10",
+      "time": "16:00",
+      "league": "الدوري التركي",
+      "round": "",
+      "stadium": "ملعب ألانيا",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
       "assistantReferees": [],
       "fourthOfficial": "",
       "varReferee": "",
       "assistantVar": "",
-      "headToHead": {
-        "matches": 0,
-        "homeWins": 0,
-        "draws": 0,
-        "awayWins": 0
-      },
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/7/15/Alanyaspor2021_7_15_15_38.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/7/15/Erzurumspor2021_7_15_16_2.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Super-Lig113-2-2021-3-39-5.png",
       "players": {
-        "home": [
-          {"name": "جريجور كوبيل", "position": "حارس مرمى", "photo": ""},
-          {"name": "جوليان رييرسون", "position": "مدافع", "photo": ""},
-          {"name": "والديمار أنطون", "position": "مدافع", "photo": ""},
-          {"name": "نيكو شلوتربيك", "position": "مدافع", "photo": ""},
-          {"name": "رامي بن سبعيني", "position": "مدافع", "photo": ""},
-          {"name": "إمري تشان", "position": "وسط", "photo": ""},
-          {"name": "باسكال غروس", "position": "وسط", "photo": ""},
-          {"name": "مارسيل سابيتزر", "position": "وسط", "photo": ""},
-          {"name": "جوليان براندت", "position": "وسط", "photo": ""},
-          {"name": "كريم أديمي", "position": "مهاجم", "photo": ""},
-          {"name": "سيرو غيراسي", "position": "مهاجم", "photo": ""}
-        ],
-        "away": [
-          {"name": "ميكائيل زيترر", "position": "حارس مرمى", "photo": ""},
-          {"name": "ميتشيل فايزر", "position": "مدافع", "photo": ""},
-          {"name": "ميلوس فيلكوفيتش", "position": "مدافع", "photo": ""},
-          {"name": "ماركو فريدل", "position": "مدافع", "photo": ""},
-          {"name": "أنطوني يونغ", "position": "مدافع", "photo": ""},
-          {"name": "سينلين شتيدج", "position": "وسط", "photo": ""},
-          {"name": "ينس شتاين", "position": "وسط", "photo": ""},
-          {"name": "رومانو شميد", "position": "وسط", "photo": ""},
-          {"name": "فيليكس أغو", "position": "وسط", "photo": ""},
-          {"name": "مارفين دوكش", "position": "مهاجم", "photo": ""},
-          {"name": "كيمين تورين", "position": "مهاجم", "photo": ""}
-        ]
+        "home": [],
+        "away": []
       },
       "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Borussia_Dortmund_logo.svg/200px-Borussia_Dortmund_logo.svg.png",
-      "awayLogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/SV-Werder-Bremen-Logo.svg/200px-SV-Werder-Bremen-Logo.svg.png",
-      "leagueLogo": "",
-      "status": "0",
+      "streamType": "m3u8",
       "linkedChannels": []
     },
     {
       "id": 5,
-      "homeTeam": "لانس",
-      "awayTeam": "أولمبيك ليون",
-      "date": "2026-10-09",
-      "time": "21:45",
-      "league": "الدوري الفرنسي (Ligue 1)",
-      "round": "الجولة 8",
-      "stadium": "ملعب بولار دوليل (لانس)",
-      "broadcastChannels": ["beIN SPORTS HD 5"],
-      "broadcastChannel": "beIN SPORTS HD 5",
-      "commentator": "جواد بدة",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "referee": "غير محدد رسميًا",
+      "homeTeam": "سامسون سبور",
+      "awayTeam": "طرابزون سبور",
+      "date": "2026-10-10",
+      "time": "16:00",
+      "league": "الدوري التركي",
+      "round": "",
+      "stadium": "ملعب 19 مايو",
+      "broadcastChannels": [
+        "بى ان سبورت اكسترا 1"
+      ],
+      "broadcastChannel": "بى ان سبورت اكسترا 1",
+      "commentator": "",
+      "referee": "",
       "assistantReferees": [],
       "fourthOfficial": "",
       "varReferee": "",
       "assistantVar": "",
-      "headToHead": {
-        "matches": 0,
-        "homeWins": 0,
-        "draws": 0,
-        "awayWins": 0
-      },
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2023/8/4/Samsunspor12023_8_4_21_39.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/7/15/Trabzonspor2021_7_15_15_32.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Super-Lig113-2-2021-3-39-5.png",
       "players": {
-        "home": [
-          {"name": "بريس سامبا", "position": "حارس مرمى", "photo": ""},
-          {"name": "جوناثان جارديل", "position": "مدافع", "photo": ""},
-          {"name": "كيفين دانسو", "position": "مدافع", "photo": ""},
-          {"name": "فاكوندو مدينا", "position": "مدافع", "photo": ""},
-          {"name": "برزي Myslaw Frankowski", "position": "مدافع", "photo": ""},
-          {"name": "أندي ديوف", "position": "وسط", "photo": ""},
-          {"name": "أدريان توماسيون", "position": "وسط", "photo": ""},
-          {"name": "ديفر ماتشادو", "position": "وسط", "photo": ""},
-          {"name": "فلوريان سوتوكا", "position": "مهاجم", "photo": ""},
-          {"name": "أنس الزروري", "position": "مهاجم", "photo": ""},
-          {"name": "مارتن ساتريانو", "position": "مهاجم", "photo": ""}
-        ],
-        "away": [
-          {"name": "لوكاس بيري", "position": "حارس مرمى", "photo": ""},
-          {"name": "أينسلي ميتلاند نيلز", "position": "مدافع", "photo": ""},
-          {"name": "كليمان توربان", "position": "مدافع", "photo": ""},
-          {"name": "موسى نياخاتي", "position": "مدافع", "photo": ""},
-          {"name": "نيكولاس تاليافيكو", "position": "مدافع", "photo": ""},
-          {"name": "نيمانيا ماتيتش", "position": "وسط", "photo": ""},
-          {"name": "ماكسينس كاكريه", "position": "وسط", "photo": ""},
-          {"name": "كورنتين توليسو", "position": "وسط", "photo": ""},
-          {"name": "سعف بن رحمة", "position": "مهاجم", "photo": ""},
-          {"name": "مالك فوفانا", "position": "مهاجم", "photo": ""},
-          {"name": "ألكسندر لاكازيت", "position": "مهاجم", "photo": ""}
-        ]
+        "home": [],
+        "away": []
       },
       "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://upload.wikimedia.org/wikipedia/en/thumb/3/3c/RC_Lens_logo.svg/200px-RC_Lens_logo.svg.png",
-      "awayLogo": "https://upload.wikimedia.org/wikipedia/en/thumb/c/c6/Olympique_Lyonnais.svg/200px-Olympique_Lyonnais.svg.png",
-      "leagueLogo": "",
-      "status": "0",
+      "streamType": "m3u8",
       "linkedChannels": []
     },
     {
       "id": 6,
-      "homeTeam": "ملقة",
-      "awayTeam": "إسبانيول",
-      "date": "2026-10-09",
-      "time": "22:00",
-      "league": "الدوري الإسباني (La Liga)",
-      "round": "الجولة 9",
-      "stadium": "لا روزاليدا (ملقة)",
-      "broadcastChannels": ["beIN SPORTS HD 2"],
-      "broadcastChannel": "beIN SPORTS HD 2",
-      "commentator": "عبدالله الغامدي",
-      "isLive": false,
-      "homeScore": 0,
-      "awayScore": 0,
-      "referee": "غير محدد رسميًا",
+      "homeTeam": "جنوى",
+      "awayTeam": "فيورنتينا",
+      "date": "2026-10-10",
+      "time": "16:00",
+      "league": "الدوري الإيطالي",
+      "round": "",
+      "stadium": "ملعب لويجي فيراريس",
+      "broadcastChannels": [
+        "Starz Play App"
+      ],
+      "broadcastChannel": "Starz Play App",
+      "commentator": "",
+      "referee": "",
       "assistantReferees": [],
       "fourthOfficial": "",
       "varReferee": "",
       "assistantVar": "",
-      "headToHead": {
-        "matches": 0,
-        "homeWins": 0,
-        "draws": 0,
-        "awayWins": 0
-      },
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Genoa2018_7_29_15_10.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/5/Screenshot%202026-08-05%201746362026_8_5_17_45.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/ZKtPclY9_400x4008-8-2021-19-27-36.jpg",
       "players": {
         "home": [
-          {"name": "ألفونسو هيريرو", "position": "حارس مرمى", "photo": ""},
-          {"name": "كارلوس بوجا", "position": "مدافع", "photo": ""},
-          {"name": "نيلسون مونتي", "position": "مدافع", "photo": ""},
-          {"name": "إيكر ألمينا", "position": "مدافع", "photo": ""},
-          {"name": "داني سانشيز", "position": "مدافع", "photo": ""},
-          {"name": "مانو مولينا", "position": "وسط", "photo": ""},
-          {"name": "لوكاس ألبيرت", "position": "وسط", "photo": ""},
-          {"name": "ديفيد لارينا", "position": "وسط", "photo": ""},
-          {"name": "كيفين فيالبا", "position": "وسط", "photo": ""},
-          {"name": "أنتونينيتو", "position": "مهاجم", "photo": ""},
-          {"name": "روكو روكشينا", "position": "مهاجم", "photo": ""}
+          {
+            "name": "Justin Bijlow",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Alessandro Marcandalli",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Leo Østigård",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Johan Vásquez",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Morten Frendrup",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Mikael Egill Ellertsson",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Tommaso Baldanzi",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Kingsley Ehizibue",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Alex Amorim",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Vitinha",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Milan Osmajić",
+            "position": "ATT",
+            "photo": ""
+          }
         ],
         "away": [
-          {"name": "جوان غارسيا", "position": "حارس مرمى", "photo": ""},
-          {"name": "عمر الهلالي", "position": "مدافع", "photo": ""},
-          {"name": "ماراش كومبولا", "position": "مدافع", "photo": ""},
-          {"name": "ألفارو تيخيرو", "position": "مدافع", "photo": ""},
-          {"name": "بريان أوليفان", "position": "مدافع", "photo": ""},
-          {"name": "أليكس Kral", "position": "وسط", "photo": ""},
-          {"name": "ألفارو أجوادو", "position": "وسط", "photo": ""},
-          {"name": "خافي بوادو", "position": "وسط", "photo": ""},
-          {"name": "كارلوس روميرو", "position": "وسط", "photo": ""},
-          {"name": "وليد شديرا", "position": "مهاجم", "photo": ""},
-          {"name": "أليخو فيليز", "position": "مهاجم", "photo": ""}
+          {
+            "name": "David de Gea",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Ángel Jiménez",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Radu Drăgușin",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Luca Ranieri",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Valdepeñas",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Nicolò Fagioli",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Cher Ndour",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Franco Mastantuono",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Pedro Gonçalves",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Njie",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Pellegrino",
+            "position": "ATT",
+            "photo": ""
+          }
         ]
       },
       "streamUrl": "",
-      "streamType": "TS",
-      "homeLogo": "https://upload.wikimedia.org/wikipedia/en/thumb/3/30/Malaga_cf.svg/200px-Malaga_cf.svg.png",
-      "awayLogo": "https://upload.wikimedia.org/wikipedia/en/thumb/d/d6/Rcd_espanyol_logo.svg/200px-Rcd_espanyol_logo.svg.png",
-      "leagueLogo": "",
-      "status": "0",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 7,
+      "homeTeam": "ميكيلّي 70",
+      "awayTeam": "ميشال سبور",
+      "date": "2026-10-10",
+      "time": "16:00",
+      "league": "بطولة أفريقيا للأندية لكرة اليد",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [
+        "قناة الاتحاد الإفريقي لليد - يوتيوب"
+      ],
+      "broadcastChannel": "قناة الاتحاد الإفريقي لليد - يوتيوب",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/10/6/Mekelle2024_10_6_23_19.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/10/7/Mechal-Sport--handball2024_10_7_0_7.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/angola%20logo114-10-2026-23-56-8.webp",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 8,
+      "homeTeam": "إنتر كلوب",
+      "awayTeam": "الجيش الرواندي",
+      "date": "2026-10-10",
+      "time": "16:00",
+      "league": "بطولة أفريقيا للأندية لكرة اليد",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [
+        "قناة الاتحاد الإفريقي لليد - يوتيوب"
+      ],
+      "broadcastChannel": "قناة الاتحاد الإفريقي لليد - يوتيوب",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/10/3/Interclub2026_10_3_23_51.webp",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/3/21/APR-Handball12024_3_21_1_55.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/angola%20logo114-10-2026-23-56-8.webp",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 9,
+      "homeTeam": "هوفنهايم",
+      "awayTeam": "هامبورج",
+      "date": "2026-10-10",
+      "time": "16:30",
+      "league": "الدوري الألماني",
+      "round": "",
+      "stadium": "بري زيرو أرينا",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Hoffenheim2018_7_29_16_6.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/8/16/Hamburg2018_8_16_10_18.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/download%20(1)10-8-2025-17-40-51.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Oliver Baumann",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Vladimír Coufal",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Ozan Kabak",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Kō Itakura Machida",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Rots",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Conté",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Leon Avdullahu",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Tim Lemperle",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Burger",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Daghim",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Adam Hložek",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Daniel Heuer Fernandes",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Capaldo",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Jordan Torunarigha",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Bornauw",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Møller Wolfe",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Jatta",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Albert Sambi Lokonga",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Remberg",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Fabio Vieira",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Adeline",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Yussuf Poulsen",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 10,
+      "homeTeam": "ماينز",
+      "awayTeam": "باير ليفركوزن",
+      "date": "2026-10-10",
+      "time": "16:30",
+      "league": "الدوري الألماني",
+      "round": "",
+      "stadium": "ميوا أرينا",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Mainz2018_7_29_16_7.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/BayerLeverkusen2018_7_29_16_6.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/download%20(1)10-8-2025-17-40-51.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Alexander Schwolow",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Stefan Posch",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Gruber",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Potulski",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Anthony Caci",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Nadiem Amiri",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Sano",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Jae-sung Lee",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Phillipp Mwene",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Sheraldo Becker",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Tietz",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Mark Flekken",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Jarell Quansah",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Edmond Tapsoba",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Medina",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Gutiérrez",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Aleix García",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Fernández",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Moussa Diaby",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Maza",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Morreira",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Patrik Schick",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 11,
+      "homeTeam": "أوجسبورج",
+      "awayTeam": "بايرن ميونيخ",
+      "date": "2026-10-10",
+      "time": "16:30",
+      "league": "الدوري الألماني",
+      "round": "",
+      "stadium": "دبليو دبليو كيه أرينا",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Augsburg2018_7_29_16_8.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/BayernMunchen2018_7_29_16_3.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/download%20(1)10-8-2025-17-40-51.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Finn Dahmen",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Matsima",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Jeffrey Gouweleeuw",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Brackelmann",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Wolf",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Massengo",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Rieder",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Behrens",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Fellhauer",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Claude-Maurice",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Michael Gregoritsch",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Manuel Neuer",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Konrad Laimer",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Dayot Upamecano",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Jonathan Tah",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Alphonso Davies",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Joshua Kimmich",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Aleksandar Pavlović",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Michael Olise",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Saibari",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Luis Díaz",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Harry Kane",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 12,
+      "homeTeam": "بادربورن",
+      "awayTeam": "شتوتجارت",
+      "date": "2026-10-10",
+      "time": "16:30",
+      "league": "الدوري الألماني",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/9/12/Paderborn2018_9_12_13_11.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Stuttgart2018_7_29_16_4.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/download%20(1)10-8-2025-17-40-51.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Noll",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "ter Horst",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Scheller",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Hansen",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Curda",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Ulrich",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Castaneda",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Vidović",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Obermair",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Marino",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Pieringer",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Seimen",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Vagnoman",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Jeltsch",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Chabot",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Mittelstädt",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Prömel",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Angelo Stiller",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "El Khannouss",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Deniz Undav",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Führich",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Pejčinović",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 13,
+      "homeTeam": "يونيون برلين",
+      "awayTeam": "إس في إلفيرسبيرج",
+      "date": "2026-10-10",
+      "time": "16:30",
+      "league": "الدوري الألماني",
+      "round": "",
+      "stadium": "ملعب آندر ألتن فورشتراي",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/9/12/UnionBerlin2018_9_12_13_37.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/2/Screenshot%202026-08-02%201929152026_8_2_19_28.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/download%20(1)10-8-2025-17-40-51.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Frederik Rønnow",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Christopher Trimmel",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Leopold Querfeld",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Uduokhai",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Rothe",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Aebischer",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Rani Khedira",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Kemlein",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Imeri",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Jeong",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Latte Lath",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Nicolas Kristof",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Gyamerah",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Pinckert",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Rohr",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Günther",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Keidel",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Poręba",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Petkov",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Onyeka",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Campbell",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Mokwa",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 14,
+      "homeTeam": "الترجي الرياضي",
+      "awayTeam": "الأولمبي الباجي",
+      "date": "2026-10-10",
+      "time": "16:30",
+      "league": "الدوري التونسي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/8/18/AlTraji2018_8_18_22_5.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/9/8/OlympiqueDeBeja2021_9_8_11_8.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/TunisianLeague30-7-2018-16-51-37.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 15,
+      "homeTeam": "اتحاد بن قردان",
+      "awayTeam": "الافريقي التونسي",
+      "date": "2026-10-10",
+      "time": "16:30",
+      "league": "الدوري التونسي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/24/EtihadBenKerdan2018_7_24_12_59.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/24/Africain2018_7_24_12_32.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/TunisianLeague30-7-2018-16-51-37.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 16,
+      "homeTeam": "البنزرتي",
+      "awayTeam": "الاتحاد المنستيري",
+      "date": "2026-10-10",
+      "time": "16:30",
+      "league": "الدوري التونسي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/25/Binzertin2018_7_25_15_53.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/9/16/Monastir2018_9_16_10_18.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/TunisianLeague30-7-2018-16-51-37.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 17,
+      "homeTeam": "تقدم ساقية الداير",
+      "awayTeam": "الصفاقسي",
+      "date": "2026-10-10",
+      "time": "16:30",
+      "league": "الدوري التونسي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/teamlogo/nateam.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/25/Sfaxien2018_7_25_15_27.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/TunisianLeague30-7-2018-16-51-37.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 18,
+      "homeTeam": "الحزم",
+      "awayTeam": "نادي نيوم",
+      "date": "2026-10-10",
+      "time": "16:50",
+      "league": "الدوري السعودي",
+      "round": "",
+      "stadium": "ملعب نادي الحزم",
+      "broadcastChannels": [
+        "ثمانية 3"
+      ],
+      "broadcastChannel": "ثمانية 3",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/2/dowVFoYC_400x4002026_8_2_18_30.webp",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/7/21/neom2024_7_21_16_52.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/124-8-2022-18-57-59.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 19,
+      "homeTeam": "أستون فيلا",
+      "awayTeam": "برينتفورد",
+      "date": "2026-10-10",
+      "time": "17:00",
+      "league": "الدوري الإنجليزي",
+      "round": "",
+      "stadium": "فيلا بارك",
+      "broadcastChannels": [
+        "بى ان سبورت 2 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 2 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/9/10/AstonVilla2018_9_10_12_22.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/9/24/Brentford2018_9_24_13_3.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Premier-League-Symbol%20(1)28-01-2025-12-24-46.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Zion Suzuki",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Aaron Wan-Bissaka",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Victor Lindelöf",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Tyrone Mings",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Matteo Ruggeri",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Boubacar Kamara",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "João Gomes",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "John McGinn",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Manzambi",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Emiliano Buendía",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Nicolas Jackson",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Caoimhín Kelleher",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Michael Kayode",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Schuster",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Kristoffer Ajer",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Keane Lewis-Potter",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Sangaré",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Vitaly Janelt",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Anthony",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Yarmolyuk",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Kevin Schade",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Igor Thiago",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 20,
+      "homeTeam": "تشيلسي",
+      "awayTeam": "بورنموث",
+      "date": "2026-10-10",
+      "time": "17:00",
+      "league": "الدوري الإنجليزي",
+      "round": "",
+      "stadium": "ستامفورد بريدج",
+      "broadcastChannels": [
+        "بى ان سبورت 1HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 1HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Chelsea2018_7_29_15_28.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Bournemouth2018_7_29_15_32.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Premier-League-Symbol%20(1)28-01-2025-12-24-46.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Emiliano Martínez",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Wesley Fofana",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Maxence Lacroix",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Levi Colwill",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Pedro Neto",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Roméo Lavia",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Henderson",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Chavarría",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Cole Palmer",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Danny Welbeck",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Morgan Rogers",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Đorđe Petrović",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Adam Smith",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "James Hill",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "António Silva",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Adrien Truffert",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Tyler Adams",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Alex Scott",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Rayan",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Ryan Christie",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Marcus Tavernier",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Evanilson",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 21,
+      "homeTeam": "إيبسويتش تاون",
+      "awayTeam": "فولهام",
+      "date": "2026-10-10",
+      "time": "17:00",
+      "league": "الدوري الإنجليزي",
+      "round": "",
+      "stadium": "بورتمان رود",
+      "broadcastChannels": [
+        "بى ان سبورت 4 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 4 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2019/1/20/IpswichTown2019_1_20_14_6.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Fulham2018_7_29_15_26.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Premier-League-Symbol%20(1)28-01-2025-12-24-46.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Kjell Scherpen",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Dara O'Shea",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Issa Diop",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Jacob Greaves",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Leif Davis",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Sasa Lukic",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Rodrigo Palacios",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Ouattara",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Julio Enciso",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Jack Clarke",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Emersonn",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Bernd Leno",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Timothy Castagne",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Affengruber",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Calvin Bassey",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Antonee Robinson",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Sander Berge",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Josh King",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Oscar Bobb",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Alex Iwobi",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Gonzalo García",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Charles",
+            "position": "MID",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 22,
+      "homeTeam": "سندرلاند",
+      "awayTeam": "برايتون",
+      "date": "2026-10-10",
+      "time": "17:00",
+      "league": "الدوري الإنجليزي",
+      "round": "",
+      "stadium": "ملعب النور",
+      "broadcastChannels": [
+        "بى ان سبورت 3 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 3 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2015/3/23/Sunderland2015_3_23_13_59.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Brighton2018_7_29_15_31.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Premier-League-Symbol%20(1)28-01-2025-12-24-46.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Robin Roefs",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Nordie Mukiele",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Kevin Danso",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Alderete",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Reinildo",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Granit Xhaka",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Habib Diarra",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Thomas Meunier",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Enzo Le Fée",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Angulo",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Wilson Isidor",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Bart Verbruggen",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Ferdi Kadıoğlu",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Vušković",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Lewis Dunk",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Boscagli",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Chema Andrés",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Pascal Groß",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Diego Gómez",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Yasin Ayari",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "De Cuyper",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Charalampos Kostoulas",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 23,
+      "homeTeam": "ألافيس",
+      "awayTeam": "أتلتيكو مدريد",
+      "date": "2026-10-10",
+      "time": "17:15",
+      "league": "الدوري الإسباني",
+      "round": "",
+      "stadium": "مينديزوروزا",
+      "broadcastChannels": [
+        "بى ان سبورت 5 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 5 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/8/11/11082024_8_11_23_19.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/8/11/132024_8_11_20_56.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/354466675_177497535300975_2290177074408202728_n3-7-2023-21-58-53.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 24,
+      "homeTeam": "كازا بيا",
+      "awayTeam": "سانتا كلارا",
+      "date": "2026-10-10",
+      "time": "17:30",
+      "league": "الدوري البرتغالي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2022/8/11/Casa12022_8_11_22_40.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/2/small_CD_Santa_Clara_Emblema_1x1_v2_d629cef5272026_8_2_19_6.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/ic_ligabetclic_c07b64a3af2-8-2026-18-42-0.webp",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 25,
+      "homeTeam": "الشحانية",
+      "awayTeam": "نادي لوسيل",
+      "date": "2026-10-10",
+      "time": "17:45",
+      "league": "دوري نجوم قطر",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/26/Shahaniya2018_7_26_12_15.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/7/16/lucail%20sc2026_7_16_23_36.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/QatarLeague30-7-2018-16-25-56.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 26,
+      "homeTeam": "الاتفاق",
+      "awayTeam": "الخليج",
+      "date": "2026-10-10",
+      "time": "17:55",
+      "league": "الدوري السعودي",
+      "round": "",
+      "stadium": "ملعب إيجو",
+      "broadcastChannels": [
+        "ثمانية 2"
+      ],
+      "broadcastChannel": "ثمانية 2",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/25/Ettifaq2018_7_25_17_9.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2023/8/12/khaleej12023_8_12_15_55.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/124-8-2022-18-57-59.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 27,
+      "homeTeam": "الزمالك",
+      "awayTeam": "كينشاسا",
+      "date": "2026-10-10",
+      "time": "18:00",
+      "league": "بطولة أفريقيا للأندية لكرة اليد",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [
+        "قناة الاتحاد الإفريقي لليد - يوتيوب"
+      ],
+      "broadcastChannel": "قناة الاتحاد الإفريقي لليد - يوتيوب",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2025/4/18/zamalek-logo2025_4_18_0_26.webp",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2023/4/26/Jsk--Kinshasa2023_4_26_17_21.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/angola%20logo114-10-2026-23-56-8.webp",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 28,
+      "homeTeam": "فلاورز",
+      "awayTeam": "بترو أتليتيكو",
+      "date": "2026-10-10",
+      "time": "18:00",
+      "league": "بطولة أفريقيا للأندية لكرة اليد",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [
+        "قناة الاتحاد الإفريقي لليد - يوتيوب"
+      ],
+      "broadcastChannel": "قناة الاتحاد الإفريقي لليد - يوتيوب",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/10/19/flowers2024_10_19_0_44.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/10/3/Petro%20Atletico%20handball12026_10_3_20_2.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/angola%20logo114-10-2026-23-56-8.webp",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 29,
+      "homeTeam": "ليل",
+      "awayTeam": "لوهافر",
+      "date": "2026-10-10",
+      "time": "18:15",
+      "league": "الدوري الفرنسي",
+      "round": "",
+      "stadium": "ملعب بيار موروا",
+      "broadcastChannels": [
+        "بى ان سبورت 6 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 6 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/9/5/Lille2021_9_5_15_50.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/2/12026_8_2_19_12.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/11-9-2024-22-5-16.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 30,
+      "homeTeam": "ريزه سبور",
+      "awayTeam": "فنربخشة",
+      "date": "2026-10-10",
+      "time": "19:00",
+      "league": "الدوري التركي",
+      "round": "",
+      "stadium": "ملعب تشايكور ديدي",
+      "broadcastChannels": [
+        "بى ان سبورت 7 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 7 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/2/13/Rizespor12021_2_13_23_36.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/8/12/Fenerbahce2018_8_12_13_1.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Super-Lig113-2-2021-3-39-5.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 31,
+      "homeTeam": "إنتر ميلان",
+      "awayTeam": "بارما",
+      "date": "2026-10-10",
+      "time": "19:00",
+      "league": "الدوري الإيطالي",
+      "round": "",
+      "stadium": "سان سيرو",
+      "broadcastChannels": [
+        "Starz Play App"
+      ],
+      "broadcastChannel": "Starz Play App",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/9/5/InterMilan2021_9_5_16_40.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Parma2018_7_29_15_23.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/ZKtPclY9_400x4008-8-2021-19-27-36.jpg",
+      "players": {
+        "home": [
+          {
+            "name": "Josep Martínez",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Yann Bisseck",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Benjamin Pavard",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Carlos Augusto",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Andy Diouf",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Nicolò Barella",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Aleksandar Stanković",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Petar Sučić",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Federico Dimarco",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Lautaro Martínez",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Marcus Thuram",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Edoardo Corvi",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Enrico Delprato",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Diego Carlos",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Troilo",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Britschgi",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Ordoñez",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Keita",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Fabbian",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Emanuele Valeri",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Romero",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Lontani",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 32,
+      "homeTeam": "مانشستر يونايتد",
+      "awayTeam": "توتنهام هوتسبر",
+      "date": "2026-10-10",
+      "time": "19:30",
+      "league": "الدوري الإنجليزي",
+      "round": "",
+      "stadium": "أولد ترافورد",
+      "broadcastChannels": [
+        "بى ان سبورت 1HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 1HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/ManchesterUnited2018_7_29_15_29.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/8/19/1482024_8_19_21_30.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/Premier-League-Symbol%20(1)28-01-2025-12-24-46.webp",
+      "players": {
+        "home": [
+          {
+            "name": "Senne Lammens",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Diogo Dalot",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Harry Maguire",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Lisandro Martínez",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Luke Shaw",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Youri Tielemans",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Kobbie Mainoo",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Bryan Mbeumo",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Bruno Fernandes",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Marcus Rashford",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Matheus Cunha",
+            "position": "ATT",
+            "photo": ""
+          }
+        ],
+        "away": [
+          {
+            "name": "Antonín Kinský",
+            "position": "GK",
+            "photo": ""
+          },
+          {
+            "name": "Archie Gray",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Jan Paul van Hecke",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Micky van de Ven",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Andy Robertson",
+            "position": "DEF",
+            "photo": ""
+          },
+          {
+            "name": "Rodrigo Bentancur",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Sandro Tonali",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Mohammed Kudus",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Conor Gallagher",
+            "position": "MID",
+            "photo": ""
+          },
+          {
+            "name": "Savinho",
+            "position": "ATT",
+            "photo": ""
+          },
+          {
+            "name": "Omar Marmoush",
+            "position": "ATT",
+            "photo": ""
+          }
+        ]
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 33,
+      "homeTeam": "برشلونة",
+      "awayTeam": "خيتافي",
+      "date": "2026-10-10",
+      "time": "19:30",
+      "league": "الدوري الإسباني",
+      "round": "",
+      "stadium": "سبوتيفاي كامب نو",
+      "broadcastChannels": [
+        "بى ان سبورت 2 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 2 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Barcelona2018_7_29_14_44.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Getafe2018_7_29_14_53.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/354466675_177497535300975_2290177074408202728_n3-7-2023-21-58-53.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 34,
+      "homeTeam": "لايبزيج",
+      "awayTeam": "آ. فرانكفورت",
+      "date": "2026-10-10",
+      "time": "19:30",
+      "league": "الدوري الألماني",
+      "round": "",
+      "stadium": "ريد بول أرينا",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Leipzig2018_7_29_16_8.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Frankfurt2018_7_29_16_5.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/download%20(1)10-8-2025-17-40-51.webp",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 35,
+      "homeTeam": "الأهلي",
+      "awayTeam": "رينيسانس",
+      "date": "2026-10-10",
+      "time": "20:00",
+      "league": "بطولة أفريقيا للأندية لكرة اليد",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [
+        "قناة الاتحاد الإفريقي لليد - يوتيوب"
+      ],
+      "broadcastChannel": "قناة الاتحاد الإفريقي لليد - يوتيوب",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/5/24/ahly-handball2024_5_24_17_24.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/10/4/Renaissance%20112026_10_4_19_21.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/angola%20logo114-10-2026-23-56-8.webp",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 36,
+      "homeTeam": "ماريتيمو",
+      "awayTeam": "بورتو",
+      "date": "2026-10-10",
+      "time": "20:00",
+      "league": "الدوري البرتغالي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/2/12026_8_2_19_5.webp",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/30/Porto2018_7_30_10_21.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/ic_ligabetclic_c07b64a3af2-8-2026-18-42-0.webp",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 37,
+      "homeTeam": "الأهلي القطري",
+      "awayTeam": "السيلية",
+      "date": "2026-10-10",
+      "time": "20:00",
+      "league": "دوري نجوم قطر",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/26/AlAhli2018_7_26_12_14.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/5/32026_8_5_23_0.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/QatarLeague30-7-2018-16-25-56.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 38,
+      "homeTeam": "الكوكب المراكشي",
+      "awayTeam": "اتحاد طنجة",
+      "date": "2026-10-10",
+      "time": "20:00",
+      "league": "الدوري المغربي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/24/AlkawkabAlmarakshy2018_7_24_17_50.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2022/7/5/EtihadTanga2018_7_24_17_562022_7_5_18_36.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/BOTOLAPRO18-8-2021-19-38-13.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 39,
+      "homeTeam": "الهلال",
+      "awayTeam": "الاتحاد",
+      "date": "2026-10-10",
+      "time": "21:00",
+      "league": "الدوري السعودي",
+      "round": "",
+      "stadium": "المملكة أرينا",
+      "broadcastChannels": [
+        "ثمانية 1"
+      ],
+      "broadcastChannel": "ثمانية 1",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/8/13/11142024_8_13_20_18.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/9/7/Ittihad2021_9_7_16_53.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/124-8-2022-18-57-59.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 40,
+      "homeTeam": "باريس سان جيرمان",
+      "awayTeam": "لو مان",
+      "date": "2026-10-10",
+      "time": "21:45",
+      "league": "الدوري الفرنسي",
+      "round": "",
+      "stadium": "بارك دي برانس",
+      "broadcastChannels": [
+        "بى ان سبورت 1HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 1HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/PSG2018_7_29_17_12.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/2/4201b154-511d-4128-ab82-9b619ecc60832026_8_2_19_13.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/11-9-2024-22-5-16.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 41,
+      "homeTeam": "لوريان",
+      "awayTeam": "باريس إف سي",
+      "date": "2026-10-10",
+      "time": "21:45",
+      "league": "الدوري الفرنسي",
+      "round": "",
+      "stadium": "ستاد دو موستوار",
+      "broadcastChannels": [
+        "بى ان سبورت 7 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 7 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2015/3/23/Lorient2015_3_23_18_7.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2023/1/28/Paris_FC_logo.svg2023_1_28_18_18.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/11-9-2024-22-5-16.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 42,
+      "homeTeam": "بريست",
+      "awayTeam": "أنجيه",
+      "date": "2026-10-10",
+      "time": "21:45",
+      "league": "الدوري الفرنسي",
+      "round": "",
+      "stadium": "ستاد فرانسيس لو بليه",
+      "broadcastChannels": [
+        "بى ان سبورت 5 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 5 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2019/7/14/StadeBrestois2019_7_14_16_43.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/9/5/Angers2021_9_5_15_15.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/11-9-2024-22-5-16.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 43,
+      "homeTeam": "موناكو",
+      "awayTeam": "تولوز",
+      "date": "2026-10-10",
+      "time": "21:45",
+      "league": "الدوري الفرنسي",
+      "round": "",
+      "stadium": "ملعب لويس الثاني",
+      "broadcastChannels": [
+        "بى ان سبورت 4 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 4 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Monaco2018_7_29_17_13.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/2/22026_8_2_19_16.webp",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/11-9-2024-22-5-16.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 44,
+      "homeTeam": "نابولي",
+      "awayTeam": "فروزينوني",
+      "date": "2026-10-10",
+      "time": "21:45",
+      "league": "الدوري الإيطالي",
+      "round": "",
+      "stadium": "ملعب دييغو أرماندو مارادونا",
+      "broadcastChannels": [
+        "Starz Play App"
+      ],
+      "broadcastChannel": "Starz Play App",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2024/8/25/Napoli12024_8_25_20_48.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Frosinone2018_7_29_15_23.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/ZKtPclY9_400x4008-8-2021-19-27-36.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 45,
+      "homeTeam": "ريال مدريد",
+      "awayTeam": "فياريال",
+      "date": "2026-10-10",
+      "time": "22:00",
+      "league": "الدوري الإسباني",
+      "round": "",
+      "stadium": "سانتياغو برنابيو",
+      "broadcastChannels": [
+        "بى ان سبورت 2 HD"
+      ],
+      "broadcastChannel": "بى ان سبورت 2 HD",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/RealMadrid2018_7_29_14_47.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Villareal2018_7_29_14_53.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/354466675_177497535300975_2290177074408202728_n3-7-2023-21-58-53.png",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 46,
+      "homeTeam": "أمل تزنيت",
+      "awayTeam": "الدفاع الجديدي",
+      "date": "2026-10-10",
+      "time": "22:00",
+      "league": "الدوري المغربي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/teamlogo/nateam.jpg",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/8/18/ElDifaaElJadidi2018_8_18_23_13.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/BOTOLAPRO18-8-2021-19-38-13.jpg",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
+      "linkedChannels": []
+    },
+    {
+      "id": 47,
+      "homeTeam": "أكاديميكو فيزيو",
+      "awayTeam": "إستوريل برايا",
+      "date": "2026-10-10",
+      "time": "22:30",
+      "league": "الدوري البرتغالي",
+      "round": "",
+      "stadium": "",
+      "broadcastChannels": [],
+      "broadcastChannel": "",
+      "commentator": "",
+      "referee": "",
+      "assistantReferees": [],
+      "fourthOfficial": "",
+      "varReferee": "",
+      "assistantVar": "",
+      "isLive": false,
+      "homeScore": "",
+      "awayScore": "",
+      "status": "لم تبدأ",
+      "homeLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/2/medium_Emb_Ac_Viseu_AF_200x200_300_849bd92d0b2026_8_2_19_1.webp",
+      "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2015/3/23/Estoril2015_3_23_18_36.jpg",
+      "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/ic_ligabetclic_c07b64a3af2-8-2026-18-42-0.webp",
+      "players": {
+        "home": [],
+        "away": []
+      },
+      "streamUrl": "",
+      "streamType": "m3u8",
       "linkedChannels": []
     }
-  ]
+  ],
+  "lineupsNote": "التشكيلات المضافة هي آخر تشكيلة معروفة/متوقعة من تقارير التشكيلات المتاحة قبل المباراة، وليست التشكيلة الرسمية المؤكدة يوم المباراة. الصور غير المتوفرة تُترك فارغة."
 }
