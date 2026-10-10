@@ -102,6 +102,9 @@ interface SaribDao {
     suspend fun clearAllMatches()
 
     // Media (Movies, Series, Anime)
+    @Query("SELECT * FROM media_items")
+    suspend fun getAllMediaList(): List<MediaEntity>
+
     @Query("SELECT * FROM media_items WHERE type = :type")
     fun getMediaByType(type: String): Flow<List<MediaEntity>>
 

@@ -244,16 +244,26 @@ class SaribRepository(private val context: Context) {
 
                         for ((url, name) in sourcesToFetch.distinctBy { it.first }) {
                             try {
-                                com.example.util.M3uPlaylistParser.parseCategoriesOnlyFromUrlStreaming(
+                                com.example.util.M3uPlaylistParser.parseFromUrlStreaming(
                                     playlistUrl = url,
-                                    defaultGroupName = name
-                                ) { bCats ->
+                                    defaultGroupName = name,
+                                    batchSize = 100
+                                ) { bCats, bChs, bMCats, bMovs ->
                                     if (bCats.isNotEmpty()) {
                                         dao.insertCategories(bCats.map { it.toEntity() })
                                     }
+                                    if (bChs.isNotEmpty()) {
+                                        dao.insertChannels(bChs.map { it.toEntity() })
+                                    }
+                                    if (bMCats.isNotEmpty()) {
+                                        dao.insertCategories(bMCats.map { it.toEntity() })
+                                    }
+                                    if (bMovs.isNotEmpty()) {
+                                        dao.insertMediaItems(bMovs.map { it.toEntity() })
+                                    }
                                 }
                             } catch (e: Exception) {
-                                Log.w("SaribRepository", "Error progressive streaming M3U categories $url: ${e.message}")
+                                Log.w("SaribRepository", "Error progressive streaming M3U $url: ${e.message}")
                             }
                         }
                     } catch (e: Exception) {
@@ -374,17 +384,156 @@ class SaribRepository(private val context: Context) {
                 }
             }
 
-            // Strict match from cached Room channels for this category only
+            // Strict & Fuzzy match from cached Room channels for this category only
             val allLocal = dao.getAllChannelsList()
+            val cleanCatName = categoryName.trim()
             val matched = allLocal.filter {
                 it.categoryId.equals(categoryId, ignoreCase = true) ||
                 it.categoryName.equals(categoryId, ignoreCase = true) ||
-                (categoryName.isNotBlank() && it.categoryName.equals(categoryName, ignoreCase = true))
+                (cleanCatName.isNotBlank() && it.categoryName.equals(cleanCatName, ignoreCase = true)) ||
+                (cleanCatName.isNotBlank() && it.categoryName.trim().equals(cleanCatName, ignoreCase = true)) ||
+                it.categoryId.equals("m3u_cat_" + Math.abs(cleanCatName.hashCode())) ||
+                (cleanCatName.isNotBlank() && (it.categoryName.contains(cleanCatName, ignoreCase = true) || cleanCatName.contains(it.categoryName, ignoreCase = true)))
             }
+            if (matched.isNotEmpty() && !forceRefresh) {
+                val mapped = matched.map { it.toModel() }
+                onBatchLoaded(mapped)
+                return@withContext mapped
+            }
+
+            // On-Demand fetch from M3U / M3U8 Sources if it's an M3U category or not yet in Room
+            val isM3uCategory = categoryId.startsWith("m3u_") || !isXtreamCategory || cleanCatName.isNotBlank()
+            if (isM3uCategory) {
+                try {
+                    val m3uSources = firebaseStreamManager.fetchM3uSources()
+                    val sourcesToQuery = mutableListOf<Pair<String, String>>()
+                    if (currentRemoteConfig.m3uPlaylistUrl.isNotBlank()) {
+                        sourcesToQuery.add(Pair(currentRemoteConfig.m3uPlaylistUrl, "باقة القنوات المباشرة"))
+                    }
+                    for (src in m3uSources) {
+                        if (src.url.isNotBlank() && src.isEnabled) {
+                            sourcesToQuery.add(Pair(src.url, src.name.ifBlank { "باقة M3U سحابية" }))
+                        }
+                    }
+                    try {
+                        val userM3uList = com.example.data.local.AppPreferences(context).getCustomM3uList()
+                        for (userSrc in userM3uList) {
+                            if (userSrc.first.isNotBlank()) {
+                                sourcesToQuery.add(Pair(userSrc.first, userSrc.second))
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.w("SaribRepository", "Error reading custom M3U: ${e.message}")
+                    }
+
+                    if (sourcesToQuery.isNotEmpty()) {
+                        val onDemandChannels = com.example.util.M3uPlaylistParser.fetchChannelsForCategoryStreaming(
+                            sources = sourcesToQuery.distinctBy { it.first },
+                            targetCategoryId = categoryId,
+                            targetCategoryName = cleanCatName,
+                            batchSize = 15
+                        ) { batch ->
+                            if (batch.isNotEmpty()) {
+                                dao.insertChannels(batch.map { it.toEntity() })
+                                onBatchLoaded(batch)
+                            }
+                        }
+                        if (onDemandChannels.isNotEmpty()) {
+                            dao.insertChannels(onDemandChannels.map { it.toEntity() })
+                            return@withContext onDemandChannels
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w("SaribRepository", "M3U on-demand category fetch note: ${e.message}")
+                }
+            }
+
             if (matched.isNotEmpty()) {
                 val mapped = matched.map { it.toModel() }
                 onBatchLoaded(mapped)
                 return@withContext mapped
+            }
+
+            // Check if items were saved in media_items table (e.g. VOD/Movie M3U items)
+            try {
+                val mediaLocal = dao.getAllMediaList()
+                val matchedMedia = mediaLocal.filter {
+                    it.genre.equals(categoryId, ignoreCase = true) ||
+                    (cleanCatName.isNotBlank() && it.genre.equals(cleanCatName, ignoreCase = true)) ||
+                    (cleanCatName.isNotBlank() && (it.genre.contains(cleanCatName, ignoreCase = true) || cleanCatName.contains(it.genre, ignoreCase = true))) ||
+                    it.id.startsWith("m3u_mov_${cleanCatName}")
+                }
+                if (matchedMedia.isNotEmpty()) {
+                    val asChannels = matchedMedia.map { m ->
+                        ChannelItem(
+                            id = m.id,
+                            name = m.title,
+                            categoryId = categoryId,
+                            categoryName = if (cleanCatName.isNotBlank()) cleanCatName else m.genre,
+                            logoUrl = m.posterUrl,
+                            streamUrl = m.streamUrl,
+                            backupUrl = "",
+                            country = "سحابي Cloud",
+                            language = "العربية",
+                            isFavorite = m.isFavorite,
+                            isEnabled = true,
+                            sortOrder = 0,
+                            viewsCount = 1500
+                        )
+                    }
+                    onBatchLoaded(asChannels)
+                    return@withContext asChannels
+                }
+            } catch (e: Exception) {
+                Log.w("SaribRepository", "Media to channels fallback note: ${e.message}")
+            }
+
+            // Check local bundled assets/channels.json as guaranteed fallback
+            try {
+                val assetJson = context.assets.open("channels.json").bufferedReader().use { it.readText() }.trim()
+                if (assetJson.isNotEmpty() && assetJson.startsWith("{")) {
+                    val jsonObj = org.json.JSONObject(assetJson)
+                    val arr = jsonObj.optJSONArray("channels")
+                    if (arr != null && arr.length() > 0) {
+                        val assetChannels = mutableListOf<ChannelItem>()
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.optJSONObject(i) ?: continue
+                            val g = obj.optString("group", "").trim()
+                            val name = obj.optString("name", "")
+                            val url = obj.optString("url", "")
+                            val logo = obj.optString("logo", "")
+                            val matchesGroup = (cleanCatName.isNotBlank() && g.equals(cleanCatName, ignoreCase = true)) ||
+                                    (cleanCatName.isNotBlank() && (g.contains(cleanCatName, ignoreCase = true) || cleanCatName.contains(g, ignoreCase = true))) ||
+                                    (categoryId.isNotBlank() && (categoryId == "fb_cat_" + Math.abs(g.hashCode()) || categoryId.equals(g, ignoreCase = true)))
+                            if (matchesGroup && url.isNotBlank()) {
+                                assetChannels.add(
+                                    ChannelItem(
+                                        id = "asset_ch_${i}_${Math.abs(url.hashCode())}",
+                                        name = name,
+                                        categoryId = categoryId,
+                                        categoryName = g,
+                                        logoUrl = logo,
+                                        streamUrl = url,
+                                        backupUrl = "",
+                                        country = "سحابي Cloud",
+                                        language = "العربية",
+                                        isFavorite = false,
+                                        isEnabled = true,
+                                        sortOrder = i,
+                                        viewsCount = 1500
+                                    )
+                                )
+                            }
+                        }
+                        if (assetChannels.isNotEmpty()) {
+                            dao.insertChannels(assetChannels.map { it.toEntity() })
+                            onBatchLoaded(assetChannels)
+                            return@withContext assetChannels
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("SaribRepository", "Asset fallback note: ${e.message}")
             }
 
             if (categoryChannels.isNotEmpty()) {
@@ -548,14 +697,26 @@ class SaribRepository(private val context: Context) {
             val manualMatchesDeferred = async { firebaseStreamManager.fetchManualMatches() }
             val overridesDeferred = async { firebaseStreamManager.fetchMatchStreamOverrides() }
             
-            val jsonUrl = currentRemoteConfig.matchesJsonUrl.ifBlank {
-                "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json"
+            val firebaseJsonUrl = firebaseStreamManager.fetchMatchesJsonUrlFromFirebase()
+            val jsonUrl = firebaseJsonUrl.ifBlank {
+                currentRemoteConfig.matchesJsonUrl.ifBlank {
+                    "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json"
+                }
             }
             val urlMatchesDeferred = async { matchesClient.fetchMatchesFromUrl(jsonUrl) }
 
             val manualMatches = manualMatchesDeferred.await()
             val streamOverrides = overridesDeferred.await()
             var matches = urlMatchesDeferred.await()
+
+            if (matches.isEmpty()) {
+                try {
+                    val assetJson = context.assets.open("data.json").bufferedReader().use { it.readText() }
+                    matches = matchesClient.parseMatchesJson(assetJson)
+                } catch (e: Exception) {
+                    // asset fallback note
+                }
+            }
 
             if (matches.isEmpty()) {
                 matches = matchesClient.fetchMatches(dayOffset)
@@ -897,7 +1058,26 @@ class SaribRepository(private val context: Context) {
     }
 
     suspend fun loadBundledAssets() = withContext(Dispatchers.IO) {
-        // Dynamic loading only - no hardcoded/fixed items
+        try {
+            val count = dao.getAllChannelsList().size
+            if (count == 0) {
+                val channels = firebaseStreamManager.fetchCustomChannels()
+                if (channels.isNotEmpty()) {
+                    dao.insertChannels(channels.map { it.toEntity() })
+                    val categories = channels.map { ch ->
+                        com.example.data.model.ChannelCategory(
+                            id = ch.categoryId,
+                            name = ch.categoryName,
+                            subtitle = "بث مباشر سريع CDN",
+                            categoryType = "live"
+                        )
+                    }.distinctBy { it.id }
+                    dao.insertCategories(categories.map { it.toEntity() })
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("SaribRepository", "Initial channels load note: ${e.message}")
+        }
     }
 
     suspend fun clearAllCache() = withContext(Dispatchers.IO) {

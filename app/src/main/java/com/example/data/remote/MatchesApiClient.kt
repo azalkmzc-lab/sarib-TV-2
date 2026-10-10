@@ -468,42 +468,42 @@ class MatchesApiClient(
     private fun parseMatchObject(obj: JSONObject, index: Int): MatchItem? {
         val id = obj.optString("id", obj.optString("match_id", "m_$index"))
 
-        // Extract Home Team (support nested and flat)
+        // Extract Home Team (support nested and flat, camelCase & snake_case)
         var homeTeam = ""
         var homeLogo = ""
         val homeObj = obj.optJSONObject("homeTeam") ?: obj.optJSONObject("team1") ?: obj.optJSONObject("home_team")
         if (homeObj != null) {
             homeTeam = homeObj.optString("name", homeObj.optString("shortName", ""))
-            homeLogo = homeObj.optString("logo", homeObj.optString("logoUrl", ""))
+            homeLogo = homeObj.optString("logo", homeObj.optString("logoUrl", homeObj.optString("icon", homeObj.optString("image", ""))))
         } else {
-            homeTeam = obj.optString("home_team", obj.optString("team1", obj.optString("homeTeam", obj.optString("team_home", obj.optString("first_team", "")))))
-            homeLogo = obj.optString("home_logo", obj.optString("team1_logo", obj.optString("home_icon", obj.optString("team_home_logo", ""))))
+            homeTeam = obj.optString("homeTeam", obj.optString("home_team", obj.optString("team1", obj.optString("team_home", obj.optString("first_team", "")))))
+            homeLogo = obj.optString("homeLogo", obj.optString("home_logo", obj.optString("homeLogoUrl", obj.optString("home_logo_url", obj.optString("team1_logo", obj.optString("team1Logo", obj.optString("home_icon", obj.optString("homeIcon", obj.optString("team_home_logo", obj.optString("logo1", ""))))))))))
         }
 
-        // Extract Away Team (support nested and flat)
+        // Extract Away Team (support nested and flat, camelCase & snake_case)
         var awayTeam = ""
         var awayLogo = ""
         val awayObj = obj.optJSONObject("awayTeam") ?: obj.optJSONObject("team2") ?: obj.optJSONObject("away_team")
         if (awayObj != null) {
             awayTeam = awayObj.optString("name", awayObj.optString("shortName", ""))
-            awayLogo = awayObj.optString("logo", awayObj.optString("logoUrl", ""))
+            awayLogo = awayObj.optString("logo", awayObj.optString("logoUrl", awayObj.optString("icon", awayObj.optString("image", ""))))
         } else {
-            awayTeam = obj.optString("away_team", obj.optString("team2", obj.optString("awayTeam", obj.optString("team_away", obj.optString("second_team", "")))))
-            awayLogo = obj.optString("away_logo", obj.optString("team2_logo", obj.optString("away_icon", obj.optString("team_away_logo", ""))))
+            awayTeam = obj.optString("awayTeam", obj.optString("away_team", obj.optString("team2", obj.optString("team_away", obj.optString("second_team", "")))))
+            awayLogo = obj.optString("awayLogo", obj.optString("away_logo", obj.optString("awayLogoUrl", obj.optString("away_logo_url", obj.optString("team2_logo", obj.optString("team2Logo", obj.optString("away_icon", obj.optString("awayIcon", obj.optString("team_away_logo", obj.optString("logo2", ""))))))))))
         }
 
         if (homeTeam.isBlank() && awayTeam.isBlank()) return null
 
-        // League
+        // League (support nested and flat, camelCase & snake_case)
         var league = "مباريات اليوم"
         var leagueIcon = ""
         val leagueObj = obj.optJSONObject("league")
         if (leagueObj != null) {
             league = leagueObj.optString("name", "مباريات اليوم")
-            leagueIcon = leagueObj.optString("logo", "")
+            leagueIcon = leagueObj.optString("logo", leagueObj.optString("logoUrl", leagueObj.optString("icon", "")))
         } else {
             league = obj.optString("league", obj.optString("championship", obj.optString("league_name", obj.optString("tournament", "مباريات اليوم"))))
-            leagueIcon = obj.optString("league_icon", obj.optString("league_logo", obj.optString("championship_logo", "")))
+            leagueIcon = obj.optString("leagueLogo", obj.optString("league_logo", obj.optString("leagueIcon", obj.optString("league_icon", obj.optString("championship_logo", "")))))
         }
 
         val time = obj.optString("time", obj.optString("match_time", obj.optString("start_time", "09:00 م")))
@@ -519,8 +519,8 @@ class MatchesApiClient(
             homeScore = if (!scoreObj.isNull("home")) scoreObj.optInt("home", 0) else 0
             awayScore = if (!scoreObj.isNull("away")) scoreObj.optInt("away", 0) else 0
         } else {
-            homeScore = obj.optInt("home_score", obj.optInt("team1_score", obj.optInt("score1", 0)))
-            awayScore = obj.optInt("away_score", obj.optInt("team2_score", obj.optInt("score2", 0)))
+            homeScore = obj.optInt("homeScore", obj.optInt("home_score", obj.optInt("team1_score", obj.optInt("score1", 0))))
+            awayScore = obj.optInt("awayScore", obj.optInt("away_score", obj.optInt("team2_score", obj.optInt("score2", 0))))
         }
 
         // Stadium
@@ -562,7 +562,7 @@ class MatchesApiClient(
             }
         } else {
             commentator = obj.optString("commentator", obj.optString("voice", obj.optString("speaker", "المعلق المعتمد")))
-            channelName = obj.optString("channel", obj.optString("tv", obj.optString("channel_name", "beIN SPORTS HD")))
+            channelName = obj.optString("broadcastChannel", obj.optString("broadcast_channel", obj.optString("channel", obj.optString("tv", obj.optString("channel_name", "beIN SPORTS HD")))))
         }
 
         val isLive = obj.optBoolean("isLive", obj.optBoolean("is_live", false)) ||

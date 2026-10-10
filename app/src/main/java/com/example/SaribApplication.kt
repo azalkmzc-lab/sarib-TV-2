@@ -107,6 +107,20 @@ class SaribApplication : Application(), ImageLoaderFactory {
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(15, TimeUnit.SECONDS)
             .retryOnConnectionFailure(true)
+            .addInterceptor { chain ->
+                val original = chain.request()
+                val requestBuilder = original.newBuilder()
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")
+                    .header("Accept", "image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8")
+
+                val host = original.url.host
+                if (host.contains("ysscores.com", ignoreCase = true)) {
+                    requestBuilder.header("Referer", "https://ysscores.com/")
+                } else if (host.contains("api-sports.io", ignoreCase = true)) {
+                    requestBuilder.header("Referer", "https://dashboard.api-football.com/")
+                }
+                chain.proceed(requestBuilder.build())
+            }
             .build()
 
         return ImageLoader.Builder(this)

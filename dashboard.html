@@ -113,6 +113,7 @@
             </div>
 
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                <div class="form-group" style="grid-column: 1 / -1;"><label style="color:#00d2ff; font-weight:bold;">⚽ رابط ملف JSON المباشر لجدول المباريات (Path: stream_config/matches_json_url & matches_json_url):</label><input type="text" id="stream-matches-json-url" placeholder="https://raw.githubusercontent.com/.../data.json"></div>
                 <div class="form-group"><label>⚽ رابط API جدول المباريات:</label><input type="text" id="stream-matches-url" placeholder="https://.../matches&day="></div>
                 <div class="form-group"><label>✈️ رابط قناة التليجرام:</label><input type="text" id="stream-telegram-link" placeholder="https://t.me/sarib_tv"></div>
                 <div class="form-group"><label>📢 شريط التنبيهات أعلى التطبيق:</label><input type="text" id="stream-announcement" placeholder="تنبيه عام للمستخدمين..."></div>
@@ -453,7 +454,9 @@
                 vod_server_host: document.getElementById('stream-vod-host').value.trim(),
                 vod_username: document.getElementById('stream-vod-username').value.trim(),
                 vod_password: document.getElementById('stream-vod-password').value.trim(),
-                matches_url: document.getElementById('stream-matches-url').value.trim(),
+                matches_json_url: document.getElementById('stream-matches-json-url').value.trim(),
+                matchesJsonUrl: document.getElementById('stream-matches-json-url').value.trim(),
+                matches_url: document.getElementById('stream-matches-url').value.trim() || document.getElementById('stream-matches-json-url').value.trim(),
                 telegram_link: document.getElementById('stream-telegram-link').value.trim(),
                 announcement: document.getElementById('stream-announcement').value.trim(),
                 m3u_playlist_url: document.getElementById('stream-m3u-url').value.trim(),
@@ -461,8 +464,20 @@
                 m3u_movies_url: document.getElementById('stream-m3u-movies-url').value.trim(),
                 updatedAt: Date.now()
             };
-            streamConfigRef.update(data).then(() => alert('✅ تم حفظ الإعدادات بنجاح!')).catch(e => alert(e.message));
+            const jsonUrl = document.getElementById('stream-matches-json-url').value.trim();
+            if (jsonUrl) {
+                db.ref('matches_json_url').set(jsonUrl);
+                db.ref('matches_url').set(jsonUrl);
+            }
+            streamConfigRef.update(data).then(() => alert('✅ تم حفظ الإعدادات ورابط جدول المباريات بنجاح!')).catch(e => alert(e.message));
         }
+
+        db.ref('matches_json_url').on('value', snap => {
+            const v = snap.val();
+            if (v && typeof v === 'string' && v.trim()) {
+                document.getElementById('stream-matches-json-url').value = v.trim();
+            }
+        });
 
         streamConfigRef.on('value', snap => {
             const d = snap.val() || {};
@@ -484,6 +499,7 @@
             document.getElementById('stream-vod-host').value = d.vod_server_host || d.vodServerHost || '';
             document.getElementById('stream-vod-username').value = d.vod_username || d.vodUsername || '';
             document.getElementById('stream-vod-password').value = d.vod_password || d.vodPassword || '';
+            document.getElementById('stream-matches-json-url').value = d.matches_json_url || d.matchesJsonUrl || 'https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json';
             document.getElementById('stream-matches-url').value = d.matches_url || d.matchesUrl || '';
             document.getElementById('stream-telegram-link').value = d.telegram_link || d.telegramLink || '';
             document.getElementById('stream-announcement').value = d.announcement || '';

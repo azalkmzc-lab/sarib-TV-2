@@ -191,7 +191,7 @@ object M3uPlaylistParser {
 
             var rawLine = reader.readLine()
             while (rawLine != null) {
-                val line = rawLine.replace("\uFEFF", "").trim()
+                val line = rawLine.replace("[\uFEFF\u200B\u200C\u200D\u00A0]".toRegex(), "").trim()
                 if (line.isNotEmpty()) {
                     // 1. Check for standard #EXTINF
                     if (line.startsWith("#EXTINF", ignoreCase = true)) {
@@ -563,5 +563,168 @@ object M3uPlaylistParser {
         } catch (e: Exception) {
             Log.w(TAG, "Error in parseCategoriesOnlyFromUrlStreaming: ${e.message}")
         }
+    }
+
+    /**
+     * Fast On-Demand streamer that queries remote M3U/M3U8 playlists for a SPECIFIC category.
+     * Streams matching channels line-by-line directly to the UI and caches them progressively.
+     */
+    suspend fun fetchChannelsForCategoryStreaming(
+        sources: List<Pair<String, String>>,
+        targetCategoryId: String,
+        targetCategoryName: String,
+        batchSize: Int = 15,
+        onBatchLoaded: suspend (List<ChannelItem>) -> Unit = {}
+    ): List<ChannelItem> = withContext(Dispatchers.IO) {
+        val results = mutableListOf<ChannelItem>()
+        val cleanTargetName = targetCategoryName.trim()
+        val cleanTargetId = targetCategoryId.trim()
+
+        for ((playlistUrl, defaultGroupName) in sources) {
+            val cleanUrl = playlistUrl.trim()
+            if (cleanUrl.isBlank()) continue
+
+            try {
+                val request = Request.Builder()
+                    .url(cleanUrl)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+                    .header("Accept", "*/*")
+                    .build()
+
+                val response = httpClient.newCall(request).execute()
+                if (!response.isSuccessful) continue
+                val body = response.body ?: continue
+
+                val reader = BufferedReader(InputStreamReader(body.byteStream(), Charsets.UTF_8), 32768)
+
+                var currentName = ""
+                var currentGroup = defaultGroupName
+                var currentLogo = ""
+                var currentTvgId = ""
+                var channelIndex = 0
+                val pendingBatch = mutableListOf<ChannelItem>()
+
+                var rawLine = reader.readLine()
+                while (rawLine != null) {
+                    val line = rawLine.replace("[\uFEFF\u200B\u200C\u200D\u00A0]".toRegex(), "").trim()
+                    if (line.isNotEmpty()) {
+                        if (line.startsWith("#EXTINF", ignoreCase = true)) {
+                            val group = extractAttribute(line, "group-title").ifBlank {
+                                extractAttribute(line, "group")
+                            }
+                            currentGroup = if (group.isNotBlank()) group else defaultGroupName
+                            currentLogo = extractAttribute(line, "tvg-logo").ifBlank {
+                                extractAttribute(line, "logo")
+                            }
+                            currentTvgId = extractAttribute(line, "tvg-id")
+                            val commaIdx = line.indexOf(',')
+                            currentName = if (commaIdx != -1 && commaIdx < line.length - 1) {
+                                line.substring(commaIdx + 1).trim()
+                            } else {
+                                val tvgName = extractAttribute(line, "tvg-name")
+                                if (tvgName.isNotBlank()) tvgName else "قناة ${channelIndex + 1}"
+                            }
+                        } else if (line.startsWith("#EXTGRP:", ignoreCase = true) || line.startsWith("#EXT-X-GROUP:", ignoreCase = true)) {
+                            val grp = line.substringAfter(':').trim()
+                            if (grp.isNotBlank()) currentGroup = grp
+                        } else if (line.startsWith("#EXT-X-STREAM-INF", ignoreCase = true)) {
+                            val streamName = extractAttribute(line, "NAME")
+                            val resolution = extractAttribute(line, "RESOLUTION")
+                            val bandwidth = extractAttribute(line, "BANDWIDTH")
+                            currentName = when {
+                                streamName.isNotBlank() -> streamName
+                                resolution.isNotBlank() -> "بث بدقة $resolution"
+                                bandwidth.isNotBlank() -> {
+                                    val bps = bandwidth.toDoubleOrNull() ?: 0.0
+                                    val mbps = bps / 1_000_000.0
+                                    if (mbps > 0) "بث بدقة ${String.format("%.1f", mbps)} Mbps" else "بث بديل"
+                                }
+                                else -> "قناة ${channelIndex + 1}"
+                            }
+                            currentGroup = defaultGroupName
+                        } else if (!line.startsWith("#")) {
+                            val streamUrl = resolveUrl(cleanUrl, line)
+                            if (streamUrl.startsWith("http://", ignoreCase = true) || streamUrl.startsWith("https://", ignoreCase = true) ||
+                                streamUrl.startsWith("rtmp://", ignoreCase = true) || streamUrl.startsWith("rtsp://", ignoreCase = true)) {
+
+                                val cleanGrp = currentGroup.trim()
+                                val cleanTgt = cleanTargetName.trim()
+                                val generatedCatId = "m3u_cat_" + Math.abs(cleanGrp.hashCode())
+                                val matchesCategory = (cleanTgt.isNotBlank() && cleanGrp.equals(cleanTgt, ignoreCase = true)) ||
+                                        (cleanTgt.isNotBlank() && (cleanGrp.contains(cleanTgt, ignoreCase = true) || cleanTgt.contains(cleanGrp, ignoreCase = true))) ||
+                                        (cleanTargetId.isNotBlank() && (cleanTargetId == generatedCatId || cleanTargetId.equals(cleanGrp, ignoreCase = true) || cleanTargetId.removePrefix("m3u_cat_") == generatedCatId.removePrefix("m3u_cat_"))) ||
+                                        (cleanTargetId == "all" || cleanTargetId.isBlank() || cleanTargetId == "custom")
+
+                                if (matchesCategory) {
+                                    val chId = if (currentTvgId.isNotBlank()) {
+                                        "m3u_${currentTvgId}_$channelIndex"
+                                    } else {
+                                        "m3u_ch_${channelIndex}_${Math.abs(streamUrl.hashCode())}"
+                                    }
+                                    val ch = ChannelItem(
+                                        id = chId,
+                                        name = currentName.ifBlank { "قناة ${channelIndex + 1}" },
+                                        categoryId = if (cleanTargetId.isNotBlank() && cleanTargetId != "all") cleanTargetId else generatedCatId,
+                                        categoryName = currentGroup,
+                                        logoUrl = currentLogo,
+                                        streamUrl = streamUrl,
+                                        backupUrl = "",
+                                        country = "سحابي Cloud",
+                                        language = "العربية",
+                                        isFavorite = false,
+                                        isEnabled = true,
+                                        sortOrder = channelIndex,
+                                        viewsCount = 1200
+                                    )
+                                    results.add(ch)
+                                    pendingBatch.add(ch)
+                                    channelIndex++
+
+                                    if (pendingBatch.size >= batchSize) {
+                                        val chunk = pendingBatch.toList()
+                                        pendingBatch.clear()
+                                        onBatchLoaded(chunk)
+                                    }
+                                }
+                            }
+                            currentName = ""
+                            currentGroup = defaultGroupName
+                            currentLogo = ""
+                            currentTvgId = ""
+                        }
+                    }
+                    rawLine = reader.readLine()
+                }
+
+                if (pendingBatch.isNotEmpty()) {
+                    val chunk = pendingBatch.toList()
+                    pendingBatch.clear()
+                    onBatchLoaded(chunk)
+                }
+
+                if (results.isEmpty() && (cleanUrl.contains(".m3u8", ignoreCase = true) || cleanUrl.contains(".ts", ignoreCase = true) || cleanUrl.contains(".mpd", ignoreCase = true))) {
+                    val ch = ChannelItem(
+                        id = "m3u_direct_${Math.abs(cleanUrl.hashCode())}",
+                        name = defaultGroupName.ifBlank { cleanTargetName.ifBlank { "بث مباشر" } },
+                        categoryId = cleanTargetId.ifBlank { "m3u_cat_" + Math.abs(defaultGroupName.hashCode()) },
+                        categoryName = defaultGroupName.ifBlank { cleanTargetName },
+                        logoUrl = "",
+                        streamUrl = cleanUrl,
+                        backupUrl = "",
+                        country = "سحابي Cloud",
+                        language = "العربية",
+                        isFavorite = false,
+                        isEnabled = true,
+                        sortOrder = 0,
+                        viewsCount = 1500
+                    )
+                    results.add(ch)
+                    onBatchLoaded(listOf(ch))
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Error fetching channels for category $cleanTargetName from $cleanUrl: ${e.message}")
+            }
+        }
+        results
     }
 }

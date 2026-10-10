@@ -314,6 +314,59 @@ class FirebaseStreamManager(private val context: Context) {
     }
 
     /**
+     * Dedicated method to fetch the dynamic Matches schedule JSON URL directly from Firebase.
+     * Paths supported:
+     * - Firestore: 'matches_config/main_config' (matches_json_url, url), 'stream_config/main_config' (matches_json_url)
+     * - RTDB: '/matches_json_url.json', '/matches_url.json', '/stream_config/matches_json_url.json', '/matches_config/url.json'
+     */
+    suspend fun fetchMatchesJsonUrlFromFirebase(): String = withContext(Dispatchers.IO) {
+        // 1. Try Firebase Firestore
+        if (isFirebaseAvailable()) {
+            try {
+                val firestore = FirebaseFirestore.getInstance()
+                val doc1 = firestore.collection("matches_config").document("main_config").get().await()
+                val u1 = doc1?.getString("matches_json_url") ?: doc1?.getString("matchesJsonUrl") ?: doc1?.getString("url") ?: doc1?.getString("matches_url")
+                if (!u1.isNullOrBlank()) {
+                    Log.i(TAG, "Matches JSON URL dynamically loaded from Firestore matches_config/main_config: $u1")
+                    return@withContext u1.trim()
+                }
+
+                val doc2 = firestore.collection("stream_config").document("main_config").get().await()
+                val u2 = doc2?.getString("matches_json_url") ?: doc2?.getString("matchesJsonUrl") ?: doc2?.getString("matches_api_url")
+                if (!u2.isNullOrBlank()) {
+                    Log.i(TAG, "Matches JSON URL dynamically loaded from Firestore stream_config/main_config: $u2")
+                    return@withContext u2.trim()
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Firestore matches JSON URL check: ${e.message}")
+            }
+        }
+
+        // 2. Try Firebase Realtime Database direct paths
+        val rtdbUrls = listOf(
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches_json_url.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches_url.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/stream_config/matches_json_url.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches_config/matches_json_url.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches_config/url.json"
+        )
+        for (url in rtdbUrls) {
+            try {
+                val req = Request.Builder().url(url).build()
+                val resp = httpClient.newCall(req).execute()
+                val body = resp.body?.string().orEmpty().trim().removeSurrounding("\"").trim()
+                if (body.startsWith("http://", ignoreCase = true) || body.startsWith("https://", ignoreCase = true)) {
+                    Log.i(TAG, "Matches JSON URL dynamically loaded from RTDB ($url): $body")
+                    return@withContext body
+                }
+            } catch (e: Exception) {
+                // Check next
+            }
+        }
+        ""
+    }
+
+    /**
      * Fetches custom Xtream accounts assigned to specific series categories.
      * Path in Firebase: Firestore collection 'series_categories_accounts' or RTDB '/series_categories_accounts.json'.
      */
@@ -457,12 +510,12 @@ class FirebaseStreamManager(private val context: Context) {
                                 if (seenIds.contains(id)) continue
                                 seenIds.add(id)
 
-                                val homeTeam = doc.getString("home_team") ?: doc.getString("homeTeam") ?: doc.getString("team1").orEmpty()
-                                val homeLogo = doc.getString("home_logo") ?: doc.getString("home_logo_url") ?: doc.getString("homeLogoUrl") ?: doc.getString("homePoster") ?: doc.getString("team1_logo").orEmpty()
-                                val awayTeam = doc.getString("away_team") ?: doc.getString("awayTeam") ?: doc.getString("team2").orEmpty()
-                                val awayLogo = doc.getString("away_logo") ?: doc.getString("away_logo_url") ?: doc.getString("awayLogoUrl") ?: doc.getString("awayPoster") ?: doc.getString("team2_logo").orEmpty()
-                                val leagueName = doc.getString("league_name") ?: doc.getString("leagueName") ?: doc.getString("league") ?: doc.getString("tournament").orEmpty()
-                                val leagueLogo = doc.getString("league_logo") ?: doc.getString("league_logo_url") ?: doc.getString("leagueLogoUrl") ?: doc.getString("leagueIconUrl").orEmpty()
+                                val homeTeam = doc.getString("homeTeam") ?: doc.getString("home_team") ?: doc.getString("team1").orEmpty()
+                                val homeLogo = doc.getString("homeLogo") ?: doc.getString("home_logo") ?: doc.getString("home_logo_url") ?: doc.getString("homeLogoUrl") ?: doc.getString("homePoster") ?: doc.getString("team1_logo").orEmpty()
+                                val awayTeam = doc.getString("awayTeam") ?: doc.getString("away_team") ?: doc.getString("team2").orEmpty()
+                                val awayLogo = doc.getString("awayLogo") ?: doc.getString("away_logo") ?: doc.getString("away_logo_url") ?: doc.getString("awayLogoUrl") ?: doc.getString("awayPoster") ?: doc.getString("team2_logo").orEmpty()
+                                val leagueName = doc.getString("leagueName") ?: doc.getString("league_name") ?: doc.getString("league") ?: doc.getString("tournament").orEmpty()
+                                val leagueLogo = doc.getString("leagueLogo") ?: doc.getString("league_logo") ?: doc.getString("league_logo_url") ?: doc.getString("leagueLogoUrl") ?: doc.getString("leagueIconUrl").orEmpty()
                                 val matchTime = doc.getString("match_time") ?: doc.getString("matchTime") ?: doc.getString("time") ?: doc.getString("kickoff").orEmpty()
                                 val matchDate = doc.getString("match_date") ?: doc.getString("matchDate") ?: doc.getString("date").orEmpty()
                                 val matchStatus = doc.getString("match_status") ?: doc.getString("status") ?: if (colName == "match_sliders") "لم تبدأ" else ""
@@ -628,12 +681,12 @@ class FirebaseStreamManager(private val context: Context) {
 
         val id = obj.optString("id", defaultId)
 
-        val homeTeam = obj.optString("home_team", obj.optString("homeTeam", obj.optString("team1", "")))
-        val homeLogo = obj.optString("home_logo", obj.optString("home_logo_url", obj.optString("homeLogoUrl", obj.optString("homePoster", obj.optString("team1_logo", "")))))
-        val awayTeam = obj.optString("away_team", obj.optString("awayTeam", obj.optString("team2", "")))
-        val awayLogo = obj.optString("away_logo", obj.optString("away_logo_url", obj.optString("awayLogoUrl", obj.optString("awayPoster", obj.optString("team2_logo", "")))))
-        val leagueName = obj.optString("league_name", obj.optString("leagueName", obj.optString("league", obj.optString("tournament", ""))))
-        val leagueLogo = obj.optString("league_logo", obj.optString("league_logo_url", obj.optString("leagueLogoUrl", obj.optString("leagueIconUrl", ""))))
+        val homeTeam = obj.optString("homeTeam", obj.optString("home_team", obj.optString("team1", "")))
+        val homeLogo = obj.optString("homeLogo", obj.optString("home_logo", obj.optString("home_logo_url", obj.optString("homeLogoUrl", obj.optString("homePoster", obj.optString("team1_logo", ""))))))
+        val awayTeam = obj.optString("awayTeam", obj.optString("away_team", obj.optString("team2", "")))
+        val awayLogo = obj.optString("awayLogo", obj.optString("away_logo", obj.optString("away_logo_url", obj.optString("awayLogoUrl", obj.optString("awayPoster", obj.optString("team2_logo", ""))))))
+        val leagueName = obj.optString("leagueName", obj.optString("league_name", obj.optString("league", obj.optString("tournament", ""))))
+        val leagueLogo = obj.optString("leagueLogo", obj.optString("league_logo", obj.optString("league_logo_url", obj.optString("leagueLogoUrl", obj.optString("leagueIconUrl", "")))))
         val matchTime = obj.optString("match_time", obj.optString("matchTime", obj.optString("time", obj.optString("kickoff", ""))))
         val matchDate = obj.optString("match_date", obj.optString("matchDate", obj.optString("date", "")))
         val matchStatus = obj.optString("match_status", obj.optString("status", if (forceMatch) "لم تبدأ" else ""))
@@ -816,52 +869,97 @@ class FirebaseStreamManager(private val context: Context) {
 
     suspend fun fetchCustomChannels(): List<com.example.data.model.ChannelItem> = withContext(Dispatchers.IO) {
         val list = mutableListOf<com.example.data.model.ChannelItem>()
+        fun parseChannelObject(obj: JSONObject, defaultId: String, sort: Int): com.example.data.model.ChannelItem? {
+            val name = obj.optString("name", obj.optString("channel_name", "قناة $sort"))
+            val group = obj.optString("group", obj.optString("category", obj.optString("group-title", "باقة البث المباشر"))).trim()
+            val catId = obj.optString("categoryId", obj.optString("category_id", "fb_cat_" + Math.abs(group.ifBlank { "باقة البث المباشر" }.hashCode())))
+            val logo = obj.optString("logo", obj.optString("logoUrl", obj.optString("icon", "")))
+            val s1 = obj.optString("server1", "")
+            val s2 = obj.optString("server2", "")
+            val urlDirect = obj.optString("url", obj.optString("streamUrl", obj.optString("stream_url", obj.optString("m3u8", ""))))
+            val mpd = obj.optString("mpd", "")
+            val streamUrl = listOf(urlDirect, s1, s2, mpd).firstOrNull { it.isNotBlank() } ?: ""
+            if (streamUrl.isBlank()) return null
+            val backupUrl = if (s2.isNotBlank() && s2 != streamUrl) s2 else ""
+            return com.example.data.model.ChannelItem(
+                id = obj.optString("id", defaultId),
+                name = name,
+                categoryId = catId,
+                categoryName = group.ifBlank { "باقة البث المباشر" },
+                logoUrl = logo,
+                streamUrl = streamUrl,
+                backupUrl = backupUrl,
+                country = "سحابي Cloud",
+                language = "العربية",
+                isFavorite = false,
+                isEnabled = true,
+                sortOrder = sort,
+                viewsCount = (500..3000).random()
+            )
+        }
+
         try {
             val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/channels.json"
             val request = Request.Builder().url(url).build()
             val response = httpClient.newCall(request).execute()
             val body = response.body?.string().orEmpty().trim()
-            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
-                val jsonObj = JSONObject(body)
-                val keys = jsonObj.keys()
-                var sort = 1
-                while (keys.hasNext()) {
-                    val key = keys.next()
-                    val obj = jsonObj.optJSONObject(key) ?: continue
-                    val name = obj.optString("name", "قناة خاصة")
-                    val catId = obj.optString("categoryId", obj.optString("category_id", "custom"))
-                    val logo = obj.optString("logo", obj.optString("logoUrl", ""))
-                    val s1 = obj.optString("server1", "")
-                    val s2 = obj.optString("server2", "")
-                    val urlDirect = obj.optString("url", "")
-                    val mpd = obj.optString("mpd", "")
-                    val streamUrl = listOf(s1, s2, mpd, urlDirect).firstOrNull { it.isNotBlank() } ?: ""
-                    val backupUrl = if (s2.isNotBlank() && s2 != streamUrl) s2 else urlDirect
-
-                    if (streamUrl.isNotBlank()) {
-                        list.add(
-                            com.example.data.model.ChannelItem(
-                                id = "fb_ch_$key",
-                                name = name,
-                                categoryId = catId,
-                                categoryName = "باقة البث المباشر السحابي",
-                                logoUrl = logo,
-                                streamUrl = streamUrl,
-                                backupUrl = backupUrl,
-                                country = "سحابي Cloud",
-                                language = "العربية",
-                                isFavorite = false,
-                                isEnabled = true,
-                                sortOrder = sort++,
-                                viewsCount = (500..3000).random()
-                            )
-                        )
+            if (body.isNotEmpty() && body != "null") {
+                if (body.startsWith("{")) {
+                    val jsonObj = JSONObject(body)
+                    val channelsArr = jsonObj.optJSONArray("channels") ?: jsonObj.optJSONArray("data")
+                    if (channelsArr != null) {
+                        for (i in 0 until channelsArr.length()) {
+                            val obj = channelsArr.optJSONObject(i) ?: continue
+                            parseChannelObject(obj, "fb_ch_$i", i + 1)?.let { list.add(it) }
+                        }
+                    } else {
+                        val keys = jsonObj.keys()
+                        var sort = 1
+                        while (keys.hasNext()) {
+                            val key = keys.next()
+                            val obj = jsonObj.optJSONObject(key) ?: continue
+                            parseChannelObject(obj, "fb_ch_$key", sort++)?.let { list.add(it) }
+                        }
+                    }
+                } else if (body.startsWith("[")) {
+                    val arr = JSONArray(body)
+                    for (i in 0 until arr.length()) {
+                        val obj = arr.optJSONObject(i) ?: continue
+                        parseChannelObject(obj, "fb_ch_$i", i + 1)?.let { list.add(it) }
                     }
                 }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Custom channels fetch error: ${e.message}")
+            Log.w(TAG, "Custom channels fetch error from RTDB: ${e.message}")
         }
+
+        // Fallback to bundled channels.json if network is offline or empty
+        if (list.isEmpty()) {
+            try {
+                val assetJson = context.assets.open("channels.json").bufferedReader().use { it.readText() }.trim()
+                if (assetJson.isNotEmpty()) {
+                    if (assetJson.startsWith("{")) {
+                        val jsonObj = JSONObject(assetJson)
+                        val arr = jsonObj.optJSONArray("channels") ?: jsonObj.optJSONArray("data")
+                        if (arr != null) {
+                            for (i in 0 until arr.length()) {
+                                val obj = arr.optJSONObject(i) ?: continue
+                                parseChannelObject(obj, "asset_ch_$i", i + 1)?.let { list.add(it) }
+                            }
+                        }
+                    } else if (assetJson.startsWith("[")) {
+                        val arr = JSONArray(assetJson)
+                        for (i in 0 until arr.length()) {
+                            val obj = arr.optJSONObject(i) ?: continue
+                            parseChannelObject(obj, "asset_ch_$i", i + 1)?.let { list.add(it) }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Asset channels fallback error: ${e.message}")
+            }
+        }
+
         list
     }
 
@@ -1458,10 +1556,10 @@ class FirebaseStreamManager(private val context: Context) {
         val list = mutableListOf<com.example.data.model.MatchItem>()
         val seenIds = mutableSetOf<String>()
 
-        // 1. Try Firestore 'matches' and 'custom_matches'
+        // 1. Try Firestore 'matches_schedule', 'matches' and 'custom_matches'
         if (isFirebaseAvailable()) {
             val firestore = FirebaseFirestore.getInstance()
-            for (col in listOf("matches", "custom_matches")) {
+            for (col in listOf("matches_schedule", "matches", "custom_matches")) {
                 try {
                     val snapshot = firestore.collection(col).get().await()
                     for (doc in snapshot.documents) {
@@ -1530,8 +1628,13 @@ class FirebaseStreamManager(private val context: Context) {
             }
         }
 
-        // 2. Try RTDB '/matches.json' & '/custom_matches.json'
-        for (url in listOf("https://iptvpro-f5172-default-rtdb.firebaseio.com/matches.json", "https://iptvpro-f5172-default-rtdb.firebaseio.com/custom_matches.json")) {
+        // 2. Try RTDB '/matches_schedule.json', '/matches.json', '/matches_data.json' & '/custom_matches.json'
+        for (url in listOf(
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches_schedule.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/matches_data.json",
+            "https://iptvpro-f5172-default-rtdb.firebaseio.com/custom_matches.json"
+        )) {
             try {
                 val request = Request.Builder().url(url).build()
                 val response = httpClient.newCall(request).execute()
@@ -1550,14 +1653,27 @@ class FirebaseStreamManager(private val context: Context) {
                         }
                     } else if (body.startsWith("{")) {
                         val jsonObj = JSONObject(body)
-                        val keys = jsonObj.keys()
-                        while (keys.hasNext()) {
-                            val key = keys.next()
-                            val obj = jsonObj.optJSONObject(key) ?: continue
-                            parseManualMatchJson(obj, "fb_match_$key")?.let {
-                                if (!seenIds.contains(it.id)) {
-                                    seenIds.add(it.id)
-                                    list.add(it)
+                        val nestedArr = jsonObj.optJSONArray("data") ?: jsonObj.optJSONArray("matches")
+                        if (nestedArr != null) {
+                            for (i in 0 until nestedArr.length()) {
+                                val obj = nestedArr.optJSONObject(i) ?: continue
+                                parseManualMatchJson(obj, "fb_match_$i")?.let {
+                                    if (!seenIds.contains(it.id)) {
+                                        seenIds.add(it.id)
+                                        list.add(it)
+                                    }
+                                }
+                            }
+                        } else {
+                            val keys = jsonObj.keys()
+                            while (keys.hasNext()) {
+                                val key = keys.next()
+                                val obj = jsonObj.optJSONObject(key) ?: continue
+                                parseManualMatchJson(obj, "fb_match_$key")?.let {
+                                    if (!seenIds.contains(it.id)) {
+                                        seenIds.add(it.id)
+                                        list.add(it)
+                                    }
                                 }
                             }
                         }
@@ -1578,9 +1694,9 @@ class FirebaseStreamManager(private val context: Context) {
 
         val id = obj.optString("id", defaultId)
         val league = obj.optString("league_name", obj.optString("leagueName", obj.optString("league", "مباريات اليوم")))
-        val leagueIcon = obj.optString("league_logo", obj.optString("leagueLogoUrl", ""))
-        val homeLogo = obj.optString("home_logo", obj.optString("homeLogoUrl", obj.optString("team1_logo", "")))
-        val awayLogo = obj.optString("away_logo", obj.optString("awayLogoUrl", obj.optString("team2_logo", "")))
+        val leagueIcon = obj.optString("league_logo", obj.optString("leagueLogo", obj.optString("leagueLogoUrl", obj.optString("league_icon", ""))))
+        val homeLogo = obj.optString("homeLogo", obj.optString("home_logo", obj.optString("homeLogoUrl", obj.optString("team1_logo", obj.optString("team1Logo", obj.optString("home_icon", ""))))))
+        val awayLogo = obj.optString("awayLogo", obj.optString("away_logo", obj.optString("awayLogoUrl", obj.optString("team2_logo", obj.optString("team2Logo", obj.optString("away_icon", ""))))))
         val time = obj.optString("match_time", obj.optString("matchTime", obj.optString("time", "09:00 م")))
         val date = obj.optString("match_date", obj.optString("matchDate", obj.optString("date", "اليوم")))
         val status = obj.optString("match_status", obj.optString("status", "لم تبدأ"))

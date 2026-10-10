@@ -1004,6 +1004,17 @@
 
             <button class="btn-submit" id="btn-save-match" onclick="saveMatch()">إضافة المباراة وحفظ السيرفرات</button>
             <button class="btn-delete" id="btn-cancel-match" style="display:none; width:100%; margin-top:6px; padding:10px;" onclick="resetMatchForm()">إلغاء التعديل</button>
+
+            <!-- استيراد ورفع ملف data.json المباشر إلى فايربيس -->
+            <div style="margin-top: 15px; padding: 12px; background: rgba(0, 210, 255, 0.08); border-radius: 10px; border: 1px dashed #00d2ff;">
+                <label style="font-size:13px; color:#00d2ff; font-weight:bold; display:block; margin-bottom:6px;">🚀 رفع ونشر جدول المباريات السحابي في فايربيس فورياً (Path: matches_schedule):</label>
+                <textarea id="import-matches-json" style="width:100%; height:60px; background:#070c14; color:#fff; border:1px solid #1a2a44; border-radius:6px; padding:8px; font-family:monospace; font-size:11px;" placeholder='ألصق هنا محتوى data.json أو كود JSON لنشره فوراً في فايربيس'></textarea>
+                <div style="display:flex; gap:8px; margin-top:8px;">
+                    <button type="button" style="flex:1; padding:8px; background:#00d2ff; color:#070c14; font-weight:bold; border:none; border-radius:6px; cursor:pointer;" onclick="uploadMatchesJsonToFirebase()">رفع وحفظ في مسار فايربيس فورياً</button>
+                    <button type="button" style="padding:8px 12px; background:#1b263b; color:#fff; border:1px solid #334e68; border-radius:6px; cursor:pointer;" onclick="document.getElementById('file-upload-matches-json').click()">اختيار ملف</button>
+                    <input type="file" id="file-upload-matches-json" accept=".json" style="display:none;" onchange="handleFileSelectMatchesJson(event)">
+                </div>
+            </div>
         </div>
 
         <!-- ============================================== -->
@@ -1179,9 +1190,22 @@
             };
 
             streamConfigRef.set(data).then(() => {
-                alert('✅ تم حفظ وتحديث بيانات البث ورابط جدول المباريات السحابي بنجاح!');
+                if (matchesJsonUrl) {
+                    database.ref('matches_json_url').set(matchesJsonUrl);
+                    database.ref('matches_url').set(matchesJsonUrl);
+                    database.ref('matches_config/matches_json_url').set(matchesJsonUrl);
+                    database.ref('matches_config/url').set(matchesJsonUrl);
+                }
+                alert('✅ تم حفظ وتحديث بيانات البث ورابط جدول المباريات السحابي في مسارات فايربيس بنجاح!');
             }).catch(err => alert('خطأ: ' + err.message));
         }
+
+        database.ref('matches_json_url').on('value', (snap) => {
+            const v = snap.val();
+            if (v && typeof v === 'string' && v.trim()) {
+                document.getElementById('stream-matches-json-url').value = v.trim();
+            }
+        });
 
         streamConfigRef.on('value', (snap) => {
             const d = snap.val();
@@ -2112,6 +2136,74 @@
             document.getElementById('match-panel-title').innerText = '⚽ إدارة جدول المباريات والسيرفرات (Path: matches)';
             document.getElementById('btn-save-match').innerText = 'إضافة المباراة وحفظ السيرفرات';
             document.getElementById('btn-cancel-match').style.display = 'none';
+        }
+
+        function uploadMatchesJsonToFirebase() {
+            const raw = document.getElementById('import-matches-json').value.trim();
+            if (!raw) {
+                alert('يرجى لصق كود JSON أو اختيار ملف أولاً');
+                return;
+            }
+            try {
+                const parsed = JSON.parse(raw);
+                const matchesArr = parsed.data || parsed.matches || (Array.isArray(parsed) ? parsed : null);
+                if (!matchesArr || !Array.isArray(matchesArr) || matchesArr.length === 0) {
+                    alert('لم يتم العثور على مصفوفة مباريات صالحة في كود JSON');
+                    return;
+                }
+                const formatted = {};
+                matchesArr.forEach((m, idx) => {
+                    const id = m.id || ('m_' + (idx + 1));
+                    formatted[id] = {
+                        id: String(id),
+                        homeTeam: m.homeTeam || m.team1 || '',
+                        team1Name: m.homeTeam || m.team1 || '',
+                        awayTeam: m.awayTeam || m.team2 || '',
+                        team2Name: m.awayTeam || m.team2 || '',
+                        homeLogo: m.homeLogo || m.team1_logo || m.homeLogoUrl || '',
+                        homeLogoUrl: m.homeLogo || m.team1_logo || m.homeLogoUrl || '',
+                        awayLogo: m.awayLogo || m.team2_logo || m.awayLogoUrl || '',
+                        awayLogoUrl: m.awayLogo || m.team2_logo || m.awayLogoUrl || '',
+                        leagueName: m.league || m.leagueName || 'دوري عام',
+                        leagueLogo: m.leagueLogo || m.leagueIcon || '',
+                        matchTime: m.time || m.matchTime || '09:00 م',
+                        matchDate: m.date || m.matchDate || new Date().toISOString().split('T')[0],
+                        stadium: m.stadium || 'الملعب الرئيسي',
+                        commentator: m.commentator || 'المعلق المعتمد',
+                        channelName: m.broadcastChannel || m.channelName || 'beIN SPORTS',
+                        status: m.status === '0' ? 'لم تبدأ بعد' : (m.status || 'لم تبدأ بعد'),
+                        homeScore: parseInt(m.homeScore) || 0,
+                        awayScore: parseInt(m.awayScore) || 0,
+                        streamUrl: m.streamUrl || m.server1 || '',
+                        server1: m.server1 || m.streamUrl || '',
+                        server2: m.server2 || '',
+                        server3: m.server3 || '',
+                        server4: m.server4 || '',
+                        server5: m.server5 || '',
+                        isLive: Boolean(m.isLive)
+                    };
+                });
+                Promise.all([
+                    database.ref('matches_schedule').set(formatted),
+                    database.ref('matches').set(formatted)
+                ]).then(() => {
+                    alert('✅ تم رفع ونشر ' + matchesArr.length + ' مباراة في مسارات فايربيس (matches_schedule و matches) بنجاح مع ظهور الشعارات والسيرفرات!');
+                    document.getElementById('import-matches-json').value = '';
+                }).catch(err => alert('خطأ في الرفع: ' + err.message));
+            } catch (e) {
+                alert('خطأ في قراءة ملف JSON: ' + e.message);
+            }
+        }
+
+        function handleFileSelectMatchesJson(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('import-matches-json').value = e.target.result;
+                uploadMatchesJsonToFirebase();
+            };
+            reader.readAsText(file);
         }
 
         matchesRef.on('value', (snap) => {
