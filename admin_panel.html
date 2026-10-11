@@ -954,7 +954,12 @@
                 </div>
                 <div class="form-group">
                     <label>تاريخ المباراة (YYYY-MM-DD):</label>
-                    <input type="text" id="match-date" placeholder="مثال: 2026-09-02">
+                    <div style="display:flex; gap:6px;">
+                        <input type="text" id="match-date" placeholder="مثال: 2026-10-10" style="flex:1;">
+                        <button type="button" class="btn-action" style="padding:4px 8px; font-size:11px;" onclick="setMatchDateOffset(-1)">الأمس</button>
+                        <button type="button" class="btn-action" style="padding:4px 8px; font-size:11px; background:#00d2ff; color:#0b111e; font-weight:bold;" onclick="setMatchDateOffset(0)">اليوم</button>
+                        <button type="button" class="btn-action" style="padding:4px 8px; font-size:11px;" onclick="setMatchDateOffset(1)">الغد</button>
+                    </div>
                 </div>
             </div>
 
@@ -2045,6 +2050,15 @@
         /* =========================================
            5. إدارة جدول وسيرفرات المباريات (matches)
         ========================================= */
+        function setMatchDateOffset(offset) {
+            const d = new Date();
+            d.setDate(d.getDate() + offset);
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            document.getElementById('match-date').value = `${yyyy}-${mm}-${dd}`;
+        }
+
         function saveMatch() {
             const id = document.getElementById('match-id').value;
             const t1 = document.getElementById('team1-name').value.trim();

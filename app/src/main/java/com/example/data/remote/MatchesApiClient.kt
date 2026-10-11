@@ -413,7 +413,7 @@ class MatchesApiClient(
         }
     }
 
-    private fun getDateString(dayOffset: Int): String {
+    fun getDateString(dayOffset: Int): String {
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_YEAR, dayOffset)
         val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)

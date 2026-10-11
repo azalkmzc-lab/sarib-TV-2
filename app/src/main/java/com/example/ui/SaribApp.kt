@@ -461,6 +461,10 @@ fun SaribApp(
                                 "matches" -> {
                                     MatchesScreen(
                                         matches = allMatches,
+                                        selectedDate = selectedMatchDate,
+                                        onDateSelected = { date, offset ->
+                                            viewModel.selectMatchDate(date, offset)
+                                        },
                                         onMatchClick = { match ->
                                             viewModel.openMatchDetail(match)
                                         },

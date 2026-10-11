@@ -694,46 +694,81 @@ class SaribRepository(private val context: Context) {
 
     suspend fun fetchMatchesForDay(dayOffset: Int = 0): List<MatchItem> = withContext(Dispatchers.IO) {
         try {
+            val targetDateStr = matchesClient.getDateString(dayOffset)
             val manualMatchesDeferred = async { firebaseStreamManager.fetchManualMatches() }
             val overridesDeferred = async { firebaseStreamManager.fetchMatchStreamOverrides() }
             
-            val firebaseJsonUrl = firebaseStreamManager.fetchMatchesJsonUrlFromFirebase()
-            val jsonUrl = firebaseJsonUrl.ifBlank {
-                currentRemoteConfig.matchesJsonUrl.ifBlank {
-                    "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json"
-                }
-            }
-            val urlMatchesDeferred = async { matchesClient.fetchMatchesFromUrl(jsonUrl) }
-
             val manualMatches = manualMatchesDeferred.await()
             val streamOverrides = overridesDeferred.await()
-            var matches = urlMatchesDeferred.await()
 
-            if (matches.isEmpty()) {
-                try {
-                    val assetJson = context.assets.open("data.json").bufferedReader().use { it.readText() }
-                    matches = matchesClient.parseMatchesJson(assetJson)
-                } catch (e: Exception) {
-                    // asset fallback note
+            var matches = mutableListOf<MatchItem>()
+
+            if (dayOffset == 0) {
+                val firebaseJsonUrl = firebaseStreamManager.fetchMatchesJsonUrlFromFirebase()
+                val jsonUrl = firebaseJsonUrl.ifBlank {
+                    currentRemoteConfig.matchesJsonUrl.ifBlank {
+                        "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json"
+                    }
+                }
+                val urlMatches = matchesClient.fetchMatchesFromUrl(jsonUrl)
+                if (urlMatches.isNotEmpty()) {
+                    matches.addAll(urlMatches)
+                } else {
+                    try {
+                        val assetJson = context.assets.open("data.json").bufferedReader().use { it.readText() }
+                        matches.addAll(matchesClient.parseMatchesJson(assetJson))
+                    } catch (e: Exception) {
+                        // asset fallback note
+                    }
+                }
+
+                if (matches.isEmpty()) {
+                    matches.addAll(matchesClient.fetchMatches(0))
+                }
+            } else {
+                // Fetch matches for specific offset (Yesterday: -1, Tomorrow: +1)
+                val dayMatches = matchesClient.fetchMatches(dayOffset)
+                if (dayMatches.isNotEmpty()) {
+                    matches.addAll(dayMatches)
+                }
+
+                // Also check if remote jsonUrl has matches matching this date
+                val firebaseJsonUrl = firebaseStreamManager.fetchMatchesJsonUrlFromFirebase()
+                val jsonUrl = firebaseJsonUrl.ifBlank { currentRemoteConfig.matchesJsonUrl }
+                if (jsonUrl.isNotBlank()) {
+                    try {
+                        val urlMatches = matchesClient.fetchMatchesFromUrl(jsonUrl)
+                        val matchingDate = urlMatches.filter { it.matchDate == targetDateStr }
+                        if (matchingDate.isNotEmpty()) {
+                            matches.addAll(matchingDate)
+                        }
+                    } catch (e: Exception) {
+                        Log.w("SaribRepository", "Date-specific jsonUrl fetch note: ${e.message}")
+                    }
                 }
             }
 
-            if (matches.isEmpty()) {
-                matches = matchesClient.fetchMatches(dayOffset)
+            // Filter manual matches that belong to this date or include all if matching
+            val relevantManual = manualMatches.filter { m ->
+                val d = m.matchDate.trim()
+                when (dayOffset) {
+                    -1 -> d == targetDateStr || d.contains("أمس") || d.contains("yesterday", ignoreCase = true)
+                    1 -> d == targetDateStr || d.contains("غد") || d.contains("tomorrow", ignoreCase = true)
+                    else -> d.isBlank() || d == targetDateStr || d.contains("اليوم") || d.contains("today", ignoreCase = true)
+                }
             }
 
             val enrichedMatches = matches.mapIndexed { index, match ->
                 applyMatchOverride(match, index + 1, streamOverrides)
             }
 
-            val combined = (manualMatches + enrichedMatches).distinctBy { it.id }
+            val combined = (relevantManual + enrichedMatches).distinctBy { it.id }
             if (combined.isNotEmpty()) {
-                dao.clearAllMatches()
                 dao.insertMatches(combined.map { it.toEntity() })
             }
             combined
         } catch (e: Exception) {
-            Log.e("SaribRepository", "Error fetching matches: ${e.message}", e)
+            Log.e("SaribRepository", "Error fetching matches for day $dayOffset: ${e.message}", e)
             dao.getAllMatchesList().map { it.toModel() }
         }
     }
