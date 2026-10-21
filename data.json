@@ -11,7 +11,7 @@
       "time": "17:00",
       "league": "الدوري المصري",
       "round": "",
-      "stadium": "",
+      "stadium": "ملعب غزل المحلة",
       "broadcastChannels": [
         "ON Sport PLUS HD"
       ],
@@ -30,8 +30,34 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/24/Alittihad2018_7_24_13_30.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/EPLLogo19-9-2023-16-31-21.png",
       "players": {
-        "home": [],
-        "away": []
+        "home": [
+          {"name": "عامر عامر", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/2/Amer_Amer.jpg"},
+          {"name": "أحمد حكم", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/9/Ahmed_Hakam.jpg"},
+          {"name": "محمد جابر", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/10/Mohamed_Gaber.jpg"},
+          {"name": "يحيى زكريا", "number": 3, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Yehia_Zakaria.jpg"},
+          {"name": "بسام وليد", "number": 12, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Bassam_Walid.jpg"},
+          {"name": "حميد ماو", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/8/Himid_Mao.jpg"},
+          {"name": "محمود غالي", "number": 14, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/11/Mahmoud_Ghaly.jpg"},
+          {"name": "أشرف مجدي", "number": 10, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/9/Ashraf_Magdy.jpg"},
+          {"name": "عبده يحيى", "number": 7, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/1/Abdo_Yehia.jpg"},
+          {"name": "محمد أسامة", "number": 11, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/10/Mohamed_Osama.jpg"},
+          {"name": "بنجامين أفوتو", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/1/Benjamin_Afutu.jpg"},
+          {"name": "محمود الحضري", "number": 16, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/10/Mahmoud_ElHadary.jpg"}
+        ],
+        "away": [
+          {"name": "المهدي سليمان", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/ElMahdy_Soliman.jpg"},
+          {"name": "مصطفى إبراهيم", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/10/Mostafa_Ibrahim.jpg"},
+          {"name": "محمود شبانة", "number": 5, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/9/Mahmoud_Shabana.jpg"},
+          {"name": "سيف تقا", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Seif_Teka.jpg"},
+          {"name": "كريم الديب", "number": 12, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Kareem_ElDeeb.jpg"},
+          {"name": "مورو ساليفو", "number": 6, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/10/Moro_Salifu.jpg"},
+          {"name": "ناصر ناصر", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/9/Nasser_Nasser.jpg"},
+          {"name": "عبدالغني محمد", "number": 10, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/1/Abdelghani_Mohamed.jpg"},
+          {"name": "بواتينغ", "number": 19, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/10/Benjamin_Boateng.jpg"},
+          {"name": "فادي فريد", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/11/Fady_Fareed.jpg"},
+          {"name": "إبراهيم حسن", "number": 11, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Ibrahim_Hassan.jpg"},
+          {"name": "صبحي سليمان", "number": 16, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/10/Sobhy_Soliman.jpg"}
+        ]
       },
       "streamUrl": "",
       "streamType": "m3u8",
@@ -50,7 +76,7 @@
       "time": "20:00",
       "league": "الدوري المصري",
       "round": "",
-      "stadium": "",
+      "stadium": "ستاد القاهرة الدولي",
       "broadcastChannels": [
         "ON Sport HD"
       ],
@@ -69,7 +95,20 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/10/9/AlQanah2018_10_9_12_34.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/EPLLogo19-9-2023-16-31-21.png",
       "players": {
-        "home": [],
+        "home": [
+          {"name": "محمد الشناوي", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Mohamed_ElShenawy.jpg"},
+          {"name": "محمد هاني", "number": 30, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Mohamed_Hany.jpg"},
+          {"name": "رامي ربيعة", "number": 5, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Rami_Rabia.jpg"},
+          {"name": "ياسر إبراهيم", "number": 6, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/1/Yasser_Ibrahim.jpg"},
+          {"name": "يحيى عطية الله", "number": 18, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/8/Yahia_Attiyat_Allah.jpg"},
+          {"name": "أحمد نبيل كوكا", "number": 36, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/1/Ahmed_Nabil_Koka.jpg"},
+          {"name": "إمام عاشور", "number": 22, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Emam_Ashour.jpg"},
+          {"name": "مروان عطية", "number": 13, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/1/Marwan_Attia.jpg"},
+          {"name": "حسين الشحات", "number": 14, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/1/Hussein_ElShahat.jpg"},
+          {"name": "بيرسي تاو", "number": 10, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Percy_Tau.jpg"},
+          {"name": "وسام أبو علي", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/1/Wessam_Abou_Ali.jpg"},
+          {"name": "مصطفى شوبير", "number": 16, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/10/Mostafa_Shobeir.jpg"}
+        ],
         "away": []
       },
       "streamUrl": "",
@@ -89,7 +128,7 @@
       "time": "20:00",
       "league": "الدوري المصري",
       "round": "",
-      "stadium": "",
+      "stadium": "ستاد المقاولون العرب",
       "broadcastChannels": [
         "ON Sport MAX HD"
       ],
@@ -108,7 +147,20 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/5/767101644_4496435057267714_3802005914714408483_n2026_8_5_23_35.webp",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/EPLLogo19-9-2023-16-31-21.png",
       "players": {
-        "home": [],
+        "home": [
+          {"name": "محمد بسام", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Mohamed_Bassam.jpg"},
+          {"name": "عبدالرحمن بيكهام", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Abdelrahman_Beckham.jpg"},
+          {"name": "رجب نبيل", "number": 5, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Rageb_Nabil.jpg"},
+          {"name": "أحمد هاني", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Ahmed_Hany.jpg"},
+          {"name": "خالد صبحي", "number": 3, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/11/Khaled_Sobhy.jpg"},
+          {"name": "محمد إبراهيم", "number": 22, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Mohamed_Ibrahim.jpg"},
+          {"name": "أحمد القندوسي", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/1/Ahmed_Kendouci.jpg"},
+          {"name": "صديق إيجولا", "number": 11, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/10/Sodiq_Awujoola.jpg"},
+          {"name": "أحمد ياسر ريان", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Ahmed_Yasser_Rayan.jpg"},
+          {"name": "جون إيبوكا", "number": 17, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/11/John_Ebuka.jpg"},
+          {"name": "فخري لاكاي", "number": 10, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/1/Fagrie_Lakay.jpg"},
+          {"name": "علي الجابري", "number": 16, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/9/Ali_ElGabry.jpg"}
+        ],
         "away": []
       },
       "streamUrl": "",
@@ -128,7 +180,7 @@
       "time": "15:00",
       "league": "دوري أبطال أفريقيا",
       "round": "",
-      "stadium": "",
+      "stadium": "ملعب مالابو",
       "broadcastChannels": [],
       "broadcastChannel": "",
       "commentator": "",
@@ -160,7 +212,7 @@
       "time": "19:00",
       "league": "دوري أبطال أفريقيا",
       "round": "",
-      "stadium": "",
+      "stadium": "ملعب مكابي",
       "broadcastChannels": [],
       "broadcastChannel": "",
       "commentator": "",
@@ -192,7 +244,7 @@
       "time": "21:00",
       "league": "الدوري الإسباني",
       "round": "",
-      "stadium": "",
+      "stadium": "ملعب سيوتات دي فالنسيا",
       "broadcastChannels": [
         "beIN SPORTS MAX HD1"
       ],
@@ -212,7 +264,20 @@
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/354466675_177497535300975_2290177074408202728_n3-7-2023-21-58-53.png",
       "players": {
         "home": [],
-        "away": []
+        "away": [
+          {"name": "أوناي سيمون", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Unai_Simon.jpg"},
+          {"name": "أوسكار دي ماركوس", "number": 18, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Oscar_de_Marcos.jpg"},
+          {"name": "داني فيفيان", "number": 3, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Dani_Vivian.jpg"},
+          {"name": "أيتور باريديس", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/8/Aitor_Paredes.jpg"},
+          {"name": "يوري بيرشيش", "number": 17, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Yuri_Berchiche.jpg"},
+          {"name": "ميكيل جاوريجويزار", "number": 16, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/12/Mikel_Jauregizar.jpg"},
+          {"name": "إينيغو رويز دي غالاريتا", "number": 24, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Ruiz_de_Galarreta.jpg"},
+          {"name": "أويهان سانست", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/8/Oihan_Sancet.jpg"},
+          {"name": "إينياكي ويليامز", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Inaki_Williams.jpg"},
+          {"name": "نيكو ويليامز", "number": 10, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/1/Nico_Williams.jpg"},
+          {"name": "جوركا غوروزيتا", "number": 12, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Gorka_Guruzeta.jpg"},
+          {"name": "أدريان أجيرازبالاغا", "number": 13, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/9/Julen_Agirrezabala.jpg"}
+        ]
       },
       "streamUrl": "",
       "streamType": "m3u8",
@@ -231,7 +296,7 @@
       "time": "19:45",
       "league": "دوري أبطال أوروبا",
       "round": "",
-      "stadium": "",
+      "stadium": "ملعب جيوسيبي سينيغاليا",
       "broadcastChannels": [
         "بى ان سبورت 2 HD"
       ],
@@ -251,7 +316,20 @@
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
         "home": [],
-        "away": []
+        "away": [
+          {"name": "أندريه أونانا", "number": 24, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Andre_Onana.jpg"},
+          {"name": "ديوغو دالوت", "number": 20, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Diogo_Dalot.jpg"},
+          {"name": "ماتياس دي ليخت", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/8/Matthijs_de_Ligt.jpg"},
+          {"name": "ليساندرو مارتينيز", "number": 6, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Lisandro_Martinez.jpg"},
+          {"name": "نصير مزراوي", "number": 3, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/8/Noussair_Mazraoui.jpg"},
+          {"name": "مانويل أوجارتي", "number": 25, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/8/Manuel_Ugarte.jpg"},
+          {"name": "كوبي ماينو", "number": 37, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/2/Kobbie_Mainoo.jpg"},
+          {"name": "برونو فيرنانديز", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/1/Bruno_Fernandes.jpg"},
+          {"name": "أليخاندرو غارناتشو", "number": 17, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/4/Alejandro_Garnacho.jpg"},
+          {"name": "ماركوس راشفورد", "number": 10, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Marcus_Rashford.jpg"},
+          {"name": "جوشوا زيركزي", "number": 11, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Joshua_Zirkzee.jpg"},
+          {"name": "ألتاي بايندير", "number": 1, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/9/Altay_Bayindir.jpg"}
+        ]
       },
       "streamUrl": "",
       "streamType": "m3u8",
@@ -270,7 +348,7 @@
       "time": "19:45",
       "league": "دوري أبطال أوروبا",
       "round": "",
-      "stadium": "",
+      "stadium": "ملعب بيير موروا",
       "broadcastChannels": [
         "بى ان سبورت 3 HD"
       ],
@@ -289,8 +367,34 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/9/10/Galatasaray2018_9_10_13_8.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
-        "home": [],
-        "away": []
+        "home": [
+          {"name": "لوكاس شيفالييه", "number": 30, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/9/Lucas_Chevalier.jpg"},
+          {"name": "توماس مونييه", "number": 12, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Thomas_Meunier.jpg"},
+          {"name": "بافودي دياكيتيه", "number": 18, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/9/Bafode_Diakite.jpg"},
+          {"name": "أليكساندرو", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Alexsandro.jpg"},
+          {"name": "غابرييل گودموندسون", "number": 31, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/9/Gabriel_Gudmundsson.jpg"},
+          {"name": "بنيامين أندريه", "number": 21, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/8/Benjamin_Andre.jpg"},
+          {"name": "أنخيل غوميز", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/9/Angel_Gomes.jpg"},
+          {"name": "حاج محمد", "number": 22, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/9/Hakon_Haraldsson.jpg"},
+          {"name": "إدين جيرغوفا", "number": 11, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/1/Edon_Zhegrova.jpg"},
+          {"name": "ماتياس فيرنانديز", "number": 7, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/8/Matias_Fernandez.jpg"},
+          {"name": "جوناثان ديفيد", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/8/Jonathan_David.jpg"},
+          {"name": "فيتو مانوني", "number": 1, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/9/Vito_Mannone.jpg"}
+        ],
+        "away": [
+          {"name": "فرناندو موسليرا", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/9/Fernando_Muslera.jpg"},
+          {"name": "كاغان آيهان", "number": 23, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/1/Kaan_Ayhan.jpg"},
+          {"name": "دافينسون سانشيز", "number": 6, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/9/Davinson_Sanchez.jpg"},
+          {"name": "عبدالكريم بارداكتشي", "number": 42, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Abdulkerim_Bardakci.jpg"},
+          {"name": "إسماعيل جاكوبس", "number": 25, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/9/Ismail_Jakobs.jpg"},
+          {"name": "لوكاس توريرا", "number": 34, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/8/Lucas_Torreira.jpg"},
+          {"name": "غابرييل سارا", "number": 20, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/8/Gabriel_Sara.jpg"},
+          {"name": "دريس ميرتنز", "number": 10, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/8/Dries_Mertens.jpg"},
+          {"name": "باريس يلماز", "number": 53, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Baris_Alper_Yilmaz.jpg"},
+          {"name": "فكتور أوسيمين", "number": 45, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/9/Victor_Osimhen.jpg"},
+          {"name": "ماورو إيكاردي", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/9/Mauro_Icardi.jpg"},
+          {"name": "غوناي غوفينتش", "number": 19, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Gunay_Guvenc.jpg"}
+        ]
       },
       "streamUrl": "",
       "streamType": "m3u8",
@@ -309,7 +413,7 @@
       "time": "22:00",
       "league": "دوري أبطال أوروبا",
       "round": "",
-      "stadium": "",
+      "stadium": "ملعب بينيتو فيامارين",
       "broadcastChannels": [
         "بى ان سبورت 5 HD"
       ],
@@ -328,8 +432,34 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/7/15/Feyenoord2021_7_15_9_27.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
-        "home": [],
-        "away": []
+        "home": [
+          {"name": "روي سيلفا", "number": 13, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/7/Rui_Silva.jpg"},
+          {"name": "هيكتور بيليرين", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Hector_Bellerin.jpg"},
+          {"name": "دييجو يورينتي", "number": 6, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Diego_Llorente.jpg"},
+          {"name": "مارك بارترا", "number": 5, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Marc_Bartra.jpg"},
+          {"name": "رومان بيرود", "number": 15, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Romain_Perraud.jpg"},
+          {"name": "جوني كاردوسو", "number": 4, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/1/Johnny_Cardoso.jpg"},
+          {"name": "مارك روكا", "number": 21, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Marc_Roca.jpg"},
+          {"name": "إيسكو", "number": 22, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Isco.jpg"},
+          {"name": "بابلو فورنالس", "number": 18, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/2/Pablo_Fornals.jpg"},
+          {"name": "عبدالصمد الززلزولي", "number": 11, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/11/Abde_Ezzalzouli.jpg"},
+          {"name": "سيدريك باكامبو", "number": 12, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/2/Cedric_Bakambu.jpg"},
+          {"name": "أدريان", "number": 1, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Adrian.jpg"}
+        ],
+        "away": [
+          {"name": "تيمون فيلينرويتر", "number": 22, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/8/Timon_Wellenreuther.jpg"},
+          {"name": "بارت نيوهوب", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Bart_Nieuwkoop.jpg"},
+          {"name": "غيرنوت تراونر", "number": 3, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/7/Gernot_Trauner.jpg"},
+          {"name": "ديفيد هانكو", "number": 33, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/8/David_Hancko.jpg"},
+          {"name": "كويغو بوينو", "number": 5, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/8/Hugo_Bueno.jpg"},
+          {"name": "كوينتن تيمبر", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Quinten_Timber.jpg"},
+          {"name": "تشاي مالي", "number": 6, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Ramiz_Zerrouki.jpg"},
+          {"name": "كالفين ستنغس", "number": 10, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Calvin_Stengs.jpg"},
+          {"name": "إيغور بيشانو", "number": 14, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Igor_Paixao.jpg"},
+          {"name": "لوكا إيفانوسيك", "number": 17, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Luka_Ivanusec.jpg"},
+          {"name": "سانتياغو خيمينيز", "number": 29, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Santiago_Gimenez.jpg"},
+          {"name": "جاستن بيجلو", "number": 1, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/7/Justin_Bijlow.jpg"}
+        ]
       },
       "streamUrl": "",
       "streamType": "m3u8",
@@ -348,7 +478,7 @@
       "time": "22:00",
       "league": "دوري أبطال أوروبا",
       "round": "",
-      "stadium": "",
+      "stadium": "ملعب جان برايدل",
       "broadcastChannels": [
         "بى ان سبورت 8 HD"
       ],
@@ -367,8 +497,34 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/9/10/Lens2018_9_10_13_11.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
-        "home": [],
-        "away": []
+        "home": [
+          {"name": "سيمون مينيوليه", "number": 22, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/8/Simon_Mignolet.jpg"},
+          {"name": "خواكين سيسيه", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/8/Joaquin_Seys.jpg"},
+          {"name": "براندون ميكلي", "number": 44, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/10/Brandon_Mechele.jpg"},
+          {"name": "جويل أوردونييز", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Joel_Ordonez.jpg"},
+          {"name": "مكسيم دي كويبر", "number": 55, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Maxim_De_Cuyper.jpg"},
+          {"name": "رافائيل أونيديكا", "number": 15, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/8/Raphael_Onyedika.jpg"},
+          {"name": "هانس فاناكن", "number": 20, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/10/Hans_Vanaken.jpg"},
+          {"name": "أردون جاشاري", "number": 30, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Ardon_Jashari.jpg"},
+          {"name": "كريستوس تسوليس", "number": 8, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Christos_Tzolis.jpg"},
+          {"name": "تشيبيوس أوكو", "number": 7, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Andreas_Skov_Olsen.jpg"},
+          {"name": "فيرران جوتغلا", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Ferran_Jutgla.jpg"},
+          {"name": "نورس جاكر", "number": 29, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Nordin_Jackers.jpg"}
+        ],
+        "away": [
+          {"name": "بريس سامبا", "number": 30, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Brice_Samba.jpg"},
+          {"name": "جوناثان غرادي", "number": 24, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/9/Jonathan_Gradit.jpg"},
+          {"name": "كيفن دانسو", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Kevin_Danso.jpg"},
+          {"name": "فاكوندو ميدينا", "number": 14, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/7/Facundo_Medina.jpg"},
+          {"name": "روبن أغويلار", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/9/Ruben_Aguilar.jpg"},
+          {"name": "أندي ضيوف", "number": 18, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Andy_Diouf.jpg"},
+          {"name": "نيل الميناوي", "number": 26, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Neil_El_Aynaoui.jpg"},
+          {"name": "دانيال توماسوفسكي", "number": 19, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/David_Costa.jpg"},
+          {"name": "فلوريان سوتوكا", "number": 7, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/8/Florian_Sotoca.jpg"},
+          {"name": "ويسلي سعيد", "number": 22, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Wesley_Said.jpg"},
+          {"name": "إيلي واهي", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Elye_Wahi.jpg"},
+          {"name": "هيرفي كوفي", "number": 1, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Herve_Koffi.jpg"}
+        ]
       },
       "streamUrl": "",
       "streamType": "m3u8",
@@ -387,7 +543,7 @@
       "time": "22:00",
       "league": "دوري أبطال أوروبا",
       "round": "",
-      "stadium": "",
+      "stadium": "أليانز أرينا",
       "broadcastChannels": [
         "بى ان سبورت 1HD"
       ],
@@ -406,8 +562,34 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/9/5/Arsenal2021_9_5_14_15.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
-        "home": [],
-        "away": []
+        "home": [
+          {"name": "مانويل نوير", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Manuel_Neuer.jpg"},
+          {"name": "جوشوا كيميتش", "number": 6, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Joshua_Kimmich.jpg"},
+          {"name": "دايو أوباميكانو", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/7/Dayot_Upamecano.jpg"},
+          {"name": "كيم مين جاي", "number": 3, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Kim_Min_jae.jpg"},
+          {"name": "ألفونسو ديفيس", "number": 19, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/1/Alphonso_Davies.jpg"},
+          {"name": "جواو بالينيا", "number": 16, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Joao_Palhinha.jpg"},
+          {"name": "ألكسندر بافلوفيتش", "number": 45, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/11/Aleksandar_Pavlovic.jpg"},
+          {"name": "جمال موسيالا", "number": 42, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/6/Jamal_Musiala.jpg"},
+          {"name": "مايكل أوليز", "number": 17, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Michael_Olise.jpg"},
+          {"name": "سيرجي غنابري", "number": 7, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Serge_Gnabry.jpg"},
+          {"name": "هاري كين", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Harry_Kane.jpg"},
+          {"name": "سفين أولريش", "number": 26, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Sven_Ulreich.jpg"}
+        ],
+        "away": [
+          {"name": "ديفيد رايا", "number": 22, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/David_Raya.jpg"},
+          {"name": "بن وايت", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/7/Ben_White.jpg"},
+          {"name": "ويليام ساليبا", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/7/William_Saliba.jpg"},
+          {"name": "غابرييل ماغالهايس", "number": 6, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/9/Gabriel_Magalhaes.jpg"},
+          {"name": "رينيكو كالافيوري", "number": 33, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Riccardo_Calafiori.jpg"},
+          {"name": "توماس بارتي", "number": 5, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/10/Thomas_Partey.jpg"},
+          {"name": "ديكلان رايس", "number": 41, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Declan_Rice.jpg"},
+          {"name": "مارتين أوديغارد", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/1/Martin_Odegaard.jpg"},
+          {"name": "بوكايو ساكا", "number": 7, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/12/Bukayo_Saka.jpg"},
+          {"name": "غابرييل مارتينيلي", "number": 11, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/7/Gabriel_Martinelli.jpg"},
+          {"name": "كاي هافيرتز", "number": 29, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/6/Kai_Havertz.jpg"},
+          {"name": "نيتو", "number": 32, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/8/Neto.jpg"}
+        ]
       },
       "streamUrl": "",
       "streamType": "m3u8",
@@ -426,7 +608,7 @@
       "time": "22:00",
       "league": "دوري أبطال أوروبا",
       "round": "",
-      "stadium": "",
+      "stadium": "سان سيرو",
       "broadcastChannels": [
         "بى ان سبورت 3 HD"
       ],
@@ -445,8 +627,34 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2015/2/19/Shakhtar%20Donetsk2015_2_19_18_31.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
-        "home": [],
-        "away": []
+        "home": [
+          {"name": "يان سومر", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Yann_Sommer.jpg"},
+          {"name": "بنجامين بافارد", "number": 28, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Benjamin_Pavard.jpg"},
+          {"name": "فرانشيسكو أتشيربي", "number": 15, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/9/Francesco_Acerbi.jpg"},
+          {"name": "أليساندرو باستوني", "number": 95, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Alessandro_Bastoni.jpg"},
+          {"name": "دينزل دومفريس", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Denzel_Dumfries.jpg"},
+          {"name": "نيكولو باريلا", "number": 23, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/7/Nicolo_Barella.jpg"},
+          {"name": "هاكان كالهان أوغلو", "number": 20, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/6/Hakan_Calhanoglu.jpg"},
+          {"name": "هنريك مخيتاريان", "number": 22, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Henrikh_Mkhitaryan.jpg"},
+          {"name": "فيديريكو ديماركو", "number": 32, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Federico_Dimarco.jpg"},
+          {"name": "ماركوس تورام", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Marcus_Thuram.jpg"},
+          {"name": "لاوتارو مارتينيز", "number": 10, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Lautaro_Martinez.jpg"},
+          {"name": "جوزيب مارتينيز", "number": 13, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Josep_Martinez.jpg"}
+        ],
+        "away": [
+          {"name": "ديميتري ريزنيك", "number": 31, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/2/Dmytro_Riznyk.jpg"},
+          {"name": "يموفيل كونوبليا", "number": 26, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Yukhym_Konoplya.jpg"},
+          {"name": "فاليري بوندار", "number": 5, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/8/Valeriy_Bondar.jpg"},
+          {"name": "ميقول ماتفينكو", "number": 22, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/9/Mykola_Matviyenko.jpg"},
+          {"name": "إراكلي أزاروفي", "number": 16, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Irakli_Azarovi.jpg"},
+          {"name": "تاراس ستيبانينكو", "number": 6, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/9/Taras_Stepanenko.jpg"},
+          {"name": "هيرجي سوداكوف", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/10/Heorhiy_Sudakov.jpg"},
+          {"name": "ألكسندر زوبكوف", "number": 11, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/8/Oleksandr_Zubkov.jpg"},
+          {"name": "كيفن", "number": 37, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/1/Kevin.jpg"},
+          {"name": "بيدرينهو", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/7/Pedrinho.jpg"},
+          {"name": "دانييل سيكان", "number": 14, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/8/Danylo_Sikan.jpg"},
+          {"name": "تيريز فودزين", "number": 12, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/8/Tymur_Puzankov.jpg"}
+        ]
       },
       "streamUrl": "",
       "streamType": "m3u8",
@@ -465,7 +673,7 @@
       "time": "22:00",
       "league": "دوري أبطال أوروبا",
       "round": "",
-      "stadium": "",
+      "stadium": "ملعب جوزيه ألفالادي",
       "broadcastChannels": [
         "بى ان سبورت 9 HD"
       ],
@@ -484,7 +692,20 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/7/15/Lask2021_7_15_9_46.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
-        "home": [],
+        "home": [
+          {"name": "فرانكو إسرائيل", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Franco_Israel.jpg"},
+          {"name": "جيو فريسندا", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Ivan_Fresneda.jpg"},
+          {"name": "عثمان ديوماندي", "number": 26, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/1/Ousmane_Diomande.jpg"},
+          {"name": "غونزالو إيناسيو", "number": 25, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/10/Goncalo_Inacio.jpg"},
+          {"name": "ماتوس ريس", "number": 3, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/2/Matheus_Reis.jpg"},
+          {"name": "مورتن هولماند", "number": 42, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Morten_Hjulmand.jpg"},
+          {"name": "هيديديتا موريتا", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Hidemasa_Morita.jpg"},
+          {"name": "فرانسيسكو ترينكاو", "number": 17, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Francisco_Trincao.jpg"},
+          {"name": "بيدرو غونسالفيس", "number": 28, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/8/Pedro_Goncalves.jpg"},
+          {"name": "فيكتور جيوكيريس", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Viktor_Gyokeres.jpg"},
+          {"name": "جيني كاتامو", "number": 21, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/9/Geny_Catamo.jpg"},
+          {"name": "ديوغو بينتو", "number": 41, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/5/Diogo_Pinto.jpg"}
+        ],
         "away": []
       },
       "streamUrl": "",
@@ -504,7 +725,7 @@
       "time": "22:00",
       "league": "دوري أبطال أوروبا",
       "round": "",
-      "stadium": "",
+      "stadium": "فيلا بارك",
       "broadcastChannels": [
         "بى ان سبورت 4 HD"
       ],
@@ -523,7 +744,20 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/24/Viking_FK2026_8_24_17_50.webp",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
-        "home": [],
+        "home": [
+          {"name": "إيميليانو مارتينيز", "number": 23, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/9/Emiliano_Martinez.jpg"},
+          {"name": "ماتي كاش", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/9/Matty_Cash.jpg"},
+          {"name": "إزري كونسا", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/7/Ezri_Konsa.jpg"},
+          {"name": "باو توريس", "number": 14, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Pau_Torres.jpg"},
+          {"name": "لوكا ديني", "number": 12, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/1/Lucas_Digne.jpg"},
+          {"name": "أمادو أونانا", "number": 24, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Amadou_Onana.jpg"},
+          {"name": "يوري تيليمانس", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Youri_Tielemans.jpg"},
+          {"name": "جون مكجين", "number": 7, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/8/John_McGinn.jpg"},
+          {"name": "ليون بايلي", "number": 31, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Leon_Bailey.jpg"},
+          {"name": "مورجان روجرز", "number": 27, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/2/Morgan_Rogers.jpg"},
+          {"name": "أولي واتكينز", "number": 11, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/9/Ollie_Watkins.jpg"},
+          {"name": "روبن أولسن", "number": 25, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/1/Robin_Olsen.jpg"}
+        ],
         "away": []
       },
       "streamUrl": "",
@@ -543,7 +777,7 @@
       "time": "22:00",
       "league": "دوري أبطال أوروبا",
       "round": "",
-      "stadium": "",
+      "stadium": "سانتياغو برنابيو",
       "broadcastChannels": [
         "بى ان سبورت 2 HD"
       ],
@@ -562,8 +796,34 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Leipzig2018_7_29_16_8.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
-        "home": [],
-        "away": []
+        "home": [
+          {"name": "تيبو كورتوا", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Thibaut_Courtois.jpg"},
+          {"name": "داني كارفاخال", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Dani_Carvajal.jpg"},
+          {"name": "أنطونيو روديغر", "number": 22, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/6/Antonio_Rudiger.jpg"},
+          {"name": "إيدير ميليتاو", "number": 3, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/7/Eder_Militao.jpg"},
+          {"name": "فيرلاند ميندي", "number": 23, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/7/Ferland_Mendy.jpg"},
+          {"name": "أوريليان تشواميني", "number": 14, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/6/Aurelien_Tchouameni.jpg"},
+          {"name": "فيدي فالفيردي", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Federico_Valverde.jpg"},
+          {"name": "جود بيلينغهام", "number": 5, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/6/Jude_Bellingham.jpg"},
+          {"name": "رودريغو", "number": 11, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/7/Rodrygo.jpg"},
+          {"name": "كيليان مبابي", "number": 9, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/6/Kylian_Mbappe.jpg"},
+          {"name": "فينيسيوس جونيور", "number": 7, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Vinicius_Junior.jpg"},
+          {"name": "أندريه لونين", "number": 13, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Andriy_Lunin.jpg"}
+        ],
+        "away": [
+          {"name": "بيتر غولاكسي", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Peter_Gulacsi.jpg"},
+          {"name": "لويس هنريشكس", "number": 39, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/8/Benjamin_Henrichs.jpg"},
+          {"name": "فيلي أوربان", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Willi_Orban.jpg"},
+          {"name": "كاستيلو لوكيبا", "number": 23, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Castello_Lukeba.jpg"},
+          {"name": "دافيد راوم", "number": 22, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/David_Raum.jpg"},
+          {"name": "كيفن كامبل", "number": 44, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Kevin_Kampl.jpg"},
+          {"name": "أمادو هايدارا", "number": 8, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/1/Amadou_Haidara.jpg"},
+          {"name": "تشافي سيمونز", "number": 20, "position": "MF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Xavi_Simons.jpg"},
+          {"name": "كريستوف باومغارتنر", "number": 14, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/6/Christoph_Baumgartner.jpg"},
+          {"name": "لويس أوبيندا", "number": 11, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Lois_Openda.jpg"},
+          {"name": "بنيامين سيسكو", "number": 30, "position": "FW", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Benjamin_Sesko.jpg"},
+          {"name": "مارتين فانديفوردت", "number": 26, "position": "GK", "isStarter": false, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Maarten_Vandevoordt.jpg"}
+        ]
       },
       "streamUrl": "",
       "streamType": "m3u8",
