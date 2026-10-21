@@ -30,6 +30,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/24/Alittihad2018_7_24_13_30.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/EPLLogo19-9-2023-16-31-21.png",
       "players": {
+        "homeFormation": "4-3-3",
+        "awayFormation": "4-3-3",
         "home": [
           {"name": "عامر عامر", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/2/Amer_Amer.jpg"},
           {"name": "أحمد حكم", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/9/Ahmed_Hakam.jpg"},
@@ -95,6 +97,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/10/9/AlQanah2018_10_9_12_34.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/EPLLogo19-9-2023-16-31-21.png",
       "players": {
+        "homeFormation": "4-3-3",
+        "awayFormation": "",
         "home": [
           {"name": "محمد الشناوي", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Mohamed_ElShenawy.jpg"},
           {"name": "محمد هاني", "number": 30, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Mohamed_Hany.jpg"},
@@ -147,6 +151,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/5/767101644_4496435057267714_3802005914714408483_n2026_8_5_23_35.webp",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/EPLLogo19-9-2023-16-31-21.png",
       "players": {
+        "homeFormation": "4-2-3-1",
+        "awayFormation": "",
         "home": [
           {"name": "محمد بسام", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Mohamed_Bassam.jpg"},
           {"name": "عبدالرحمن بيكهام", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/7/Abdelrahman_Beckham.jpg"},
@@ -197,6 +203,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/24/Simba2018_7_24_12_50.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/576229894_25484069324544446_513137027842226473_n3-11-2025-19-25-24.webp",
       "players": {
+        "homeFormation": "",
+        "awayFormation": "",
         "home": [],
         "away": []
       },
@@ -229,6 +237,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/10/4/centre_de_formation_de_footbal%20logo2026_10_4_19_19.webp",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/576229894_25484069324544446_513137027842226473_n3-11-2025-19-25-24.webp",
       "players": {
+        "homeFormation": "",
+        "awayFormation": "",
         "home": [],
         "away": []
       },
@@ -263,6 +273,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/AthleticBilbao2018_7_29_14_44.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/354466675_177497535300975_2290177074408202728_n3-7-2023-21-58-53.png",
       "players": {
+        "homeFormation": "",
+        "awayFormation": "4-2-3-1",
         "home": [],
         "away": [
           {"name": "أوناي سيمون", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Unai_Simon.jpg"},
@@ -315,6 +327,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/ManchesterUnited2018_7_29_15_29.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
+        "homeFormation": "",
+        "awayFormation": "4-2-3-1",
         "home": [],
         "away": [
           {"name": "أندريه أونانا", "number": 24, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/7/Andre_Onana.jpg"},
@@ -367,6 +381,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/9/10/Galatasaray2018_9_10_13_8.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
+        "homeFormation": "4-2-3-1",
+        "awayFormation": "4-2-3-1",
         "home": [
           {"name": "لوكاس شيفالييه", "number": 30, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/9/Lucas_Chevalier.jpg"},
           {"name": "توماس مونييه", "number": 12, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2024/7/Thomas_Meunier.jpg"},
@@ -432,6 +448,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/7/15/Feyenoord2021_7_15_9_27.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
+        "homeFormation": "4-2-3-1",
+        "awayFormation": "4-3-3",
         "home": [
           {"name": "روي سيلفا", "number": 13, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/7/Rui_Silva.jpg"},
           {"name": "هيكتور بيليرين", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2021/8/Hector_Bellerin.jpg"},
@@ -497,6 +515,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/9/10/Lens2018_9_10_13_11.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
+        "homeFormation": "4-3-3",
+        "awayFormation": "3-4-2-1",
         "home": [
           {"name": "سيمون مينيوليه", "number": 22, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2019/8/Simon_Mignolet.jpg"},
           {"name": "خواكين سيسيه", "number": 4, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/8/Joaquin_Seys.jpg"},
@@ -562,6 +582,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/9/5/Arsenal2021_9_5_14_15.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
+        "homeFormation": "4-2-3-1",
+        "awayFormation": "4-3-3",
         "home": [
           {"name": "مانويل نوير", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Manuel_Neuer.jpg"},
           {"name": "جوشوا كيميتش", "number": 6, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Joshua_Kimmich.jpg"},
@@ -627,6 +649,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2015/2/19/Shakhtar%20Donetsk2015_2_19_18_31.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
+        "homeFormation": "3-5-2",
+        "awayFormation": "4-3-3",
         "home": [
           {"name": "يان سومر", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Yann_Sommer.jpg"},
           {"name": "بنجامين بافارد", "number": 28, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Benjamin_Pavard.jpg"},
@@ -692,6 +716,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2021/7/15/Lask2021_7_15_9_46.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
+        "homeFormation": "3-4-3",
+        "awayFormation": "",
         "home": [
           {"name": "فرانكو إسرائيل", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2022/7/Franco_Israel.jpg"},
           {"name": "جيو فريسندا", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2023/8/Ivan_Fresneda.jpg"},
@@ -744,6 +770,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2026/8/24/Viking_FK2026_8_24_17_50.webp",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
+        "homeFormation": "4-2-3-1",
+        "awayFormation": "",
         "home": [
           {"name": "إيميليانو مارتينيز", "number": 23, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/9/Emiliano_Martinez.jpg"},
           {"name": "ماتي كاش", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2020/9/Matty_Cash.jpg"},
@@ -796,6 +824,8 @@
       "awayLogo": "https://mediayk.gemini.media/img/yallakora/iosteams/120/2018/7/29/Leipzig2018_7_29_16_8.jpg",
       "leagueLogo": "https://mediayk.gemini.media/img/yallakora/tourlogo/UEFAChampionsLeague30-7-2018-14-58-54.png",
       "players": {
+        "homeFormation": "4-3-3",
+        "awayFormation": "4-2-2-2",
         "home": [
           {"name": "تيبو كورتوا", "number": 1, "position": "GK", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Thibaut_Courtois.jpg"},
           {"name": "داني كارفاخال", "number": 2, "position": "DF", "isStarter": true, "photo": "https://mediayk.gemini.media/img/yallakora/iosplayers/120/2018/8/Dani_Carvajal.jpg"},
