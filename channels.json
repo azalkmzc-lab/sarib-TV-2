@@ -8,6 +8,12 @@
       "logo": "",
       "url": "https://blc2cr.linkip.org/live/90030_.m3u8",
       "group": "Box"
+    },
+    {
+      "name": "تجربة",
+      "logo": "",
+      "url": "https://scccrwb-live.cdn.intigral-ott.net/bpk-tv/STW/wv-pr/manifest.mpd?|drmScheme=clearkey&drmLicense=19cf49b59d662baf0359682aa503749f:af573556d33ef2f094b98c7d22e9ffce",
+      "group": "Box"
     }
   ]
 }
