@@ -11,16 +11,6 @@
   ],
   "channels": [
     {
-      "name": "اطفال",
-      "logo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d6/BeIN_Sports_logo_%28vertical_version%29.svg/1280px-BeIN_Sports_logo_%28vertical_version%29.svg.png?utm_source=ar.wikipedia.org&utm_campaign=index&utm_content=thumbnail",
-      "url": "https://blc2cr.linkip.org/live/90030_.m3u8",
-      "urls": [
-        "https://blc2cr.linkip.org/live/90030_.m3u8",
-        "https://scccrwb-live.cdn.intigral-ott.net/bpk-tv/STW/wv-pr/manifest.mpd?|drmScheme=clearkey&drmLicense=19cf49b59d662baf0359682aa503749f:af573556d33ef2f094b98c7d22e9ffce"
-      ],
-      "group": "Box"
-    },
-    {
       "name": "تجربة",
       "logo": "",
       "url": "https://scccrwb-live.cdn.intigral-ott.net/bpk-tv/STW/wv-pr/manifest.mpd?|drmScheme=clearkey&drmLicense=19cf49b59d662baf0359682aa503749f:af573556d33ef2f094b98c7d22e9ffce",
