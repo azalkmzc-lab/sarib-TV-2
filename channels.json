@@ -1,6 +1,9 @@
 {
   "categories": [
-    "Box"
+    {
+      "name": "Box",
+      "logo": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d6/BeIN_Sports_logo_%28vertical_version%29.svg/1280px-BeIN_Sports_logo_%28vertical_version%29.svg.png?utm_source=ar.wikipedia.org&utm_campaign=index&utm_content=thumbnail"
+    }
   ],
   "channels": [
     {
