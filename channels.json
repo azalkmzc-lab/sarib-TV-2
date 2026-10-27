@@ -9,15 +9,5 @@
       "logo": ""
     }
   ],
-  "channels": [
-    {
-      "name": "بى ان سبورت HD3",
-      "logo": "",
-      "url": "https://dat6.dataspeedai.cfd/sd/qseifluvupum/index.html",
-      "urls": [
-        "https://dat6.dataspeedai.cfd/sd/qseifluvupum/index.html"
-      ],
-      "group": "beIN Sports"
-    }
-  ]
+  "channels": []
 }
