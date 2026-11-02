@@ -152,12 +152,15 @@ fun MatchesScreen(
     // Date matching helper
     fun matchesTargetDate(match: MatchItem, targetTab: String): Boolean {
         val d = match.matchDate.trim()
+        val id = match.id.lowercase()
         return when (targetTab) {
-            "الأمس" -> d == yesterdayIso || d.contains("أمس") || d.contains("yesterday", ignoreCase = true)
-            "الغد" -> d == tomorrowIso || d.contains("غد") || d.contains("tomorrow", ignoreCase = true)
+            "الأمس" -> id.startsWith("yesterday") || d == yesterdayIso || d.contains("أمس") || d.contains("yesterday", ignoreCase = true)
+            "الغد" -> id.startsWith("tomorrow") || d == tomorrowIso || d.contains("غد") || d.contains("tomorrow", ignoreCase = true)
             else -> { // "اليوم"
-                d.isBlank() || d == todayIso || d.contains("اليوم") || d.contains("today", ignoreCase = true) ||
-                (d != yesterdayIso && d != tomorrowIso && !d.contains("أمس") && !d.contains("غد"))
+                if (id.startsWith("yesterday") || id.startsWith("tomorrow")) return false
+                if (d == yesterdayIso || d == tomorrowIso) return false
+                if (d.contains("أمس") || d.contains("غد")) return false
+                true
             }
         }
     }

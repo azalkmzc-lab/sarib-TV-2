@@ -1,19 +1,16 @@
 package com.example.ui.components
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +18,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -37,20 +33,19 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.VideoLibrary
@@ -58,12 +53,10 @@ import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LiveTv
-import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material.icons.outlined.SportsSoccer
 import androidx.compose.material.icons.outlined.VideoLibrary
-import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,27 +73,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.Player
-import androidx.media3.datasource.DefaultHttpDataSource
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
-import androidx.media3.ui.AspectRatioFrameLayout
-import androidx.media3.ui.PlayerView
-import com.example.util.StreamUrlParser
-import kotlinx.coroutines.delay
-import coil.compose.AsyncImage
-import coil.compose.SubcomposeAsyncImage
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -109,41 +93,36 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.focusable
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.ui.AspectRatioFrameLayout
+import androidx.media3.ui.PlayerView
+import coil.compose.AsyncImage
 import com.example.R
 import com.example.data.model.ChannelCategory
 import com.example.data.model.ChannelItem
 import com.example.data.model.HeroBannerItem
 import com.example.data.model.MatchItem
 import com.example.data.model.MediaItem
-import com.example.ui.theme.SaribBlueGlow
 import com.example.ui.theme.SaribCardBg
 import com.example.ui.theme.SaribCardBgSecondary
 import com.example.ui.theme.SaribCardBorder
 import com.example.ui.theme.SaribCardBorderSubtle
 import com.example.ui.theme.SaribCyanAccent
-import com.example.ui.theme.SaribDarkBackground
 import com.example.ui.theme.SaribDarkSurface
 import com.example.ui.theme.SaribElectricBlue
-import com.example.ui.theme.SaribHeaderGradientEnd
-import com.example.ui.theme.SaribHeaderGradientStart
-import com.example.ui.theme.SaribLiveRed
 import com.example.ui.theme.SaribGoldRating
-import com.example.ui.theme.SaribSuccessGreen
+import com.example.ui.theme.SaribLiveRed
 import com.example.ui.theme.SaribTextMuted
 import com.example.ui.theme.SaribTextPrimary
 import com.example.ui.theme.SaribTextSecondary
 import com.example.ui.theme.SaribTop01
 import com.example.ui.theme.SaribTop02
 import com.example.ui.theme.SaribTop03
+import com.example.util.StreamUrlParser
 import kotlinx.coroutines.delay
 
 @Composable
@@ -158,106 +137,81 @@ fun SaribTopHeader(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(12.dp, RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
-            .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
-            .border(
-                1.dp,
-                Brush.verticalGradient(listOf(SaribCardBorder, SaribBlueGlow)),
-                RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
-            ),
-        color = SaribHeaderGradientStart
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface
     ) {
-        Box(
-            modifier = Modifier
-                .background(
-                    Brush.verticalGradient(
-                        listOf(SaribHeaderGradientStart, SaribHeaderGradientEnd)
-                    )
-                )
-                .padding(horizontal = 14.dp, vertical = 10.dp)
-        ) {
+        Column {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                // Menu Hamburger Icon
-                IconButton(
-                    onClick = onMenuClick,
-                    modifier = Modifier
-                        .testTag("menu_button")
-                        .size(42.dp)
-                        .clip(CircleShape)
-                        .background(SaribCardBg)
-                        .border(1.dp, SaribCardBorder, CircleShape)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Menu,
-                        contentDescription = "القائمة",
-                        tint = SaribCyanAccent,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-
-                // Center SARIB TV Branding
+                // Left/Start: Menu + Brand Title
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
+                    IconButton(
+                        onClick = onMenuClick,
                         modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .border(1.dp, SaribElectricBlue, CircleShape)
+                            .testTag("menu_button")
+                            .size(40.dp)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_sarib_logo),
-                            contentDescription = "شعار SARIB TV",
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "القائمة",
+                            tint = SaribTextPrimary,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
+
+                    Spacer(modifier = Modifier.width(6.dp))
+
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_sarib_logo),
+                        contentDescription = "شعار SARIB TV",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .size(30.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+
                     Spacer(modifier = Modifier.width(8.dp))
+
                     Text(
                         text = "SARIB",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
                             color = SaribTextPrimary
                         )
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
                     Text(
                         text = "TV",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Black,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
                             color = SaribCyanAccent
                         )
                     )
                 }
 
-                // Right Action Icons (Search, Refresh, Telegram, Favorites)
+                // Right/End: Clean Icon Actions
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     if (onSearchClick != null) {
                         IconButton(
                             onClick = onSearchClick,
                             modifier = Modifier
                                 .testTag("header_search_button")
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(SaribCardBg)
-                                .border(1.dp, SaribCardBorder, CircleShape)
+                                .size(38.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Search,
                                 contentDescription = "البحث",
-                                tint = SaribTextPrimary,
+                                tint = SaribTextSecondary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -268,7 +222,7 @@ fun SaribTopHeader(
                             initialValue = 0f,
                             targetValue = 360f,
                             animationSpec = infiniteRepeatable(
-                                animation = tween(1000, easing = androidx.compose.animation.core.LinearEasing),
+                                animation = tween(1000, easing = LinearEasing),
                                 repeatMode = RepeatMode.Restart
                             ),
                             label = "spin_anim"
@@ -277,15 +231,12 @@ fun SaribTopHeader(
                             onClick = onRefreshClick,
                             modifier = Modifier
                                 .testTag("header_refresh_button")
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(if (isRefreshing) SaribElectricBlue.copy(alpha = 0.35f) else SaribCardBg)
-                                .border(1.dp, if (isRefreshing) SaribCyanAccent else SaribCardBorder, CircleShape)
+                                .size(38.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = "تحديث محتوى التطبيق",
-                                tint = if (isRefreshing) SaribCyanAccent else SaribTextPrimary,
+                                tint = if (isRefreshing) SaribCyanAccent else SaribTextSecondary,
                                 modifier = Modifier
                                     .size(20.dp)
                                     .graphicsLayer {
@@ -299,10 +250,7 @@ fun SaribTopHeader(
                         onClick = onTelegramClick,
                         modifier = Modifier
                             .testTag("telegram_button")
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(SaribCardBg)
-                            .border(1.dp, SaribCardBorder, CircleShape)
+                            .size(38.dp)
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.Send,
@@ -317,15 +265,12 @@ fun SaribTopHeader(
                             onClick = onDownloadsClick,
                             modifier = Modifier
                                 .testTag("header_downloads_button")
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(SaribCardBg)
-                                .border(1.dp, SaribCardBorder, CircleShape)
+                                .size(38.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Download,
                                 contentDescription = "التنزيلات",
-                                tint = SaribCyanAccent,
+                                tint = SaribTextSecondary,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -335,20 +280,18 @@ fun SaribTopHeader(
                         onClick = onFavoritesClick,
                         modifier = Modifier
                             .testTag("header_favorites_button")
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(SaribCardBg)
-                            .border(1.dp, SaribCardBorder, CircleShape)
+                            .size(38.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.FavoriteBorder,
                             contentDescription = "المفضلة",
-                            tint = SaribTextPrimary,
+                            tint = SaribTextSecondary,
                             modifier = Modifier.size(20.dp)
                         )
                     }
                 }
             }
+            HorizontalDivider(color = SaribCardBorderSubtle, thickness = 1.dp)
         }
     }
 }
@@ -369,24 +312,24 @@ fun CategoryChipsRow(
             val isSelected = category == selectedCategory
             val bgColor = if (isSelected) SaribElectricBlue else SaribCardBg
             val textColor = if (isSelected) Color.White else SaribTextSecondary
-            val borderColor = if (isSelected) SaribCyanAccent else SaribCardBorderSubtle
+            val borderColor = if (isSelected) Color.Transparent else SaribCardBorderSubtle
 
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(RoundedCornerShape(10.dp))
                     .background(bgColor)
-                    .border(1.dp, borderColor, RoundedCornerShape(16.dp))
+                    .border(1.dp, borderColor, RoundedCornerShape(10.dp))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
                     ) { onCategorySelected(category) }
-                    .padding(horizontal = 16.dp, vertical = 7.dp)
+                    .padding(horizontal = 14.dp, vertical = 7.dp)
             ) {
                 Text(
                     text = category,
                     style = MaterialTheme.typography.labelMedium.copy(
                         color = textColor,
-                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
                     )
                 )
             }
@@ -406,7 +349,6 @@ fun HeroSlider(
     val pagerState = rememberPagerState(pageCount = { pageCount })
     var isMuted by remember { mutableStateOf(true) }
 
-    // Auto-advance slider smoothly every 10 seconds
     LaunchedEffect(pagerState, pageCount) {
         if (pageCount > 1) {
             while (true) {
@@ -426,10 +368,10 @@ fun HeroSlider(
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(240.dp)
-                .shadow(16.dp, RoundedCornerShape(22.dp))
-                .clip(RoundedCornerShape(22.dp))
-                .border(1.dp, SaribCardBorder, RoundedCornerShape(22.dp)),
+                .height(210.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(16.dp)),
+            shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = SaribCardBg)
         ) {
             HorizontalPager(
@@ -460,20 +402,19 @@ fun HeroSlider(
         }
 
         if (pageCount > 1) {
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            // Pagination Indicator dots
             Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 repeat(pageCount) { index ->
                     val isSelected = pagerState.currentPage == index
-                    val width = if (isSelected) 24.dp else 8.dp
-                    val color = if (isSelected) SaribCyanAccent else SaribTextMuted
+                    val width = if (isSelected) 18.dp else 6.dp
+                    val color = if (isSelected) SaribCyanAccent else SaribCardBorder
                     Box(
                         modifier = Modifier
-                            .height(6.dp)
+                            .height(5.dp)
                             .width(width)
                             .clip(RoundedCornerShape(3.dp))
                             .background(color)
@@ -484,9 +425,6 @@ fun HeroSlider(
     }
 }
 
-/**
- * Standard Hero Slider Content (Movies, Series, Live Channels) with enhanced poster fit.
- */
 @Composable
 private fun HeroStandardSliderContent(
     item: HeroBannerItem,
@@ -500,7 +438,6 @@ private fun HeroStandardSliderContent(
     val backdropImage = item.backdropUrl.ifBlank { item.posterUrl }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 1. Dual-Layer Poster: Ambient background crop + crisp complete poster
         if (backdropImage.isNotBlank()) {
             AsyncImage(
                 model = backdropImage,
@@ -517,7 +454,6 @@ private fun HeroStandardSliderContent(
             )
         }
 
-        // 2. Centered fit layer if distinct vertical poster exists
         if (posterImage.isNotBlank() && posterImage != backdropImage) {
             AsyncImage(
                 model = posterImage,
@@ -529,7 +465,6 @@ private fun HeroStandardSliderContent(
             )
         }
 
-        // 3. Auto-Playing Video in Slider (Appears smoothly after 3s when ready)
         if (videoUrl.isNotBlank() && isActive) {
             HeroSliderVideoBackground(
                 streamUrl = videoUrl,
@@ -539,22 +474,21 @@ private fun HeroStandardSliderContent(
             )
         }
 
-        // 4. Dark Gradient Vignette for pristine contrast & readability
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0x66070C14),
-                            Color(0x33070C14),
-                            Color(0xF8070C14)
+                            Color(0x440F141C),
+                            Color(0x660F141C),
+                            Color(0xEE0F141C)
                         )
                     )
                 )
         )
 
-        // 5. Top Header Badges & Mute/Unmute Control
+        // Top Header Badge & Mute Control
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -563,112 +497,96 @@ private fun HeroStandardSliderContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Top info badge (LIVE / Category)
             Row(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xDD0A0F1A))
-                    .border(0.5.dp, SaribCyanAccent.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(Color(0xCC171E29))
                     .padding(horizontal = 10.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 if (item.isLive) {
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
+                            .size(7.dp)
                             .clip(CircleShape)
                             .background(SaribLiveRed)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                } else {
-                    Icon(
-                        imageVector = Icons.Default.Tv,
-                        contentDescription = null,
-                        tint = SaribCyanAccent,
-                        modifier = Modifier.size(14.dp)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                 }
                 Text(
                     text = if (item.badge.isNotBlank()) "${item.badge} • ${item.subtitle}" else item.subtitle,
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold
+                        color = SaribTextPrimary,
+                        fontWeight = FontWeight.Medium
                     ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }
 
-            // Mute / Unmute Button for Video Preview
             if (videoUrl.isNotBlank()) {
                 IconButton(
                     onClick = onMuteToggle,
                     modifier = Modifier
-                        .size(34.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
-                        .background(Color(0xCC000000))
-                        .border(1.dp, Color(0x44FFFFFF), CircleShape)
+                        .background(Color(0xAA171E29))
                 ) {
                     Icon(
                         imageVector = if (isMuted) Icons.Default.VolumeOff else Icons.Default.VolumeUp,
                         contentDescription = if (isMuted) "تشغيل الصوت" else "كتم الصوت",
-                        tint = if (isMuted) Color.White else SaribCyanAccent,
-                        modifier = Modifier.size(18.dp)
+                        tint = Color.White,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
         }
 
-        // 6. Bottom Title & Action Button
-        Column(
+        // Bottom Title & Clean Action Button
+        Row(
             modifier = Modifier
+                .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 14.dp, vertical = 10.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = item.title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Black,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold,
                     color = Color.White
                 ),
-                textAlign = TextAlign.Center,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.width(10.dp))
 
-            // Watch Button (Direct navigation to full player)
             Box(
                 modifier = Modifier
                     .testTag("hero_watch_button")
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(
-                        Brush.horizontalGradient(
-                            listOf(SaribElectricBlue, SaribCyanAccent)
-                        )
-                    )
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(SaribElectricBlue)
                     .clickable { onWatchClick() }
-                    .padding(horizontal = 22.dp, vertical = 7.dp)
+                    .padding(horizontal = 14.dp, vertical = 7.dp)
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = Icons.Default.PlayArrow,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(6.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (item.isLive) "مشاهدة البث المباشر" else stringResource(id = R.string.watch_now),
-                        style = MaterialTheme.typography.labelLarge.copy(
+                        text = if (item.isLive) "مشاهدة" else stringResource(id = R.string.watch_now),
+                        style = MaterialTheme.typography.labelMedium.copy(
                             color = Color.White,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.SemiBold
                         )
                     )
                 }
@@ -677,11 +595,6 @@ private fun HeroStandardSliderContent(
     }
 }
 
-/**
- * Specialized Match Hero Slider (سلايدر المباراة):
- * Displays Host Team (Logo/Name), Guest Team (Logo/Name), League Badge & Name,
- * Kickoff Time, Live Score or Countdown Timer, and Match details.
- */
 @Composable
 private fun HeroMatchSliderContent(
     item: HeroBannerItem,
@@ -694,7 +607,6 @@ private fun HeroMatchSliderContent(
     val backdropImage = item.backdropUrl.ifBlank { item.posterUrl }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // 1. Full Stadium / Match Backdrop Poster
         if (backdropImage.isNotBlank()) {
             AsyncImage(
                 model = backdropImage,
@@ -703,19 +615,13 @@ private fun HeroMatchSliderContent(
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            // Default stadium gradient
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            listOf(Color(0xFF0F172A), Color(0xFF064E3B), Color(0xFF022C22))
-                        )
-                    )
+                    .background(SaribCardBgSecondary)
             )
         }
 
-        // 2. Video Stream Background if live
         if (videoUrl.isNotBlank() && isActive) {
             HeroSliderVideoBackground(
                 streamUrl = videoUrl,
@@ -725,41 +631,37 @@ private fun HeroMatchSliderContent(
             )
         }
 
-        // 3. Dark Gradient Overlay for Match clarity
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color(0x88050912),
-                            Color(0x66050912),
-                            Color(0xFA050912)
+                            Color(0x990F141C),
+                            Color(0xBB0F141C),
+                            Color(0xF50F141C)
                         )
                     )
                 )
         )
 
-        // 4. Content Layout
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // Top Header: League Pill & Match Status / Countdown
+            // Top League & Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // League Pill (Logo + Name)
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xDD0A0F1A))
-                        .border(0.5.dp, SaribCyanAccent.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xCC171E29))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (item.leagueLogoUrl.isNotBlank()) {
@@ -768,7 +670,7 @@ private fun HeroMatchSliderContent(
                             contentDescription = item.leagueName,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier
-                                .size(18.dp)
+                                .size(16.dp)
                                 .clip(CircleShape)
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -785,47 +687,38 @@ private fun HeroMatchSliderContent(
                         text = item.leagueName.ifBlank { "مباراة اليوم" },
                         style = MaterialTheme.typography.labelSmall.copy(
                             color = Color.White,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Medium
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                // Match Status & Countdown Pill
                 Row(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (item.isLive) Color(0xDDDC2626) else Color(0xDD0B132B))
-                        .border(0.5.dp, if (item.isLive) SaribLiveRed else SaribCyanAccent.copy(alpha = 0.5f), RoundedCornerShape(12.dp))
-                        .padding(horizontal = 8.dp, vertical = 3.dp),
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(if (item.isLive) SaribLiveRed else Color(0xCC171E29))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (item.isLive) {
-                        Box(
-                            modifier = Modifier
-                                .size(6.dp)
-                                .clip(CircleShape)
-                                .background(Color.White)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "مباشر LIVE",
+                            text = "مباشر",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.SemiBold
                             )
                         )
                     } else {
                         Icon(
                             imageVector = Icons.Default.Schedule,
                             contentDescription = null,
-                            tint = SaribCyanAccent,
-                            modifier = Modifier.size(13.dp)
+                            tint = SaribTextSecondary,
+                            modifier = Modifier.size(12.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         val timeDisplay = when {
-                            item.matchTime.isNotBlank() -> "تبدأ ${item.matchTime}"
+                            item.matchTime.isNotBlank() -> item.matchTime
                             item.matchDate.isNotBlank() -> item.matchDate
                             else -> "قريباً"
                         }
@@ -833,33 +726,29 @@ private fun HeroMatchSliderContent(
                             text = timeDisplay,
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Medium
                             )
                         )
                     }
                 }
             }
 
-            // Center Match Face-Off: Host Team vs Away Team
+            // Center Match Teams
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 2.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Host Team (الفريق المضيف)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
-                            .shadow(8.dp, CircleShape)
+                            .size(46.dp)
                             .clip(CircleShape)
-                            .background(Color(0xCC0D1B2A))
-                            .border(1.5.dp, SaribCyanAccent, CircleShape),
+                            .background(SaribCardBg)
+                            .border(1.dp, SaribCardBorder, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         if (item.homeLogoUrl.isNotBlank()) {
@@ -867,16 +756,14 @@ private fun HeroMatchSliderContent(
                                 model = item.homeLogoUrl,
                                 contentDescription = item.homeTeam,
                                 contentScale = ContentScale.Fit,
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
+                                modifier = Modifier.size(32.dp)
                             )
                         } else {
                             Icon(
                                 imageVector = Icons.Default.SportsSoccer,
                                 contentDescription = null,
-                                tint = SaribCyanAccent,
-                                modifier = Modifier.size(26.dp)
+                                tint = SaribTextSecondary,
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
@@ -884,7 +771,7 @@ private fun HeroMatchSliderContent(
                     Text(
                         text = item.homeTeam.ifBlank { "الفريق المضيف" },
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = Color.White
                         ),
                         textAlign = TextAlign.Center,
@@ -893,67 +780,39 @@ private fun HeroMatchSliderContent(
                     )
                 }
 
-                // Center Score or VS
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(horizontal = 6.dp)
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     if (item.isLive) {
                         Text(
                             text = "${item.homeScore} - ${item.awayScore}",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Black,
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold,
                                 color = SaribCyanAccent
                             )
                         )
+                    } else {
                         Text(
-                            text = item.matchStatus.ifBlank { "مباشر الآن" },
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = SaribLiveRed,
-                                fontWeight = FontWeight.Bold
+                            text = "VS",
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = SaribTextSecondary
                             )
                         )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(Color(0xAA0A1128))
-                                .border(1.dp, SaribElectricBlue.copy(alpha = 0.8f), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 10.dp, vertical = 2.dp)
-                        ) {
-                            Text(
-                                text = "VS",
-                                style = MaterialTheme.typography.labelLarge.copy(
-                                    fontWeight = FontWeight.Black,
-                                    color = SaribCyanAccent
-                                )
-                            )
-                        }
-                        if (item.matchTime.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(2.dp))
-                            Text(
-                                text = item.matchTime,
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = Color(0xFF94A3B8),
-                                    fontWeight = FontWeight.SemiBold
-                                )
-                            )
-                        }
                     }
                 }
 
-                // Away Team (الفريق الضيف)
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(52.dp)
-                            .shadow(8.dp, CircleShape)
+                            .size(46.dp)
                             .clip(CircleShape)
-                            .background(Color(0xCC0D1B2A))
-                            .border(1.5.dp, SaribElectricBlue, CircleShape),
+                            .background(SaribCardBg)
+                            .border(1.dp, SaribCardBorder, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         if (item.awayLogoUrl.isNotBlank()) {
@@ -961,16 +820,14 @@ private fun HeroMatchSliderContent(
                                 model = item.awayLogoUrl,
                                 contentDescription = item.awayTeam,
                                 contentScale = ContentScale.Fit,
-                                modifier = Modifier
-                                    .size(38.dp)
-                                    .clip(CircleShape)
+                                modifier = Modifier.size(32.dp)
                             )
                         } else {
                             Icon(
                                 imageVector = Icons.Default.SportsSoccer,
                                 contentDescription = null,
-                                tint = SaribElectricBlue,
-                                modifier = Modifier.size(26.dp)
+                                tint = SaribTextSecondary,
+                                modifier = Modifier.size(22.dp)
                             )
                         }
                     }
@@ -978,7 +835,7 @@ private fun HeroMatchSliderContent(
                     Text(
                         text = item.awayTeam.ifBlank { "الفريق الضيف" },
                         style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = Color.White
                         ),
                         textAlign = TextAlign.Center,
@@ -988,62 +845,48 @@ private fun HeroMatchSliderContent(
                 }
             }
 
-            // Bottom Bar: Commentator / Channel & Watch Button
+            // Bottom Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Channel & Commentator info
                 val detailsText = listOfNotNull(
-                    item.channelName.takeIf { it.isNotBlank() }?.let { "📺 $it" },
-                    item.commentator.takeIf { it.isNotBlank() }?.let { "🎤 $it" }
+                    item.channelName.takeIf { it.isNotBlank() },
+                    item.commentator.takeIf { it.isNotBlank() }
                 ).joinToString(" • ")
 
-                if (detailsText.isNotBlank()) {
-                    Text(
-                        text = detailsText,
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = Color(0xFFCBD5E1),
-                            fontWeight = FontWeight.Medium
-                        ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
-                } else {
-                    Spacer(modifier = Modifier.width(4.dp))
-                }
+                Text(
+                    text = detailsText,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = SaribTextSecondary
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
 
-                // Watch Button
                 Box(
                     modifier = Modifier
                         .testTag("match_watch_button")
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(SaribElectricBlue, SaribCyanAccent)
-                            )
-                        )
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SaribElectricBlue)
                         .clickable { onWatchClick() }
-                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
                             contentDescription = null,
                             tint = Color.White,
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(15.dp)
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = if (item.isLive) "مشاهدة البث" else "تفاصيل المباراة",
-                            style = MaterialTheme.typography.labelMedium.copy(
+                            text = if (item.isLive) "مشاهدة" else "التفاصيل",
+                            style = MaterialTheme.typography.labelSmall.copy(
                                 color = Color.White,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.SemiBold
                             )
                         )
                     }
@@ -1053,9 +896,6 @@ private fun HeroMatchSliderContent(
     }
 }
 
-/**
- * High-performance, lifecycle-safe Video Auto-Play background composable for HeroSlider.
- */
 @Composable
 fun HeroSliderVideoBackground(
     streamUrl: String,
@@ -1073,7 +913,7 @@ fun HeroSliderVideoBackground(
 
     LaunchedEffect(streamUrl, isActive) {
         if (isActive && streamUrl.isNotBlank()) {
-            delay(3500) // Stay on high-res poster smoothly before auto-playing
+            delay(3500)
             if (!isActive) return@LaunchedEffect
             try {
                 val player = ExoPlayer.Builder(context).build().apply {
@@ -1176,58 +1016,44 @@ fun MainCategoriesRoundGrid(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         items.forEach { (title, icon, route) ->
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+            Surface(
                 modifier = Modifier
+                    .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
                     .clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
-                    ) { onCategoryClick(route) }
-                    .padding(2.dp)
+                    ) { onCategoryClick(route) },
+                color = SaribCardBg,
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, SaribCardBorderSubtle)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(50.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.linearGradient(
-                                listOf(SaribCardBgSecondary, SaribCardBg)
-                            )
-                        )
-                        .border(1.5.dp, SaribElectricBlue.copy(alpha = 0.6f), CircleShape),
-                    contentAlignment = Alignment.Center
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(34.dp)
-                            .clip(CircleShape)
-                            .background(SaribElectricBlue.copy(alpha = 0.2f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = title,
-                            tint = SaribCyanAccent,
-                            modifier = Modifier.size(22.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(5.dp))
-
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = SaribTextPrimary,
-                        fontWeight = FontWeight.Bold
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        tint = SaribCyanAccent,
+                        modifier = Modifier.size(22.dp)
                     )
-                )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = SaribTextPrimary,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
             }
         }
     }
@@ -1246,55 +1072,35 @@ fun SectionHeader(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Right side (RTL Start): Blue vertical line & Section Title
-        Row(
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .width(4.dp)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(SaribCyanAccent)
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = SaribTextPrimary
             )
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = SaribTextPrimary
-                )
-            )
-        }
+        )
 
-        // Left side: View All Pill Button
-        Box(
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .clip(RoundedCornerShape(14.dp))
-                .background(SaribCardBg)
-                .border(1.dp, SaribCardBorder, RoundedCornerShape(14.dp))
+                .clip(RoundedCornerShape(8.dp))
                 .clickable { onViewAllClick() }
-                .padding(horizontal = 12.dp, vertical = 5.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = SaribCyanAccent,
-                    modifier = Modifier.size(14.dp)
+            Text(
+                text = stringResource(id = R.string.view_all),
+                style = MaterialTheme.typography.labelMedium.copy(
+                    color = SaribCyanAccent,
+                    fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = stringResource(id = R.string.view_all),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = SaribCyanAccent,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                )
-            }
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                contentDescription = null,
+                tint = SaribCyanAccent,
+                modifier = Modifier.size(14.dp)
+            )
         }
     }
 }
@@ -1308,10 +1114,11 @@ fun ChannelCardItem(
 ) {
     Card(
         modifier = modifier
-            .width(115.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .border(1.dp, SaribCardBorder, RoundedCornerShape(18.dp))
+            .width(110.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(14.dp))
             .clickable { onClick(channel) },
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = SaribCardBg)
     ) {
         Column(
@@ -1320,13 +1127,11 @@ fun ChannelCardItem(
                 .padding(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Channel Logo Box
             Box(
                 modifier = Modifier
-                    .size(76.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(Color(0xFF09111E))
-                    .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(14.dp)),
+                    .size(72.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(SaribDarkSurface),
                 contentAlignment = Alignment.Center
             ) {
                 if (channel.logoUrl.isNotBlank()) {
@@ -1336,49 +1141,32 @@ fun ChannelCardItem(
                         contentScale = ContentScale.Fit,
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(6.dp)
+                            .padding(8.dp)
                     )
                 } else {
-                    // Stylized Fallback Channel Logo
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Tv,
-                            contentDescription = null,
-                            tint = SaribCyanAccent,
-                            modifier = Modifier.size(28.dp)
-                        )
-                        Text(
-                            text = if (channel.name.contains("beIN", ignoreCase = true)) "beIN"
-                            else if (channel.name.contains("MBC", ignoreCase = true)) "MBC"
-                            else if (channel.name.contains("SSC", ignoreCase = true)) "SSC"
-                            else "TV",
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White,
-                                fontWeight = FontWeight.Black
-                            )
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Tv,
+                        contentDescription = null,
+                        tint = SaribTextSecondary,
+                        modifier = Modifier.size(26.dp)
+                    )
                 }
 
-                // Favorite Toggle Button (Top-Right)
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .padding(2.dp)
-                        .size(24.dp)
+                        .padding(3.dp)
+                        .size(22.dp)
                         .clip(CircleShape)
-                        .background(Color(0xAA000000))
+                        .background(Color(0x88000000))
                         .clickable { onFavoriteToggle(channel) },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = if (channel.isFavorite) Icons.Filled.Favorite else Icons.Default.FavoriteBorder,
                         contentDescription = "المفضلة",
-                        tint = if (channel.isFavorite) Color(0xFFFF2A4B) else Color.White,
-                        modifier = Modifier.size(14.dp)
+                        tint = if (channel.isFavorite) SaribLiveRed else Color.White,
+                        modifier = Modifier.size(13.dp)
                     )
                 }
             }
@@ -1388,7 +1176,7 @@ fun ChannelCardItem(
             Text(
                 text = channel.name,
                 style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Medium,
                     color = SaribTextPrimary
                 ),
                 maxLines = 1,
@@ -1410,11 +1198,11 @@ fun MatchCardItem(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(22.dp))
+            .clip(RoundedCornerShape(14.dp))
             .border(
-                width = if (isFocused || match.isLive) 1.5.dp else 1.dp,
-                color = if (isFocused) SaribCyanAccent else if (match.isLive) SaribLiveRed.copy(alpha = 0.5f) else SaribCardBorder,
-                shape = RoundedCornerShape(22.dp)
+                width = 1.dp,
+                color = if (isFocused) SaribCyanAccent else if (match.isLive) SaribLiveRed.copy(alpha = 0.4f) else SaribCardBorderSubtle,
+                shape = RoundedCornerShape(14.dp)
             )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
@@ -1433,6 +1221,7 @@ fun MatchCardItem(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
             ) { onClick(match) },
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isFocused) SaribCardBgSecondary else SaribCardBg
         )
@@ -1440,23 +1229,14 @@ fun MatchCardItem(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            if (match.isLive) Color(0xFF16243A) else Color(0xFF131D2E),
-                            Color(0xFF0C1322)
-                        )
-                    )
-                )
                 .padding(14.dp)
         ) {
-            // Header Row: Tournament badge + Status badge
+            // Top Row: League & Status
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // League Name & Icon
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f, fill = false)
@@ -1465,78 +1245,52 @@ fun MatchCardItem(
                         AsyncImage(
                             model = match.leagueIconUrl,
                             contentDescription = match.leagueName,
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(16.dp),
                             contentScale = ContentScale.Fit
                         )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(SaribCyanAccent)
-                        )
+                        Spacer(modifier = Modifier.width(6.dp))
                     }
-                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         text = match.leagueName.ifBlank { "مباريات اليوم" },
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = SaribCyanAccent,
-                            fontWeight = FontWeight.Bold
+                            color = SaribTextSecondary,
+                            fontWeight = FontWeight.Medium
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                // Match Status Pill
                 if (match.isLive) {
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(SaribLiveRed.copy(alpha = 0.25f))
-                            .border(1.dp, SaribLiveRed, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 9.dp, vertical = 3.dp)
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(6.dp)
-                                    .clip(CircleShape)
-                                    .background(SaribLiveRed)
-                            )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Text(
-                                text = "مباشر LIVE",
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = SaribLiveRed,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 10.sp
-                                )
-                            )
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(Color(0x33000000))
-                            .border(0.5.dp, Color(0x33FFFFFF), RoundedCornerShape(10.dp))
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(SaribLiveRed.copy(alpha = 0.15f))
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = if (match.status.isNotBlank() && !match.status.contains("-")) match.status else match.matchDate.ifBlank { "لم تبدأ بعد" },
+                            text = "مباشر",
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = SaribTextMuted,
+                                color = SaribLiveRed,
+                                fontWeight = FontWeight.SemiBold,
                                 fontSize = 10.sp
                             )
                         )
                     }
+                } else {
+                    Text(
+                        text = if (match.status.isNotBlank() && !match.status.contains("-")) match.status else match.matchDate.ifBlank { "لم تبدأ" },
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = SaribTextMuted,
+                            fontSize = 11.sp
+                        )
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Teams & Score Center
+            // Middle Teams & Score/Time
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -1547,38 +1301,35 @@ fun MatchCardItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.weight(1f)
                 ) {
-                    if (match.homeLogoUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = match.homeLogoUrl,
-                            contentDescription = match.homeTeam,
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF1B263B)),
-                            contentScale = ContentScale.Fit
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF1B263B)),
-                            contentAlignment = Alignment.Center
-                        ) {
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(SaribDarkSurface),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (match.homeLogoUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = match.homeLogoUrl,
+                                contentDescription = match.homeTeam,
+                                modifier = Modifier.size(26.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        } else {
                             Text(
                                 text = match.homeTeam.take(1),
-                                style = MaterialTheme.typography.titleMedium.copy(
+                                style = MaterialTheme.typography.labelLarge.copy(
                                     color = SaribCyanAccent,
                                     fontWeight = FontWeight.Bold
                                 )
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = match.homeTeam,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = SaribTextPrimary
                         ),
                         maxLines = 1,
@@ -1586,18 +1337,13 @@ fun MatchCardItem(
                     )
                 }
 
-                // Middle Score / Time Capsule
+                // Score / Time Pill
                 Box(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color(0xFF182338), Color(0xFF0F1829))
-                            )
-                        )
-                        .border(1.dp, if (match.isLive) SaribCyanAccent.copy(alpha = 0.5f) else SaribCardBorderSubtle, RoundedCornerShape(14.dp))
-                        .padding(horizontal = 14.dp, vertical = 6.dp),
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(SaribDarkSurface)
+                        .padding(horizontal = 12.dp, vertical = 5.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     val scoreOrTime = if (match.isLive || match.status.contains("-") || match.homeScore > 0 || match.awayScore > 0) {
@@ -1609,9 +1355,8 @@ fun MatchCardItem(
                     Text(
                         text = scoreOrTime,
                         style = MaterialTheme.typography.labelLarge.copy(
-                            color = if (match.isLive) SaribCyanAccent else Color.White,
-                            fontWeight = FontWeight.Black,
-                            fontSize = 14.sp
+                            color = if (match.isLive) SaribCyanAccent else SaribTextPrimary,
+                            fontWeight = FontWeight.Bold
                         )
                     )
                 }
@@ -1625,34 +1370,31 @@ fun MatchCardItem(
                     Text(
                         text = match.awayTeam,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.SemiBold,
                             color = SaribTextPrimary
                         ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    if (match.awayLogoUrl.isNotBlank()) {
-                        AsyncImage(
-                            model = match.awayLogoUrl,
-                            contentDescription = match.awayTeam,
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF1B263B)),
-                            contentScale = ContentScale.Fit
-                        )
-                    } else {
-                        Box(
-                            modifier = Modifier
-                                .size(38.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF1B263B)),
-                            contentAlignment = Alignment.Center
-                        ) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(34.dp)
+                            .clip(CircleShape)
+                            .background(SaribDarkSurface),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (match.awayLogoUrl.isNotBlank()) {
+                            AsyncImage(
+                                model = match.awayLogoUrl,
+                                contentDescription = match.awayTeam,
+                                modifier = Modifier.size(26.dp),
+                                contentScale = ContentScale.Fit
+                            )
+                        } else {
                             Text(
                                 text = match.awayTeam.take(1),
-                                style = MaterialTheme.typography.titleMedium.copy(
+                                style = MaterialTheme.typography.labelLarge.copy(
                                     color = SaribElectricBlue,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -1662,16 +1404,14 @@ fun MatchCardItem(
                 }
             }
 
-            // Bottom Metadata: Stadium, Channel, Commentator
-            if (match.channelName.isNotBlank() || match.commentator.isNotBlank() || match.stadium.isNotBlank()) {
+            // Bottom Metadata
+            if (match.channelName.isNotBlank() || match.commentator.isNotBlank()) {
                 Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = SaribCardBorderSubtle, thickness = 0.5.dp)
+                Spacer(modifier = Modifier.height(8.dp))
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0x22000000))
-                        .padding(horizontal = 8.dp, vertical = 5.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (match.channelName.isNotBlank()) {
@@ -1679,7 +1419,7 @@ fun MatchCardItem(
                             Icon(
                                 imageVector = Icons.Default.Tv,
                                 contentDescription = null,
-                                tint = SaribCyanAccent,
+                                tint = SaribTextMuted,
                                 modifier = Modifier.size(13.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
@@ -1699,7 +1439,7 @@ fun MatchCardItem(
                             Icon(
                                 imageVector = Icons.Default.VolumeUp,
                                 contentDescription = null,
-                                tint = SaribCyanAccent,
+                                tint = SaribTextMuted,
                                 modifier = Modifier.size(13.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
@@ -1710,27 +1450,6 @@ fun MatchCardItem(
                                     fontSize = 11.sp
                                 ),
                                 maxLines = 1
-                            )
-                        }
-                    }
-
-                    if (match.stadium.isNotBlank()) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.SportsSoccer,
-                                contentDescription = null,
-                                tint = SaribCyanAccent,
-                                modifier = Modifier.size(13.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = match.stadium,
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    color = SaribTextMuted,
-                                    fontSize = 10.sp
-                                ),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -1752,12 +1471,12 @@ fun MediaCardItem(
 
     Card(
         modifier = modifier
-            .width(135.dp)
-            .clip(RoundedCornerShape(18.dp))
+            .width(130.dp)
+            .clip(RoundedCornerShape(12.dp))
             .border(
-                width = if (isFocused) 2.dp else 1.dp,
-                color = if (isFocused) SaribCyanAccent else SaribCardBorder,
-                shape = RoundedCornerShape(18.dp)
+                width = 1.dp,
+                color = if (isFocused) SaribCyanAccent else SaribCardBorderSubtle,
+                shape = RoundedCornerShape(12.dp)
             )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
@@ -1776,6 +1495,7 @@ fun MediaCardItem(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
             ) { onClick(item) },
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isFocused) SaribCardBgSecondary else SaribCardBg
         )
@@ -1784,8 +1504,8 @@ fun MediaCardItem(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(185.dp)
-                    .background(Color(0xFF111E30))
+                    .height(175.dp)
+                    .background(SaribDarkSurface)
             ) {
                 if (displayImageUrl.isNotBlank()) {
                     AsyncImage(
@@ -1803,7 +1523,6 @@ fun MediaCardItem(
                     )
                 }
 
-                // Top Badges (Rank or Quality)
                 if (item.isTop) {
                     val badgeColor = when (item.topRank) {
                         "01" -> SaribTop01
@@ -1822,8 +1541,8 @@ fun MediaCardItem(
                             text = "TOP ${item.topRank}",
                             style = MaterialTheme.typography.labelSmall.copy(
                                 color = Color.White,
-                                fontWeight = FontWeight.Black,
-                                fontSize = 10.sp
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 9.sp
                             )
                         )
                     }
@@ -1833,7 +1552,7 @@ fun MediaCardItem(
                             .align(Alignment.TopEnd)
                             .padding(6.dp)
                             .clip(RoundedCornerShape(6.dp))
-                            .background(Color(0xCC000000))
+                            .background(Color(0xBB000000))
                             .padding(horizontal = 5.dp, vertical = 2.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -1843,7 +1562,7 @@ fun MediaCardItem(
                                 text = item.rating,
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     color = SaribGoldRating,
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.SemiBold,
                                     fontSize = 10.sp
                                 )
                             )
@@ -1851,73 +1570,52 @@ fun MediaCardItem(
                     }
                 }
 
-                // Favorite Toggle Button (Top-Start)
                 if (onFavoriteToggle != null) {
                     Box(
                         modifier = Modifier
                             .align(Alignment.TopStart)
                             .padding(6.dp)
-                            .size(28.dp)
+                            .size(26.dp)
                             .clip(CircleShape)
-                            .background(Color(0xAA000000))
+                            .background(Color(0x99000000))
                             .clickable { onFavoriteToggle(item) },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = if (item.isFavorite) Icons.Filled.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "المفضلة",
-                            tint = if (item.isFavorite) Color(0xFFFF2A4B) else Color.White,
-                            modifier = Modifier.size(16.dp)
+                            tint = if (item.isFavorite) SaribLiveRed else Color.White,
+                            modifier = Modifier.size(14.dp)
                         )
                     }
                 }
+            }
 
-                // Year or Category Badge (Bottom-Start inside poster)
-                if (item.year.isNotBlank()) {
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(start = 6.dp, bottom = 28.dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color(0x99000000))
-                            .padding(horizontal = 4.dp, vertical = 1.dp)
-                    ) {
-                        Text(
-                            text = item.year,
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                color = SaribTextMuted,
-                                fontSize = 9.sp
-                            )
-                        )
-                    }
-                }
-
-                // Overlay gradient at bottom
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(Color.Transparent, Color(0x33000000), Color(0xEE070C14))
-                            )
-                        )
-                )
-
-                // Bottom title inside poster
+            // Clean Title Bar Below Poster
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp)
+            ) {
                 Text(
                     text = item.title,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = if (isFocused) SaribCyanAccent else Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        color = if (isFocused) SaribCyanAccent else SaribTextPrimary,
+                        fontWeight = FontWeight.Medium
                     ),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(horizontal = 6.dp, vertical = 6.dp),
-                    textAlign = TextAlign.Center
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                if (item.year.isNotBlank()) {
+                    Text(
+                        text = item.year,
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = SaribTextMuted,
+                            fontSize = 10.sp
+                        ),
+                        maxLines = 1
+                    )
+                }
             }
         }
     }
@@ -1934,11 +1632,11 @@ fun LargeChannelCategoryCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(14.dp))
             .border(
-                width = if (isFocused) 2.dp else 1.dp,
-                color = if (isFocused) SaribCyanAccent else SaribCardBorder,
-                shape = RoundedCornerShape(20.dp)
+                width = 1.dp,
+                color = if (isFocused) SaribCyanAccent else SaribCardBorderSubtle,
+                shape = RoundedCornerShape(14.dp)
             )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
@@ -1957,69 +1655,49 @@ fun LargeChannelCategoryCard(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
             ) { onClick(category) },
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isFocused) SaribCardBgSecondary else SaribCardBg
         )
     ) {
-        Box(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(
-                    Brush.horizontalGradient(
-                        listOf(
-                            SaribCardBgSecondary,
-                            SaribCardBg
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(SaribDarkSurface),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = when (category.categoryType) {
+                            "sports" -> Icons.Default.SportsSoccer
+                            "movies" -> Icons.Default.Movie
+                            else -> Icons.Default.Tv
+                        },
+                        contentDescription = null,
+                        tint = SaribCyanAccent,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = category.name,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            color = SaribTextPrimary
                         )
                     )
-                )
-                .padding(horizontal = 16.dp, vertical = 14.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                // Icon & Title & Subtitle
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(46.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(
-                                Brush.linearGradient(
-                                    listOf(
-                                        SaribElectricBlue.copy(alpha = 0.3f),
-                                        Color(0xFF0F2440)
-                                    )
-                                )
-                            )
-                            .border(1.dp, SaribCyanAccent.copy(alpha = 0.5f), RoundedCornerShape(14.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            imageVector = when (category.categoryType) {
-                                "sports" -> Icons.Default.SportsSoccer
-                                "movies" -> Icons.Default.Movie
-                                else -> Icons.Default.Tv
-                            },
-                            contentDescription = null,
-                            tint = SaribCyanAccent,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(14.dp))
-
-                    Column {
-                        Text(
-                            text = category.name,
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = SaribTextPrimary
-                            )
-                        )
+                    if (category.subtitle.isNotBlank()) {
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
                             text = category.subtitle,
@@ -2029,15 +1707,14 @@ fun LargeChannelCategoryCard(
                         )
                     }
                 }
-
-                // Arrow
-                Icon(
-                    imageVector = Icons.Default.ChevronLeft,
-                    contentDescription = null,
-                    tint = SaribTextMuted,
-                    modifier = Modifier.size(24.dp)
-                )
             }
+
+            Icon(
+                imageVector = Icons.Default.ChevronLeft,
+                contentDescription = null,
+                tint = SaribTextMuted,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -2058,101 +1735,59 @@ fun SaribBottomNav(
     }
 
     val navBg = MaterialTheme.colorScheme.surface
-    val navSurfaceVariant = MaterialTheme.colorScheme.surfaceVariant
-    val borderColor = MaterialTheme.colorScheme.outline
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-            .shadow(4.dp, RoundedCornerShape(24.dp))
-            .clip(RoundedCornerShape(24.dp))
-            .border(
-                1.dp,
-                Brush.horizontalGradient(listOf(borderColor, SaribBlueGlow, borderColor)),
-                RoundedCornerShape(24.dp)
-            ),
+        modifier = modifier.fillMaxWidth(),
         color = navBg
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .background(
-                    Brush.verticalGradient(
-                        listOf(navBg, navSurfaceVariant)
-                    )
-                )
-                .padding(horizontal = 6.dp, vertical = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            items.forEach { (labelKey, icon, tabKey) ->
-                val label = com.example.data.local.tr(labelKey)
-                val isSelected = currentTab == tabKey
-                var isItemFocused by remember { mutableStateOf(false) }
+        Column {
+            HorizontalDivider(color = SaribCardBorderSubtle, thickness = 1.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items.forEach { (labelKey, icon, tabKey) ->
+                    val label = com.example.data.local.tr(labelKey)
+                    val isSelected = currentTab == tabKey
+                    var isItemFocused by remember { mutableStateOf(false) }
 
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .clip(RoundedCornerShape(18.dp))
-                        .background(
-                            when {
-                                isSelected -> SaribElectricBlue.copy(alpha = 0.35f)
-                                isItemFocused -> SaribElectricBlue.copy(alpha = 0.2f)
-                                else -> Color.Transparent
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .padding(vertical = 6.dp, horizontal = 4.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(
+                                when {
+                                    isSelected -> SaribElectricBlue.copy(alpha = 0.15f)
+                                    isItemFocused -> SaribElectricBlue.copy(alpha = 0.1f)
+                                    else -> Color.Transparent
+                                }
+                            )
+                            .onFocusChanged { isItemFocused = it.isFocused }
+                            .focusable()
+                            .onKeyEvent { keyEvent ->
+                                if (keyEvent.type == KeyEventType.KeyUp && (
+                                    keyEvent.key == Key.DirectionCenter ||
+                                    keyEvent.key == Key.Enter ||
+                                    keyEvent.key == Key.NumPadEnter ||
+                                    keyEvent.key == Key.ButtonA
+                                )) {
+                                    onTabSelected(tabKey)
+                                    true
+                                } else false
                             }
-                        )
-                        .border(
-                            width = if (isSelected || isItemFocused) 1.5.dp else 0.dp,
-                            color = if (isItemFocused) SaribCyanAccent else if (isSelected) SaribCyanAccent else Color.Transparent,
-                            shape = RoundedCornerShape(18.dp)
-                        )
-                        .onFocusChanged { isItemFocused = it.isFocused }
-                        .focusable()
-                        .onKeyEvent { keyEvent ->
-                            if (keyEvent.type == KeyEventType.KeyUp && (
-                                keyEvent.key == Key.DirectionCenter ||
-                                keyEvent.key == Key.Enter ||
-                                keyEvent.key == Key.NumPadEnter ||
-                                keyEvent.key == Key.ButtonA
-                            )) {
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
+                            ) {
                                 onTabSelected(tabKey)
-                                true
-                            } else false
-                        }
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
-                        ) {
-                            onTabSelected(tabKey)
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    if (isSelected) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(horizontal = 6.dp)
-                        ) {
-                            Icon(
-                                imageVector = icon,
-                                contentDescription = label,
-                                tint = SaribCyanAccent,
-                                modifier = Modifier.size(19.dp)
-                            )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            Text(
-                                text = label,
-                                style = MaterialTheme.typography.labelMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 12.sp
-                                ),
-                                maxLines = 1
-                            )
-                        }
-                    } else {
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
@@ -2160,15 +1795,16 @@ fun SaribBottomNav(
                             Icon(
                                 imageVector = icon,
                                 contentDescription = label,
-                                tint = if (isItemFocused) SaribCyanAccent else SaribTextMuted,
+                                tint = if (isSelected || isItemFocused) SaribCyanAccent else SaribTextMuted,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.labelSmall.copy(
-                                    color = if (isItemFocused) SaribCyanAccent else SaribTextMuted,
-                                    fontSize = 10.sp
+                                    color = if (isSelected || isItemFocused) SaribCyanAccent else SaribTextMuted,
+                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                    fontSize = 11.sp
                                 ),
                                 maxLines = 1
                             )
@@ -2183,21 +1819,21 @@ fun SaribBottomNav(
 @Composable
 fun ActionButtonCard(
     title: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     onClick: () -> Unit,
     isActive: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var isFocused by remember { mutableStateOf(false) }
 
-    androidx.compose.material3.Card(
+    Card(
         modifier = modifier
-            .height(58.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .height(48.dp)
+            .clip(RoundedCornerShape(12.dp))
             .border(
-                width = if (isFocused) 2.dp else 1.dp,
-                color = if (isFocused || isActive) SaribCyanAccent else SaribCardBorder,
-                shape = RoundedCornerShape(16.dp)
+                width = 1.dp,
+                color = if (isFocused || isActive) SaribCyanAccent else SaribCardBorderSubtle,
+                shape = RoundedCornerShape(12.dp)
             )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
@@ -2216,14 +1852,15 @@ fun ActionButtonCard(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = androidx.compose.material3.ripple(bounded = true, color = SaribCyanAccent)
             ) { onClick() },
-        colors = androidx.compose.material3.CardDefaults.cardColors(
-            containerColor = if (isFocused) SaribCardBgSecondary else if (isActive) SaribElectricBlue.copy(alpha = 0.15f) else SaribCardBg
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isFocused || isActive) SaribElectricBlue.copy(alpha = 0.15f) else SaribCardBg
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
@@ -2231,17 +1868,18 @@ fun ActionButtonCard(
                 imageVector = icon,
                 contentDescription = title,
                 tint = if (isFocused || isActive) SaribCyanAccent else SaribTextSecondary,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp)
             )
-            Spacer(modifier = Modifier.width(8.dp))
+            Spacer(modifier = Modifier.width(6.dp))
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium.copy(
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Medium,
                     color = if (isFocused || isActive) SaribCyanAccent else SaribTextPrimary
-                )
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
         }
     }
 }
-

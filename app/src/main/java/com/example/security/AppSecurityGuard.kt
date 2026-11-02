@@ -66,30 +66,11 @@ object AppSecurityGuard {
                 }
             }
 
-            // Check if device is TV (avoid false positives from TV virtual interfaces / Wi-Fi direct)
-            val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as? android.app.UiModeManager
-            val isTv = uiModeManager?.currentModeType == android.content.res.Configuration.UI_MODE_TYPE_TELEVISION
-                    || context.packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_LEANBACK)
-
-            if (!isTv) {
-                // Check for explicit VPN network interfaces with active routable addresses
-                val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
-                for (intf in interfaces) {
-                    if (!intf.isUp || intf.isLoopback) continue
-                    val name = intf.name.lowercase()
-                    if (name.contains("p2p") || name.contains("wlan") || name.contains("eth") || name.contains("dummy")) continue
-                    if (name.startsWith("tun") ||
-                        name.startsWith("ppp") ||
-                        name.startsWith("wg") ||
-                        name.startsWith("utun") ||
-                        (name.contains("vpn") && !name.contains("p2p"))
-                    ) {
-                        val addrs = Collections.list(intf.inetAddresses)
-                        if (addrs.any { !it.isLoopbackAddress && !it.isLinkLocalAddress }) {
-                            return true
-                        }
-                    }
-                }
+            // Quick check for system proxy
+            val proxyHost = System.getProperty("http.proxyHost")
+            val proxyPort = System.getProperty("http.proxyPort")
+            if (!proxyHost.isNullOrBlank() && !proxyPort.isNullOrBlank()) {
+                return true
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error checking VPN/Proxy status: ${e.message}")

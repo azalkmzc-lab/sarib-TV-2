@@ -215,6 +215,9 @@ data class NewsArticle(
 
 data class MatchStreamOverride(
     val matchKey: String = "", // match_1, match_2, id, or team names
+    val matchId: String = "",
+    val homeLogo: String = "",
+    val awayLogo: String = "",
     val streamUrl: String = "",
     val server1: String = "",
     val server2: String = "",
@@ -224,7 +227,26 @@ data class MatchStreamOverride(
     val commentator: String = "",
     val channelName: String = "",
     val status: String = "",
+    val statusMode: String = "auto", // "auto" or "manual"
+    val manualStatus: String = "not_started", // "not_started", "live", "ended"
+    val durationMinutes: Int = 120,
     val isEnabled: Boolean = true
+)
+
+data class PopupConfig(
+    val isEnabled: Boolean = false,
+    val title: String = "",
+    val image: String = "",
+    val message: String = "",
+    val buttonText: String = "",
+    val buttonUrl: String = ""
+)
+
+data class AppControlConfig(
+    val isMaintenance: Boolean = false,
+    val maintenanceMessage: String = "",
+    val minVersion: Int = 0,
+    val updateUrl: String = ""
 )
 
 data class MediaItem(

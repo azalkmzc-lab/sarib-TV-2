@@ -180,6 +180,14 @@ class SaribRepository(private val context: Context) {
             // 4. Quick Non-Blocking Light-Sync for Splash Screen (Instant Entry < 300ms)
             // Launch progressive streaming sync in background immediately
             kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                // Preload matches for all 3 days in background so yesterday, today, tomorrow are instantly available
+                try {
+                    fetchMatchesForDay(0)
+                    fetchMatchesForDay(-1)
+                    fetchMatchesForDay(1)
+                } catch (e: Exception) {
+                    Log.w("SaribRepository", "Preload matches note: ${e.message}")
+                }
                 syncAllContentInBackground(force = false)
             }
 
@@ -732,19 +740,33 @@ class SaribRepository(private val context: Context) {
                     matches.addAll(dayMatches)
                 }
 
-                // Also check if remote jsonUrl has matches matching this date
+                // Also check if remote jsonUrl or bundled asset has matches matching this date
                 val firebaseJsonUrl = firebaseStreamManager.fetchMatchesJsonUrlFromFirebase()
                 val jsonUrl = firebaseJsonUrl.ifBlank { currentRemoteConfig.matchesJsonUrl }
+                val extraMatches = mutableListOf<MatchItem>()
                 if (jsonUrl.isNotBlank()) {
                     try {
-                        val urlMatches = matchesClient.fetchMatchesFromUrl(jsonUrl)
-                        val matchingDate = urlMatches.filter { it.matchDate == targetDateStr }
-                        if (matchingDate.isNotEmpty()) {
-                            matches.addAll(matchingDate)
-                        }
+                        extraMatches.addAll(matchesClient.fetchMatchesFromUrl(jsonUrl))
                     } catch (e: Exception) {
                         Log.w("SaribRepository", "Date-specific jsonUrl fetch note: ${e.message}")
                     }
+                }
+                if (extraMatches.isEmpty()) {
+                    try {
+                        val assetJson = context.assets.open("data.json").bufferedReader().use { it.readText() }
+                        extraMatches.addAll(matchesClient.parseMatchesJson(assetJson))
+                    } catch (e: Exception) {
+                        // ignore asset note
+                    }
+                }
+
+                val matchingDate = extraMatches.filter {
+                    it.matchDate == targetDateStr ||
+                    (dayOffset == -1 && (it.id.startsWith("yesterday") || it.matchDate.contains("أمس") || it.matchDate.contains("yesterday", ignoreCase = true))) ||
+                    (dayOffset == 1 && (it.id.startsWith("tomorrow") || it.matchDate.contains("غد") || it.matchDate.contains("tomorrow", ignoreCase = true)))
+                }
+                if (matchingDate.isNotEmpty()) {
+                    matches.addAll(matchingDate)
                 }
             }
 
@@ -1110,8 +1132,59 @@ class SaribRepository(private val context: Context) {
                     dao.insertCategories(categories.map { it.toEntity() })
                 }
             }
+
+            // Immediately seed matches from assets/data.json for instant 0ms startup
+            val matchesCount = dao.getAllMatchesList().size
+            if (matchesCount == 0) {
+                try {
+                    val assetJson = context.assets.open("data.json").bufferedReader().use { it.readText() }
+                    val assetMatches = matchesClient.parseMatchesJson(assetJson)
+                    if (assetMatches.isNotEmpty()) {
+                        dao.insertMatches(assetMatches.map { it.toEntity() })
+                    }
+                } catch (e: Exception) {
+                    Log.w("SaribRepository", "Initial matches load note: ${e.message}")
+                }
+            }
         } catch (e: Exception) {
             Log.w("SaribRepository", "Initial channels load note: ${e.message}")
+        }
+    }
+
+    suspend fun getCachedChannelsForCategory(categoryId: String, categoryName: String): List<ChannelItem> = withContext(Dispatchers.IO) {
+        try {
+            if (categoryId.isBlank() || categoryId == "all" || categoryId == "custom") {
+                return@withContext dao.getAllChannelsList().map { it.toModel() }
+            }
+            val list = dao.getChannelsListByCategory(categoryId)
+            if (list.isNotEmpty()) return@withContext list.map { it.toModel() }
+            val cleanCatName = categoryName.trim()
+            if (cleanCatName.isNotBlank()) {
+                val byName = dao.getChannelsByCategoryOrName(categoryId, cleanCatName)
+                if (byName.isNotEmpty()) return@withContext byName.map { it.toModel() }
+            }
+        } catch (e: Exception) {
+            Log.w("SaribRepository", "Error getting cached channels: ${e.message}")
+        }
+        emptyList()
+    }
+
+    suspend fun getCachedMediaForCategory(categoryId: String?, isSeries: Boolean): List<MediaItem> = withContext(Dispatchers.IO) {
+        try {
+            val type = if (isSeries) "SERIES" else "MOVIE"
+            val cleanCatId = categoryId?.removePrefix("vod_")?.removePrefix("series_")?.removePrefix("m3u_mov_cat_") ?: ""
+            val local = dao.getMediaListByType(type)
+            if (categoryId.isNullOrBlank() || categoryId == "all" || categoryId == "all_movies" || categoryId == "all_series") {
+                return@withContext local.map { it.toModel() }
+            }
+            local.filter {
+                it.genre.equals(categoryId, ignoreCase = true) ||
+                (cleanCatId.isNotBlank() && it.genre.equals(cleanCatId, ignoreCase = true)) ||
+                it.id.startsWith("m3u_mov_cat_${cleanCatId}_")
+            }.map { it.toModel() }
+        } catch (e: Exception) {
+            Log.w("SaribRepository", "Error getting cached media: ${e.message}")
+            emptyList()
         }
     }
 

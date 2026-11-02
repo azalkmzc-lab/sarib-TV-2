@@ -245,8 +245,8 @@ fun MediaCategoryDetailScreen(
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             )
 
-            if (isLoading) {
-                // Stylish Loading Indicator
+            if (isLoading && filteredMedia.isEmpty()) {
+                // Stylish Loading Indicator when no items loaded yet
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -314,105 +314,115 @@ fun MediaCategoryDetailScreen(
                         }
                     }
                 }
-            } else if (isGridView) {
-                // Grid of posters
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 110.dp),
-                    contentPadding = PaddingValues(14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(filteredMedia, key = { it.id }, contentType = { "media_grid" }) { item ->
-                        MediaCardItem(
-                            item = item,
-                            onClick = onMediaClick,
-                            onFavoriteToggle = onFavoriteToggle,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-                }
             } else {
-                // List of items
-                LazyColumn(
-                    contentPadding = PaddingValues(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(filteredMedia, key = { it.id }, contentType = { "media_list" }) { item ->
-                        val displayImageUrl = item.posterUrl.ifBlank { item.backdropUrl }
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .border(1.dp, SaribCardBorder, RoundedCornerShape(16.dp))
-                                .clickable { onMediaClick(item) },
-                            colors = CardDefaults.cardColors(containerColor = SaribCardBg)
-                        ) {
-                            Row(
+                // Sleek non-blocking progress indicator if streaming more items in background
+                if (isLoading) {
+                    androidx.compose.material3.LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth().height(3.dp),
+                        color = SaribCyanAccent,
+                        trackColor = Color.Transparent
+                    )
+                }
+
+                if (isGridView) {
+                    // Grid of posters
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 110.dp),
+                        contentPadding = PaddingValues(14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(filteredMedia, key = { it.id }, contentType = { "media_grid" }) { item ->
+                            MediaCardItem(
+                                item = item,
+                                onClick = onMediaClick,
+                                onFavoriteToggle = onFavoriteToggle,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                } else {
+                    // List of items
+                    LazyColumn(
+                        contentPadding = PaddingValues(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(filteredMedia, key = { it.id }, contentType = { "media_list" }) { item ->
+                            val displayImageUrl = item.posterUrl.ifBlank { item.backdropUrl }
+                            Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .border(1.dp, SaribCardBorder, RoundedCornerShape(16.dp))
+                                    .clickable { onMediaClick(item) },
+                                colors = CardDefaults.cardColors(containerColor = SaribCardBg)
                             ) {
                                 Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(10.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(width = 54.dp, height = 72.dp)
-                                            .clip(RoundedCornerShape(10.dp))
-                                            .background(Color(0xFF09111E)),
-                                        contentAlignment = Alignment.Center
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        if (displayImageUrl.isNotBlank()) {
-                                            AsyncImage(
-                                                model = displayImageUrl,
-                                                contentDescription = item.title,
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier.fillMaxSize()
-                                            )
-                                        } else {
-                                            Icon(
-                                                imageVector = if (item.type == ContentType.SERIES) Icons.Default.Tv else Icons.Default.Movie,
-                                                contentDescription = null,
-                                                tint = SaribCyanAccent,
-                                                modifier = Modifier.size(24.dp)
-                                            )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(width = 54.dp, height = 72.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(Color(0xFF09111E)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (displayImageUrl.isNotBlank()) {
+                                                AsyncImage(
+                                                    model = displayImageUrl,
+                                                    contentDescription = item.title,
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
+                                            } else {
+                                                Icon(
+                                                    imageVector = if (item.type == ContentType.SERIES) Icons.Default.Tv else Icons.Default.Movie,
+                                                    contentDescription = null,
+                                                    tint = SaribCyanAccent,
+                                                    modifier = Modifier.size(24.dp)
+                                                )
+                                            }
                                         }
-                                    }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text(
-                                            text = item.title,
-                                            style = MaterialTheme.typography.labelLarge.copy(
-                                                color = SaribTextPrimary,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Spacer(modifier = Modifier.height(3.dp))
-                                        Text(
-                                            text = "${item.year.ifBlank { "2024" }} • ${item.genre.ifBlank { "HD" }}",
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                color = SaribTextSecondary
-                                            )
-                                        )
-                                        if (item.rating.isNotBlank()) {
-                                            Spacer(modifier = Modifier.height(2.dp))
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column {
                                             Text(
-                                                text = "⭐ ${item.rating}",
-                                                style = MaterialTheme.typography.labelSmall.copy(
-                                                    color = SaribGoldRating,
+                                                text = item.title,
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    color = SaribTextPrimary,
                                                     fontWeight = FontWeight.Bold
+                                                ),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Spacer(modifier = Modifier.height(3.dp))
+                                            Text(
+                                                text = "${item.year.ifBlank { "2024" }} • ${item.genre.ifBlank { "HD" }}",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    color = SaribTextSecondary
                                                 )
                                             )
+                                            if (item.rating.isNotBlank()) {
+                                                Spacer(modifier = Modifier.height(2.dp))
+                                                Text(
+                                                    text = "⭐ ${item.rating}",
+                                                    style = MaterialTheme.typography.labelSmall.copy(
+                                                        color = SaribGoldRating,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                )
+                                            }
                                         }
                                     }
-                                }
 
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -481,4 +491,5 @@ fun MediaCategoryDetailScreen(
             }
         }
     }
+}
 }

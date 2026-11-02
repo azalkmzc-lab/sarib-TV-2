@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
@@ -80,42 +81,42 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val heroSliders: StateFlow<List<HeroBannerItem>> = repository.heroSliders
 
     val categories: StateFlow<List<ChannelCategory>> = repository.getAllCategories()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val entertainmentCategories: StateFlow<List<ChannelCategory>> = repository.getEntertainmentCategories()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val vodCategories: StateFlow<List<ChannelCategory>> = repository.getVodCategories()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val seriesCategories: StateFlow<List<ChannelCategory>> = repository.getSeriesCategories()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val mostWatchedChannels: StateFlow<List<ChannelItem>> = repository.getMostWatchedChannels()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val allChannels: StateFlow<List<ChannelItem>> = repository.getAllChannels()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val allMatches: StateFlow<List<MatchItem>> = repository.getAllMatches()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val newsList: StateFlow<List<NewsArticle>> = repository.newsList
 
     val featuredMovies: StateFlow<List<MediaItem>> = repository.getMediaByType(ContentType.MOVIE)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val featuredSeries: StateFlow<List<MediaItem>> = repository.getMediaByType(ContentType.SERIES)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val animePicks: StateFlow<List<MediaItem>> = repository.getMediaByType(ContentType.ANIME)
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val favorites: StateFlow<List<FavoriteEntity>> = repository.getFavorites()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     val watchHistory: StateFlow<List<com.example.data.local.WatchHistoryEntity>> = repository.getWatchHistory()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
     // Category Detail Screen State
     private val _selectedCategory = MutableStateFlow<ChannelCategory?>(null)
@@ -182,7 +183,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 if (_isVpnDetected.value != detected) {
                     _isVpnDetected.value = detected
                 }
-                delay(3000L) // Continuous 3-second check across the entire app
+                delay(30000L) // Scan every 30 seconds instead of 3s to completely eliminate CPU/UI freezes
             }
         }
     }
@@ -328,16 +329,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         _selectedCategory.value = category
-        _categoryChannels.value = emptyList()
         
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.CategoryDetail) {
             backStack.add(curr)
         }
         _currentScreen.value = AppScreen.CategoryDetail(category)
-        _isCategoryLoading.value = true
 
         viewModelScope.launch(Dispatchers.IO) {
+            // 1. Immediately show cached channels in 0ms so user never waits
+            val cached = repository.getCachedChannelsForCategory(category.id, category.name)
+            if (cached.isNotEmpty()) {
+                _categoryChannels.value = cached
+                _isCategoryLoading.value = false
+            } else {
+                _categoryChannels.value = emptyList()
+                _isCategoryLoading.value = true
+            }
+
+            // 2. Progressively fetch from network and stream in batches as they arrive
             try {
                 val channels = repository.getChannelsForCategoryOnDemand(
                     categoryId = category.id,
@@ -345,12 +355,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     forceRefresh = forceRefresh
                 ) { batch ->
                     if (batch.isNotEmpty()) {
-                        _categoryChannels.value = batch
+                        _categoryChannels.update { current ->
+                            (current + batch).distinctBy { it.id }
+                        }
                         _isCategoryLoading.value = false
                     }
                 }
                 if (channels.isNotEmpty()) {
-                    _categoryChannels.value = channels
+                    _categoryChannels.update { current ->
+                        (current + channels).distinctBy { it.id }
+                    }
                 }
             } catch (e: Exception) {
                 android.util.Log.w("MainViewModel", "Error fetching channels for ${category.name}: ${e.message}")
@@ -369,36 +383,51 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return
         }
         _selectedCategory.value = category
-        _categoryMediaList.value = emptyList()
 
         val curr = _currentScreen.value
         if (curr != AppScreen.Splash && curr !is AppScreen.MediaCategoryDetail) {
             backStack.add(curr)
         }
         _currentScreen.value = AppScreen.MediaCategoryDetail(category)
-        _isCategoryLoading.value = true
 
         val isSeries = category.categoryType == "series"
 
         viewModelScope.launch(Dispatchers.IO) {
+            // 1. Immediately show cached media in 0ms so user never waits
+            val cached = repository.getCachedMediaForCategory(category.id, isSeries)
+            if (cached.isNotEmpty()) {
+                _categoryMediaList.value = cached
+                _isCategoryLoading.value = false
+            } else {
+                _categoryMediaList.value = emptyList()
+                _isCategoryLoading.value = true
+            }
+
+            // 2. Progressively fetch and stream in batches as they arrive
             try {
                 val media = if (isSeries) {
                     repository.getSeriesForCategoryOnDemand(category.id) { batch ->
                         if (batch.isNotEmpty()) {
-                            _categoryMediaList.value = batch
+                            _categoryMediaList.update { current ->
+                                (current + batch).distinctBy { it.id }
+                            }
                             _isCategoryLoading.value = false
                         }
                     }
                 } else {
                     repository.getMoviesForCategoryOnDemand(category.id) { batch ->
                         if (batch.isNotEmpty()) {
-                            _categoryMediaList.value = batch
+                            _categoryMediaList.update { current ->
+                                (current + batch).distinctBy { it.id }
+                            }
                             _isCategoryLoading.value = false
                         }
                     }
                 }
                 if (media.isNotEmpty()) {
-                    _categoryMediaList.value = media
+                    _categoryMediaList.update { current ->
+                        (current + media).distinctBy { it.id }
+                    }
                 }
             } catch (e: Exception) {
                 android.util.Log.w("MainViewModel", "Error fetching media for ${category.name}: ${e.message}")

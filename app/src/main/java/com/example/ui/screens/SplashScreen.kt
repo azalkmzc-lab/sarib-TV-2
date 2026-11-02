@@ -1,12 +1,8 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,10 +14,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -30,14 +26,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.draw.scale
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
@@ -50,8 +41,6 @@ import com.example.R
 import com.example.data.local.tr
 import com.example.ui.components.SaribLoadingIndicator
 import com.example.ui.theme.SaribCardBg
-import com.example.ui.theme.SaribCardBgSecondary
-import com.example.ui.theme.SaribCardBorder
 import com.example.ui.theme.SaribCardBorderSubtle
 import com.example.ui.theme.SaribCyanAccent
 import com.example.ui.theme.SaribDarkBackground
@@ -68,218 +57,108 @@ fun SplashScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "splash_motion")
-    
-    // Single unified smooth cinematic poster movement (فقط واحد مش ثلاثة)
-    val singlePosterOffset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = -450f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(22000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "single_poster_scroll"
-    )
-
-    val pulseScale by infiniteTransition.animateFloat(
-        initialValue = 0.98f,
-        targetValue = 1.02f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1600, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "scale"
-    )
-
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(SaribDarkBackground)
+            .background(SaribDarkBackground),
+        contentAlignment = Alignment.Center
     ) {
-        // Single Unified Animated Poster Background (Covering full screen with slow continuous drift)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .scale(1.1f)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .offset(y = singlePosterOffset.dp)
-            ) {
-                repeat(4) {
-                    Image(
-                        painter = painterResource(id = R.drawable.splash_posters_bg),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(650.dp)
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            }
-        }
-
-        // Cinematic Translucent Glassmorphism Vignette (Allows posters to shine through the entire screen)
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(
-                            Color(0x99070C14),
-                            Color(0xBB070C14),
-                            Color(0xEE070C14)
-                        )
-                    )
-                )
-        )
-
-        // Subtle Radial Cyan Ambient Glow in Center
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            SaribCyanAccent.copy(alpha = 0.12f),
-                            Color.Transparent
-                        )
-                    )
-                )
-        )
-
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
+                .fillMaxWidth()
+                .widthIn(max = 360.dp)
+                .padding(horizontal = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Main SARIB TV Frosted Glass Card
+            // Clean, Simple Logo Container
             Surface(
-                modifier = Modifier
-                    .fillMaxWidth(0.88f)
-                    .scale(pulseScale)
-                    .shadow(36.dp, RoundedCornerShape(28.dp))
-                    .clip(RoundedCornerShape(28.dp))
-                    .border(
-                        1.5.dp,
-                        Brush.verticalGradient(
-                            listOf(SaribCyanAccent.copy(alpha = 0.8f), SaribCardBorder.copy(alpha = 0.4f))
-                        ),
-                        RoundedCornerShape(28.dp)
-                    ),
-                color = SaribCardBg.copy(alpha = 0.85f)
+                modifier = Modifier.size(88.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = SaribCardBg,
+                tonalElevation = 2.dp
             ) {
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.ic_sarib_logo),
+                    contentDescription = "SARIB TV",
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .background(
-                            Brush.verticalGradient(
-                                listOf(SaribCardBgSecondary.copy(alpha = 0.88f), SaribCardBg.copy(alpha = 0.92f))
-                            )
-                        )
-                        .padding(vertical = 32.dp, horizontal = 20.dp),
-                    contentAlignment = Alignment.Center
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(24.dp))
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Clean App Title
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "SARIB",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp,
+                        color = SaribTextPrimary
+                    )
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = "TV",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = SaribCyanAccent
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Text(
+                text = "منصة البث المباشر والترفيه",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = SaribTextSecondary,
+                    fontWeight = FontWeight.Normal
+                ),
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(modifier = Modifier.height(36.dp))
+
+            // Minimalist Loading or Error State
+            AnimatedVisibility(
+                visible = errorMessage == null,
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(SaribCardBg)
+                        .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(14.dp))
+                        .padding(horizontal = 20.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // Glowing Logo Emblem
-                        Box(
-                            modifier = Modifier
-                                .size(92.dp)
-                                .shadow(24.dp, CircleShape)
-                                .clip(CircleShape)
-                                .background(Color(0xFF060B12))
-                                .border(2.5.dp, SaribCyanAccent, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_sarib_logo),
-                                contentDescription = "SARIB TV",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(18.dp))
-
-                        // App Name
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "SARIB",
-                                style = MaterialTheme.typography.displayLarge.copy(
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 2.sp,
-                                    color = SaribTextPrimary
-                                )
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "TV",
-                                style = MaterialTheme.typography.displayLarge.copy(
-                                    fontWeight = FontWeight.Black,
-                                    color = SaribCyanAccent
-                                )
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(4.dp))
-
-                        Text(
-                            text = "منصة البث المباشر والترفيه الرقمي",
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                color = SaribTextSecondary,
-                                fontWeight = FontWeight.Medium
-                            )
+                    SaribLoadingIndicator(size = 20.dp)
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = tr("connecting"),
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            color = SaribTextSecondary,
+                            fontWeight = FontWeight.Medium
                         )
-                    }
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Loading / Status Card
-            if (errorMessage == null) {
+            if (errorMessage != null) {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxWidth(0.78f)
-                        .clip(RoundedCornerShape(20.dp))
-                        .border(1.dp, SaribCyanAccent.copy(alpha = 0.5f), RoundedCornerShape(20.dp)),
-                    color = SaribCardBg.copy(alpha = 0.88f)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .background(SaribCardBg.copy(alpha = 0.88f))
-                            .padding(horizontal = 20.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        SaribLoadingIndicator(
-                            size = 26.dp
-                        )
-                        Spacer(modifier = Modifier.width(14.dp))
-                        Text(
-                            text = tr("connecting"),
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                color = SaribTextPrimary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                    }
-                }
-            } else {
-                // Connection Error & Retry
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth(0.88f)
-                        .clip(RoundedCornerShape(20.dp))
-                        .border(1.dp, SaribLiveRed.copy(alpha = 0.7f), RoundedCornerShape(20.dp)),
-                    color = SaribCardBg.copy(alpha = 0.9f)
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    color = SaribCardBg,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, SaribCardBorderSubtle)
                 ) {
                     Column(
                         modifier = Modifier.padding(20.dp),
@@ -288,26 +167,29 @@ fun SplashScreen(
                         Text(
                             text = errorMessage,
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                color = SaribLiveRed,
+                                color = SaribTextSecondary,
                                 textAlign = TextAlign.Center
                             )
                         )
 
-                        Spacer(modifier = Modifier.height(14.dp))
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         Button(
                             onClick = onRetry,
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = SaribElectricBlue
                             ),
-                            shape = RoundedCornerShape(14.dp),
-                            modifier = Modifier.testTag("retry_button")
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .testTag("retry_button")
                         ) {
                             Text(
                                 text = tr("retry"),
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     color = Color.White,
-                                    fontWeight = FontWeight.Bold
+                                    fontWeight = FontWeight.SemiBold
                                 )
                             )
                         }

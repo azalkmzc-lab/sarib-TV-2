@@ -21,7 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.Card
@@ -35,22 +35,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.R
 import com.example.data.local.FavoriteEntity
-import com.example.data.local.tr
 import com.example.ui.components.SaribBottomNav
 import com.example.ui.components.SaribTopHeader
-import com.example.ui.theme.SaribBlueGlow
 import com.example.ui.theme.SaribCardBg
-import com.example.ui.theme.SaribCardBorder
+import com.example.ui.theme.SaribCardBorderSubtle
 import com.example.ui.theme.SaribCyanAccent
-import com.example.ui.theme.SaribDarkBackground
+import com.example.ui.theme.SaribDarkSurface
 import com.example.ui.theme.SaribElectricBlue
 import com.example.ui.theme.SaribLiveRed
 import com.example.ui.theme.SaribTextMuted
@@ -74,7 +70,6 @@ fun FavoritesScreen(
 ) {
     val content: @Composable (Modifier) -> Unit = { paddingModifier ->
         if (favorites.isEmpty()) {
-            // Beautiful Empty State matching requirements
             Box(
                 modifier = modifier
                     .fillMaxSize()
@@ -87,40 +82,38 @@ fun FavoritesScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Glowing Blue Heart Icon
                     Box(
                         modifier = Modifier
-                            .size(90.dp)
-                            .shadow(20.dp, CircleShape)
+                            .size(72.dp)
                             .clip(CircleShape)
-                            .background(Color(0xFF0C1625))
-                            .border(1.5.dp, SaribCyanAccent, CircleShape),
+                            .background(SaribCardBg)
+                            .border(1.dp, SaribCardBorderSubtle, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Favorite,
+                            imageVector = Icons.Default.FavoriteBorder,
                             contentDescription = null,
-                            tint = SaribCyanAccent,
-                            modifier = Modifier.size(44.dp)
+                            tint = SaribTextMuted,
+                            modifier = Modifier.size(32.dp)
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
                         text = stringResource(id = R.string.no_favorites_title),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
                             color = SaribTextPrimary
                         ),
                         textAlign = TextAlign.Center
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
 
                     Text(
                         text = stringResource(id = R.string.no_favorites_subtitle),
-                        style = MaterialTheme.typography.bodyMedium.copy(
+                        style = MaterialTheme.typography.bodySmall.copy(
                             color = SaribTextSecondary
                         ),
                         textAlign = TextAlign.Center
@@ -133,17 +126,18 @@ fun FavoritesScreen(
                 modifier = modifier
                     .fillMaxSize()
                     .then(paddingModifier)
-                    .background(SaribDarkBackground),
+                    .background(MaterialTheme.colorScheme.background),
                 contentPadding = PaddingValues(start = 14.dp, end = 14.dp, top = 14.dp, bottom = if (showBars) 24.dp else 14.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 items(favorites, key = { it.itemId }, contentType = { "favorite_item" }) { fav ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .border(1.dp, SaribCardBorder, RoundedCornerShape(16.dp))
+                            .clip(RoundedCornerShape(12.dp))
+                            .border(1.dp, SaribCardBorderSubtle, RoundedCornerShape(12.dp))
                             .clickable { onItemClick(fav) },
+                        shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = SaribCardBg)
                     ) {
                         Row(
@@ -153,28 +147,31 @@ fun FavoritesScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f)
+                            ) {
                                 Box(
                                     modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF09111E)),
+                                        .size(40.dp)
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(SaribDarkSurface),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Tv,
                                         contentDescription = null,
                                         tint = SaribCyanAccent,
-                                        modifier = Modifier.size(22.dp)
+                                        modifier = Modifier.size(20.dp)
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column {
                                     Text(
                                         text = fav.title,
-                                        style = MaterialTheme.typography.labelLarge.copy(
+                                        style = MaterialTheme.typography.bodyMedium.copy(
                                             color = SaribTextPrimary,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.SemiBold
                                         )
                                     )
                                     Text(
@@ -191,21 +188,21 @@ fun FavoritesScreen(
                                     Icon(
                                         imageVector = Icons.Default.Delete,
                                         contentDescription = "حذف من المفضلة",
-                                        tint = SaribLiveRed.copy(alpha = 0.8f)
+                                        tint = SaribTextMuted
                                     )
                                 }
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                        .size(34.dp)
                                         .clip(CircleShape)
-                                        .background(SaribElectricBlue.copy(alpha = 0.2f)),
+                                        .background(SaribElectricBlue.copy(alpha = 0.15f)),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.PlayArrow,
                                         contentDescription = "تشغيل",
                                         tint = SaribCyanAccent,
-                                        modifier = Modifier.size(20.dp)
+                                        modifier = Modifier.size(18.dp)
                                     )
                                 }
                             }

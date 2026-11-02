@@ -1,7 +1,5 @@
 package com.example.ui.components
 
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Article
@@ -29,7 +26,6 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Movie
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsSoccer
 import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material3.HorizontalDivider
@@ -46,9 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -62,12 +56,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.R
 import com.example.data.local.tr
-import com.example.ui.theme.SaribCardBorder
+import com.example.ui.theme.SaribCardBorderSubtle
 import com.example.ui.theme.SaribCyanAccent
-import com.example.ui.theme.SaribDarkBackground
 import com.example.ui.theme.SaribElectricBlue
 import com.example.ui.theme.SaribTextMuted
 import com.example.ui.theme.SaribTextPrimary
+import com.example.ui.theme.SaribTextSecondary
 
 @Composable
 fun SaribDrawerContent(
@@ -83,43 +77,31 @@ fun SaribDrawerContent(
 ) {
     val drawerBg = MaterialTheme.colorScheme.surface
     val onSurfaceColor = MaterialTheme.colorScheme.onSurface
-    val surfaceVariant = MaterialTheme.colorScheme.surfaceVariant
-    val borderColor = MaterialTheme.colorScheme.outline
 
     Surface(
         modifier = modifier
             .fillMaxHeight()
-            .width(300.dp),
+            .width(280.dp),
         color = drawerBg
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.verticalGradient(
-                        listOf(surfaceVariant, drawerBg)
-                    )
-                )
-                .padding(20.dp)
+                .padding(horizontal = 16.dp, vertical = 20.dp)
         ) {
-            // Header: SARIB TV Branding
+            // Simple Clean Header
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(horizontal = 4.dp)
             ) {
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.ic_sarib_logo),
+                    contentDescription = "SARIB TV",
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .size(50.dp)
-                        .clip(CircleShape)
-                        .border(1.5.dp, SaribCyanAccent, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_sarib_logo),
-                        contentDescription = "SARIB TV",
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
+                        .size(44.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                )
 
                 Spacer(modifier = Modifier.width(12.dp))
 
@@ -127,35 +109,35 @@ fun SaribDrawerContent(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = "SARIB",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Black,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
                                 color = onSurfaceColor
                             )
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
                             text = "TV",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Black,
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold,
                                 color = SaribCyanAccent
                             )
                         )
                     }
                     Text(
-                        text = "الإصدار 2.0 • PRO VIP",
-                        style = MaterialTheme.typography.labelSmall.copy(color = SaribTextMuted)
+                        text = "بث مباشر وترفيه",
+                        style = MaterialTheme.typography.bodySmall.copy(color = SaribTextMuted)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-            HorizontalDivider(color = borderColor, thickness = 1.dp)
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(18.dp))
+            HorizontalDivider(color = SaribCardBorderSubtle, thickness = 1.dp)
+            Spacer(modifier = Modifier.height(12.dp))
 
             // Navigation items list
             LazyColumn(
                 modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 item {
                     DrawerItem(
@@ -209,15 +191,15 @@ fun SaribDrawerContent(
                     DrawerItem(
                         icon = Icons.Default.Download,
                         title = "التنزيلات والتحميلات",
-                        tint = SaribCyanAccent,
+                        tint = onSurfaceColor,
                         onClick = onNavigateToDownloads
                     )
                 }
 
                 item {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    HorizontalDivider(color = borderColor, thickness = 1.dp)
-                    Spacer(modifier = Modifier.height(14.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+                    HorizontalDivider(color = SaribCardBorderSubtle, thickness = 1.dp)
+                    Spacer(modifier = Modifier.height(10.dp))
                 }
 
                 item {
@@ -230,14 +212,14 @@ fun SaribDrawerContent(
                 }
             }
 
-            // Footer
+            // Simple Footer
             Text(
-                text = "جميع حقوق محفوظة مطور 𝐍𝐈𝐆𝐇𝐓𝐌𝐀𝐑𝐄_𝕏𝐍𝐕𝐑",
+                text = "SARIB TV • تصميم خفيف",
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = SaribTextMuted,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Medium
-                )
+                    fontSize = 11.sp
+                ),
+                modifier = Modifier.padding(horizontal = 4.dp)
             )
         }
     }
@@ -251,28 +233,19 @@ fun DrawerItem(
     onClick: () -> Unit
 ) {
     var isFocused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (isFocused) 1.03f else 1f,
-        animationSpec = tween(120),
-        label = "drawer_item_scale"
-    )
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
-            }
-            .clip(RoundedCornerShape(12.dp))
+            .clip(RoundedCornerShape(10.dp))
             .background(
-                if (isFocused) SaribElectricBlue.copy(alpha = 0.25f)
+                if (isFocused) SaribElectricBlue.copy(alpha = 0.15f)
                 else Color.Transparent
             )
             .border(
-                width = if (isFocused) 2.dp else 1.dp,
+                width = 1.dp,
                 color = if (isFocused) SaribCyanAccent else Color.Transparent,
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(10.dp)
             )
             .onFocusChanged { isFocused = it.isFocused }
             .focusable()
@@ -287,21 +260,21 @@ fun DrawerItem(
                 }
             }
             .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 11.dp),
+            .padding(horizontal = 12.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = title,
-            tint = if (isFocused) SaribCyanAccent else if (tint == SaribTextPrimary) SaribCyanAccent else tint,
-            modifier = Modifier.size(22.dp)
+            tint = if (isFocused) SaribCyanAccent else SaribTextSecondary,
+            modifier = Modifier.size(20.dp)
         )
-        Spacer(modifier = Modifier.width(14.dp))
+        Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = title,
             style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = if (isFocused) FontWeight.Bold else FontWeight.SemiBold,
-                color = if (isFocused) Color.White else tint
+                fontWeight = if (isFocused) FontWeight.SemiBold else FontWeight.Normal,
+                color = if (isFocused) SaribCyanAccent else tint
             )
         )
     }

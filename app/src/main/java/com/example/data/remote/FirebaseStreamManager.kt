@@ -46,6 +46,13 @@ data class RemoteStreamConfig(
         password = "755246419856",
         name = "حساب القنوات المباشرة"
     ),
+    val animeAccount: XtreamAccount = XtreamAccount(
+        serverHost = "http://cliccck52258.club:2082",
+        username = "khaledsliman",
+        password = "755246419856",
+        name = "حساب الأنمي"
+    ),
+    val isAnimeXtreamEnabled: Boolean = true,
     val isLiveXtreamEnabled: Boolean = false,
     val channelsApiUrl: String = "",
     val isChannelsApiEnabled: Boolean = false,
@@ -55,6 +62,8 @@ data class RemoteStreamConfig(
     val vodCategoriesAccounts: Map<String, XtreamAccount> = emptyMap(),
     val matchesJsonUrl: String = "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json",
     val matchesApiUrl: String = "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json",
+    val matchResultsApiUrl: String = "",
+    val matchResultsIds: Map<String, String> = emptyMap(),
     val apiFootballKey: String = "0f0396f63d80f2bad18ec0e706985c88",
     val m3uPlaylistUrl: String = "https://github.com/zezo81795-cell/IO/raw/refs/heads/main/BEINSPORTS.M3U",
     val m3uMoviesUrl: String = "",
@@ -271,6 +280,27 @@ class FirebaseStreamManager(private val context: Context) {
                         val newsApiUrl = targetObj.optString("news_api_url", targetObj.optString("news_api", baseConfig.newsApiUrl))
                         val isNewsApiEnabled = targetObj.optBoolean("news_api_enabled", targetObj.optBoolean("is_news_api_enabled", newsApiUrl.isNotBlank()))
 
+                        val matchResultsApiUrl = targetObj.optString("match_results_api_url", "")
+                        val matchResultsIds = mutableMapOf<String, String>()
+                        val idsObj = targetObj.optJSONObject("match_results_ids")
+                        if (idsObj != null) {
+                            val iKeys = idsObj.keys()
+                            while (iKeys.hasNext()) {
+                                val k = iKeys.next()
+                                matchResultsIds[k] = idsObj.optString(k, "")
+                            }
+                        } else {
+                            val idsArr = targetObj.optJSONArray("match_results_ids")
+                            if (idsArr != null) {
+                                for (i in 0 until idsArr.length()) {
+                                    val v = idsArr.optString(i, "")
+                                    if (v.isNotBlank() && v != "null") {
+                                        matchResultsIds["$i"] = v
+                                    }
+                                }
+                            }
+                        }
+
                         baseConfig = RemoteStreamConfig(
                             serverHost = serverHost,
                             username = username,
@@ -285,6 +315,8 @@ class FirebaseStreamManager(private val context: Context) {
                             isNewsApiEnabled = isNewsApiEnabled,
                             matchesJsonUrl = targetObj.optString("matches_json_url", targetObj.optString("matchesJsonUrl", "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json")),
                             matchesApiUrl = targetObj.optString("matches_json_url", targetObj.optString("matches_api_url", "https://raw.githubusercontent.com/azalkmzc-lab/sarib-TV-2/refs/heads/main/data.json")),
+                            matchResultsApiUrl = matchResultsApiUrl,
+                            matchResultsIds = matchResultsIds,
                             apiFootballKey = targetObj.optString("api_football_key", targetObj.optString("football_api_key", targetObj.optString("matches_api_key", targetObj.optString("rapidapi_key", baseConfig.apiFootballKey)))),
                             m3uPlaylistUrl = targetObj.optString("m3u_playlist_url", targetObj.optString("m3u_url", baseConfig.m3uPlaylistUrl)),
                             m3uMoviesUrl = targetObj.optString("m3u_movies_url", targetObj.optString("movies_m3u_url", baseConfig.m3uMoviesUrl)),
@@ -301,6 +333,74 @@ class FirebaseStreamManager(private val context: Context) {
             }
         } catch (e: Exception) {
             Log.w(TAG, "RTDB fetch fallback error: ${e.message}")
+        }
+
+        // Dedicated fetch for xtream_accounts path in Firebase RTDB
+        try {
+            val xtreamAccountsUrl = "https://iptvpro-f5172-default-rtdb.firebaseio.com/xtream_accounts.json"
+            val request = Request.Builder().url(xtreamAccountsUrl).build()
+            val response = httpClient.newCall(request).execute()
+            val body = response.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                val json = JSONObject(body)
+                val animeObj = json.optJSONObject("anime")
+                val seriesObj = json.optJSONObject("series")
+                val moviesObj = json.optJSONObject("movies")
+                val liveObj = json.optJSONObject("live_channels")
+
+                var updatedAnime = baseConfig.animeAccount
+                var updatedSeries = baseConfig.seriesAccount
+                var updatedVod = baseConfig.vodAccount
+                var updatedLive = baseConfig.liveXtreamAccount
+                var liveEnabled = baseConfig.isLiveXtreamEnabled
+
+                if (animeObj != null) {
+                    val en = animeObj.optBoolean("enabled", true)
+                    val h = animeObj.optString("server_host", animeObj.optString("host", "")).trim()
+                    val u = animeObj.optString("username", "").trim()
+                    val p = animeObj.optString("password", "").trim()
+                    if (h.isNotBlank() && u.isNotBlank()) {
+                        updatedAnime = XtreamAccount(serverHost = h, username = u, password = p, name = "حساب الأنمي")
+                    }
+                }
+                if (seriesObj != null) {
+                    val h = seriesObj.optString("server_host", seriesObj.optString("host", "")).trim()
+                    val u = seriesObj.optString("username", "").trim()
+                    val p = seriesObj.optString("password", "").trim()
+                    if (h.isNotBlank() && u.isNotBlank()) {
+                        updatedSeries = XtreamAccount(serverHost = h, username = u, password = p, name = "حساب المسلسلات")
+                    }
+                }
+                if (moviesObj != null) {
+                    val h = moviesObj.optString("server_host", moviesObj.optString("host", "")).trim()
+                    val u = moviesObj.optString("username", "").trim()
+                    val p = moviesObj.optString("password", "").trim()
+                    if (h.isNotBlank() && u.isNotBlank()) {
+                        updatedVod = XtreamAccount(serverHost = h, username = u, password = p, name = "حساب الأفلام")
+                    }
+                }
+                if (liveObj != null) {
+                    val en = liveObj.optBoolean("enabled", true)
+                    liveEnabled = en
+                    val h = liveObj.optString("server_host", liveObj.optString("host", "")).trim()
+                    val u = liveObj.optString("username", "").trim()
+                    val p = liveObj.optString("password", "").trim()
+                    if (h.isNotBlank() && u.isNotBlank()) {
+                        updatedLive = XtreamAccount(serverHost = h, username = u, password = p, name = "حساب القنوات المباشرة")
+                    }
+                }
+
+                baseConfig = baseConfig.copy(
+                    animeAccount = updatedAnime,
+                    seriesAccount = updatedSeries,
+                    vodAccount = updatedVod,
+                    liveXtreamAccount = updatedLive,
+                    isLiveXtreamEnabled = liveEnabled
+                )
+                Log.i(TAG, "Applied xtream_accounts from Firebase RTDB: anime=${updatedAnime.serverHost}, series=${updatedSeries.serverHost}, live=${updatedLive.serverHost}")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "xtream_accounts fetch error: ${e.message}")
         }
 
         // Also fetch per-category accounts from RTDB & Firestore paths
@@ -364,6 +464,116 @@ class FirebaseStreamManager(private val context: Context) {
             }
         }
         ""
+    }
+
+    data class MatchResultFeedItem(
+        val sourceId: String,
+        val homeScore: Int,
+        val awayScore: Int,
+        val isLive: Boolean,
+        val statusText: String
+    )
+
+    /**
+     * Fetches live match results feed from stream_config/match_results_api_url
+     */
+    suspend fun fetchMatchResultsFeed(url: String): Map<String, MatchResultFeedItem> = withContext(Dispatchers.IO) {
+        val resultMap = mutableMapOf<String, MatchResultFeedItem>()
+        if (url.isBlank()) return@withContext resultMap
+        try {
+            val req = Request.Builder().url(url).build()
+            val resp = httpClient.newCall(req).execute()
+            val body = resp.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null") {
+                if (body.startsWith("[")) {
+                    val arr = JSONArray(body)
+                    for (i in 0 until arr.length()) {
+                        val tourObj = arr.optJSONObject(i) ?: continue
+                        val matchArr = tourObj.optJSONArray("matchObj") ?: continue
+                        for (j in 0 until matchArr.length()) {
+                            val mObj = matchArr.optJSONObject(j) ?: continue
+                            val id = mObj.optString("ID", "")
+                            if (id.isNotBlank()) {
+                                val s1 = mObj.optInt("FirstTeamScore", -1)
+                                val s2 = mObj.optInt("SecondTeamScore", -1)
+                                val isLive = mObj.optBoolean("isLiveMatch", false)
+                                val status = mObj.optString("MatchStatus", "")
+                                resultMap[id] = MatchResultFeedItem(
+                                    sourceId = id,
+                                    homeScore = if (s1 >= 0) s1 else 0,
+                                    awayScore = if (s2 >= 0) s2 else 0,
+                                    isLive = isLive,
+                                    statusText = status
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Match results feed fetch error: ${e.message}")
+        }
+        resultMap
+    }
+
+    /**
+     * Fetches app_control (maintenance mode, min version, update url)
+     */
+    suspend fun fetchAppControl(): com.example.data.model.AppControlConfig = withContext(Dispatchers.IO) {
+        try {
+            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/app_control.json"
+            val req = Request.Builder().url(url).build()
+            val resp = httpClient.newCall(req).execute()
+            val body = resp.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                val json = JSONObject(body)
+                val isMaintenance = json.optBoolean("maintenance_mode", false)
+                val msg = json.optString("maintenance_message", "التطبيق قيد الصيانة والتحديث حالياً")
+                val minVer = json.optInt("min_version", 0)
+                val updateUrl = json.optString("update_url", "https://t.me/sarib_tv")
+                return@withContext com.example.data.model.AppControlConfig(
+                    isMaintenance = isMaintenance,
+                    maintenanceMessage = msg,
+                    minVersion = minVer,
+                    updateUrl = updateUrl
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "AppControl fetch error: ${e.message}")
+        }
+        com.example.data.model.AppControlConfig()
+    }
+
+    /**
+     * Fetches popup dialog configuration from /popup.json
+     */
+    suspend fun fetchPopup(): com.example.data.model.PopupConfig = withContext(Dispatchers.IO) {
+        try {
+            val url = "https://iptvpro-f5172-default-rtdb.firebaseio.com/popup.json"
+            val req = Request.Builder().url(url).build()
+            val resp = httpClient.newCall(req).execute()
+            val body = resp.body?.string().orEmpty().trim()
+            if (body.isNotEmpty() && body != "null" && body.startsWith("{")) {
+                val json = JSONObject(body)
+                val isEnabled = json.optBoolean("enabled", false)
+                val title = json.optString("title", "")
+                val image = json.optString("image", "")
+                val msg = json.optString("message", "")
+                val btnText = json.optString("buttonText", "حسناً")
+                val btnUrl = json.optString("buttonUrl", "")
+                return@withContext com.example.data.model.PopupConfig(
+                    isEnabled = isEnabled,
+                    title = title,
+                    image = image,
+                    message = msg,
+                    buttonText = btnText,
+                    buttonUrl = btnUrl
+                )
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Popup fetch error: ${e.message}")
+        }
+        com.example.data.model.PopupConfig()
     }
 
     /**
@@ -681,10 +891,10 @@ class FirebaseStreamManager(private val context: Context) {
 
         val id = obj.optString("id", defaultId)
 
-        val homeTeam = obj.optString("homeTeam", obj.optString("home_team", obj.optString("team1", "")))
-        val homeLogo = obj.optString("homeLogo", obj.optString("home_logo", obj.optString("home_logo_url", obj.optString("homeLogoUrl", obj.optString("homePoster", obj.optString("team1_logo", ""))))))
-        val awayTeam = obj.optString("awayTeam", obj.optString("away_team", obj.optString("team2", "")))
-        val awayLogo = obj.optString("awayLogo", obj.optString("away_logo", obj.optString("away_logo_url", obj.optString("awayLogoUrl", obj.optString("awayPoster", obj.optString("team2_logo", ""))))))
+        val homeTeam = obj.optString("homeTeam", obj.optString("home_team", obj.optString("team1Name", obj.optString("team1", ""))))
+        val homeLogo = obj.optString("homeLogo", obj.optString("home_logo", obj.optString("home_logo_url", obj.optString("homeLogoUrl", obj.optString("team1Logo", obj.optString("team1_logo", ""))))))
+        val awayTeam = obj.optString("awayTeam", obj.optString("away_team", obj.optString("team2Name", obj.optString("team2", ""))))
+        val awayLogo = obj.optString("awayLogo", obj.optString("away_logo", obj.optString("away_logo_url", obj.optString("awayLogoUrl", obj.optString("team2Logo", obj.optString("team2_logo", ""))))))
         val leagueName = obj.optString("leagueName", obj.optString("league_name", obj.optString("league", obj.optString("tournament", ""))))
         val leagueLogo = obj.optString("leagueLogo", obj.optString("league_logo", obj.optString("league_logo_url", obj.optString("leagueLogoUrl", obj.optString("leagueIconUrl", "")))))
         val matchTime = obj.optString("match_time", obj.optString("matchTime", obj.optString("time", obj.optString("kickoff", ""))))
@@ -714,7 +924,7 @@ class FirebaseStreamManager(private val context: Context) {
             }
         }
 
-        val isLive = typeRaw == "live" || matchStatus == "مباشر" || matchStatus == "شوط أول" || matchStatus == "شوط ثاني" || obj.optBoolean("isLive", obj.optBoolean("is_live", false))
+        val isLive = typeRaw == "live" || matchStatus == "مباشر" || matchStatus == "مباشر الآن" || matchStatus == "شوط أول" || matchStatus == "شوط ثاني" || obj.optBoolean("isLive", obj.optBoolean("is_live", false))
 
         val contentType = when {
             isMatch -> ContentType.MATCH
@@ -757,16 +967,39 @@ class FirebaseStreamManager(private val context: Context) {
         // Badge
         val badge = when {
             obj.has("badge") && obj.optString("badge").isNotEmpty() -> obj.optString("badge")
-            isMatch -> if (isLive) "مباشر LIVE" else "مباراة قمة"
+            isMatch -> if (isLive) "🔴 مباشر LIVE" else "مباراة قمة"
             typeRaw == "movie" -> "فيلم"
             else -> "حصري"
         }
 
-        val server1 = obj.optString("server1", "")
-        val server2 = obj.optString("server2", "")
-        val server3 = obj.optString("server3", "")
-        val server4 = obj.optString("server4", "")
-        val server5 = obj.optString("server5", "")
+        var server1 = obj.optString("server1", "")
+        var server2 = obj.optString("server2", "")
+        var server3 = obj.optString("server3", "")
+        var server4 = obj.optString("server4", "")
+        var server5 = obj.optString("server5", "")
+
+        val serverLinksObj = obj.optJSONObject("serverLinks")
+        if (serverLinksObj != null) {
+            fun getFirstUrlForServer(srvKey: String): String {
+                val srv = serverLinksObj.optJSONObject(srvKey) ?: return ""
+                val links = srv.optJSONObject("links") ?: return ""
+                val lKeys = links.keys()
+                while (lKeys.hasNext()) {
+                    val lKey = lKeys.next()
+                    val link = links.optJSONObject(lKey) ?: continue
+                    if (link.optBoolean("enabled", true)) {
+                        val u = link.optString("url", "").trim()
+                        if (u.isNotBlank()) return u
+                    }
+                }
+                return ""
+            }
+            if (server1.isBlank()) server1 = getFirstUrlForServer("server1")
+            if (server2.isBlank()) server2 = getFirstUrlForServer("server2")
+            if (server3.isBlank()) server3 = getFirstUrlForServer("server3")
+            if (server4.isBlank()) server4 = getFirstUrlForServer("server4")
+            if (server5.isBlank()) server5 = getFirstUrlForServer("server5")
+        }
 
         val streamUrl = listOf(
             server1,

@@ -577,8 +577,8 @@ fun CategoryDetailScreen(
                     .padding(horizontal = 14.dp, vertical = 10.dp)
             )
 
-            if (isLoading) {
-                // Stylish On-Demand Loading indicator matching user request
+            if (isLoading && filteredChannels.isEmpty()) {
+                // Stylish On-Demand Loading indicator when no items loaded yet
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -646,84 +646,94 @@ fun CategoryDetailScreen(
                         }
                     }
                 }
-            } else if (viewMode == ViewMode.GRID) {
-                // Grid View
-                LazyVerticalGrid(
-                    columns = GridCells.Adaptive(minSize = 100.dp),
-                    contentPadding = PaddingValues(14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(filteredChannels, key = { it.id }, contentType = { "channel_grid" }) { channel ->
-                        ChannelCardItem(
-                            channel = channel,
-                            onClick = onChannelClick,
-                            onFavoriteToggle = onFavoriteToggle
-                        )
-                    }
-                }
             } else {
-                // List View
-                LazyColumn(
-                    contentPadding = PaddingValues(14.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    items(filteredChannels, key = { it.id }, contentType = { "channel_list" }) { channel ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .border(1.dp, SaribCardBorder, RoundedCornerShape(16.dp))
-                                .clickable { onChannelClick(channel) },
-                            colors = CardDefaults.cardColors(containerColor = SaribCardBg)
-                        ) {
-                            Row(
+                // Sleek non-blocking progress bar if streaming more items in background
+                if (isLoading) {
+                    androidx.compose.material3.LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth().height(3.dp),
+                        color = SaribCyanAccent,
+                        trackColor = Color.Transparent
+                    )
+                }
+
+                if (viewMode == ViewMode.GRID) {
+                    // Grid View
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(minSize = 100.dp),
+                        contentPadding = PaddingValues(14.dp),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(filteredChannels, key = { it.id }, contentType = { "channel_grid" }) { channel ->
+                            ChannelCardItem(
+                                channel = channel,
+                                onClick = onChannelClick,
+                                onFavoriteToggle = onFavoriteToggle
+                            )
+                        }
+                    }
+                } else {
+                    // List View
+                    LazyColumn(
+                        contentPadding = PaddingValues(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        items(filteredChannels, key = { it.id }, contentType = { "channel_list" }) { channel ->
+                            Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .border(1.dp, SaribCardBorder, RoundedCornerShape(16.dp))
+                                    .clickable { onChannelClick(channel) },
+                                colors = CardDefaults.cardColors(containerColor = SaribCardBg)
                             ) {
                                 Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(12.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.weight(1f)
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(46.dp)
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .background(Color(0xFF09111E)),
-                                        contentAlignment = Alignment.Center
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Tv,
-                                            contentDescription = null,
-                                            tint = SaribCyanAccent,
-                                            modifier = Modifier.size(22.dp)
-                                        )
+                                        Box(
+                                            modifier = Modifier
+                                                .size(46.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(Color(0xFF09111E)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Tv,
+                                                contentDescription = null,
+                                                tint = SaribCyanAccent,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(12.dp))
+                                        Column {
+                                            Text(
+                                                text = channel.name,
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    color = SaribTextPrimary,
+                                                    fontWeight = FontWeight.Bold
+                                                ),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                            Text(
+                                                text = "${channel.country} • ${channel.language}",
+                                                style = MaterialTheme.typography.bodySmall.copy(
+                                                    color = SaribTextSecondary
+                                                ),
+                                                maxLines = 1
+                                            )
+                                        }
                                     }
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                    Column {
-                                        Text(
-                                            text = channel.name,
-                                            style = MaterialTheme.typography.labelLarge.copy(
-                                                color = SaribTextPrimary,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                        Text(
-                                            text = "${channel.country} • ${channel.language}",
-                                            style = MaterialTheme.typography.bodySmall.copy(
-                                                color = SaribTextSecondary
-                                            ),
-                                            maxLines = 1
-                                        )
-                                    }
-                                }
 
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -774,4 +784,5 @@ fun CategoryDetailScreen(
             }
         }
     }
+}
 }

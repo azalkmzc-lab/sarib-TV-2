@@ -5,6 +5,8 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -95,7 +97,6 @@ fun SaribApp(
     val vodCategories by viewModel.vodCategories.collectAsState()
     val seriesCategories by viewModel.seriesCategories.collectAsState()
     val mostWatchedChannels by viewModel.mostWatchedChannels.collectAsState()
-    val allChannels by viewModel.allChannels.collectAsState()
     val allMatches by viewModel.allMatches.collectAsState()
     val newsArticles by viewModel.newsList.collectAsState()
     val featuredMovies by viewModel.featuredMovies.collectAsState()
@@ -326,7 +327,7 @@ fun SaribApp(
     ) {
         AnimatedContent(
             targetState = currentScreen,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
+            transitionSpec = { fadeIn(animationSpec = tween(150)) togetherWith fadeOut(animationSpec = tween(150)) },
             label = "screen_transition"
         ) { screen ->
             when (screen) {
@@ -365,7 +366,12 @@ fun SaribApp(
                                 .fillMaxSize()
                                 .padding(innerPadding)
                         ) {
-                            when (currentTab) {
+                            Crossfade(
+                                targetState = currentTab,
+                                animationSpec = tween(durationMillis = 150),
+                                label = "tab_crossfade"
+                            ) { tab ->
+                                when (tab) {
                                 "home" -> {
                                     val homeMovies = remember(featuredMovies) { featuredMovies.take(10) }
                                     val homeSeries = remember(featuredSeries) { featuredSeries.take(10) }
@@ -563,6 +569,7 @@ fun SaribApp(
                         }
                     }
                 }
+                }
 
                 is AppScreen.CategoryDetail -> {
                     CategoryDetailScreen(
@@ -752,6 +759,7 @@ fun SaribApp(
                 }
 
                 is AppScreen.Player -> {
+                    val channelsList by viewModel.allChannels.collectAsState()
                     PlayerScreen(
                         title = screen.title,
                         subtitle = screen.subtitle,
@@ -759,7 +767,7 @@ fun SaribApp(
                         isLive = screen.isLive,
                         onBackClick = { viewModel.popBack() },
                         servers = screen.servers,
-                        availableChannels = allChannels,
+                        availableChannels = channelsList,
                         initialProgressMs = screen.initialProgressMs,
                         onProgressUpdate = { progress, duration ->
                             viewModel.updatePlaybackProgress(
