@@ -1,16 +1,21 @@
 FROM python:3.10-slim
 
-# تثبيت التحديثات والحزم المطلوبة مثل FFmpeg
-RUN apt-get update && apt-get install -y ffmpeg
+# تثبيت التحديثات والحزم المطلوبة مع أدوات البناء الأساسية
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    gcc \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# تحديد مجلد العمل داخل الحاوية
+# تحديد مجلد العمل
 WORKDIR /app
 
-# نسخ كافة ملفات المشروع إلى الحاوية
+# نسخ الملفات
 COPY . .
 
-# تثبيت المكتبات المذكورة في ملف requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# تحديث pip وتثبيت المكتبات
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# الأمر الرئيسي لتشغيل البوت
+# امر تشغيل البوت
 CMD ["python", "main.py"]
