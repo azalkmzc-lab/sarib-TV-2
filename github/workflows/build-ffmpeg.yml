@@ -1,0 +1,45 @@
+name: Build ExoPlayer FFmpeg extension (2.18.7)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout ExoPlayer r2.18.7
+        uses: actions/checkout@v4
+        with:
+          repository: google/ExoPlayer
+          ref: r2.18.7
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Setup NDK r21e
+        id: ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          ndk-version: r21e
+
+      - name: Build FFmpeg (ac3, eac3, dts, mp1/mp2/mp3, aac, truehd)
+        run: |
+          FFMPEG_MODULE_PATH="$(pwd)/libraries/decoder_ffmpeg/src/main"
+          cd "$FFMPEG_MODULE_PATH/jni"
+          git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg
+          cd ffmpeg && git checkout release/4.2 && cd ..
+          ./build_ffmpeg.sh "$FFMPEG_MODULE_PATH" "${{ steps.ndk.outputs.ndk-path }}" linux-x86_64 \
+            ac3 eac3 dca mp3 aac mlp truehd
+
+      - name: Assemble AAR
+        run: |
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+          ./gradlew :lib-decoder-ffmpeg:assembleRelease
+
+      - name: Upload AAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: exoplayer-ffmpeg-2.18.7-aar
+          path: libraries/decoder_ffmpeg/**/*.aar
