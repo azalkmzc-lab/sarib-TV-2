@@ -24,9 +24,21 @@ jobs:
         with:
           ndk-version: r21e
 
+      - name: Locate FFmpeg module
+        run: |
+          if [ -d extensions/ffmpeg ]; then
+            echo "MOD_PATH=$(pwd)/extensions/ffmpeg" >> $GITHUB_ENV
+            echo "MOD_REL=extensions/ffmpeg" >> $GITHUB_ENV
+            echo "GRADLE_TASK=:extension-ffmpeg:assembleRelease" >> $GITHUB_ENV
+          else
+            echo "MOD_PATH=$(pwd)/libraries/decoder_ffmpeg" >> $GITHUB_ENV
+            echo "MOD_REL=libraries/decoder_ffmpeg" >> $GITHUB_ENV
+            echo "GRADLE_TASK=:lib-decoder-ffmpeg:assembleRelease" >> $GITHUB_ENV
+          fi
+
       - name: Build FFmpeg (ac3, eac3, dts, mp1/mp2/mp3, aac, truehd)
         run: |
-          FFMPEG_MODULE_PATH="$(pwd)/libraries/decoder_ffmpeg/src/main"
+          FFMPEG_MODULE_PATH="$MOD_PATH/src/main"
           cd "$FFMPEG_MODULE_PATH/jni"
           git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg
           cd ffmpeg && git checkout release/4.2 && cd ..
@@ -36,10 +48,13 @@ jobs:
       - name: Assemble AAR
         run: |
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
-          ./gradlew :lib-decoder-ffmpeg:assembleRelease
+          ./gradlew $GRADLE_TASK
 
       - name: Upload AAR
         uses: actions/upload-artifact@v4
         with:
           name: exoplayer-ffmpeg-2.18.7-aar
-          path: libraries/decoder_ffmpeg/**/*.aar
+          path: |
+            extensions/ffmpeg/**/*.aar
+            libraries/decoder_ffmpeg/**/*.aar
+          if-no-files-found: error
