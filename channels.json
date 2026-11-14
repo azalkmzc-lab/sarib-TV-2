@@ -6,7 +6,9 @@
     "update_url": ""
   },
   "xtream_accounts": [],
-  "activation_codes": [123],
+  "activation_codes": [
+    null
+  ],
   "categories": [
     {
       "name": "تجربة",
