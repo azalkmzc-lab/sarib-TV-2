@@ -13,5 +13,15 @@
       "logo": ""
     }
   ],
-  "channels": []
+  "channels": [
+    {
+      "name": "قناة XTC",
+      "logo": "",
+      "url": "akkmsu",
+      "urls": [
+        "akkmsu"
+      ],
+      "group": "تجربة"
+    }
+  ]
 }
