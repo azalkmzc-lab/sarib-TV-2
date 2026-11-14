@@ -5,5 +5,15 @@
       "logo": ""
     }
   ],
-  "channels": []
+  "channels": [
+    {
+      "name": "نوفا اطفال",
+      "logo": "",
+      "url": "https://blcco.linkip.org/live/996_.m3u8",
+      "urls": [
+        "https://blcco.linkip.org/live/996_.m3u8"
+      ],
+      "group": "ماجستك"
+    }
+  ]
 }
