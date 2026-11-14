@@ -9,10 +9,6 @@
   "activation_codes": [],
   "categories": [
     {
-      "name": "beIN Sports",
-      "logo": "https://i.imgur.com/example1.png"
-    },
-    {
       "name": "قنوات عامة",
       "logo": "https://i.imgur.com/example2.png"
     },
@@ -21,15 +17,5 @@
       "logo": ""
     }
   ],
-  "channels": [
-    {
-      "name": "beIN Sports 1",
-      "logo": "",
-      "url": "http://stream1.mp3",
-      "urls": [
-        "http://stream1.mp3"
-      ],
-      "group": "beIN Sports"
-    }
-  ]
+  "channels": []
 }
