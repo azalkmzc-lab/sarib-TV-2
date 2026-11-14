@@ -1,1 +1,35 @@
-
+{
+  "settings": {
+    "maintenance": false,
+    "maintenance_msg": "التطبيق تحت الصيانة",
+    "version_code": 1,
+    "update_url": ""
+  },
+  "xtream_accounts": [],
+  "activation_codes": [],
+  "categories": [
+    {
+      "name": "beIN Sports",
+      "logo": "https://i.imgur.com/example1.png"
+    },
+    {
+      "name": "قنوات عامة",
+      "logo": "https://i.imgur.com/example2.png"
+    },
+    {
+      "name": "تجربة",
+      "logo": ""
+    }
+  ],
+  "channels": [
+    {
+      "name": "beIN Sports 1",
+      "logo": "",
+      "url": "http://stream1.mp3",
+      "urls": [
+        "http://stream1.mp3"
+      ],
+      "group": "beIN Sports"
+    }
+  ]
+}
