@@ -1,4 +1,9 @@
 {
-  "categories": [],
+  "categories": [
+    {
+      "name": "ماجستك",
+      "logo": ""
+    }
+  ],
   "channels": []
 }
