@@ -7,6 +7,11 @@
   },
   "xtream_accounts": [],
   "activation_codes": [],
-  "categories": [],
+  "categories": [
+    {
+      "name": "تجربة",
+      "logo": ""
+    }
+  ],
   "channels": []
 }
