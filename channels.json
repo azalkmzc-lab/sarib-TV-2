@@ -22,7 +22,7 @@
     "password": "755246419856"
   },
   "settings": {
-    "maintenance": false,
+    "maintenance": true,
     "maintenance_msg": "",
     "version_code": 1,
     "update_url": ""
