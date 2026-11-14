@@ -7,7 +7,13 @@
   },
   "xtream_accounts": [],
   "activation_codes": [
-    null
+    null,
+    {
+      "pin": "123",
+      "type": "unlimited",
+      "expiry": "lifetime",
+      "note": ""
+    }
   ],
   "categories": [
     {
