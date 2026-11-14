@@ -49,11 +49,6 @@
     }
   ],
   "activation_codes": [
-    {
-      "pin": "123",
-      "type": "unlimited",
-      "expiry": "lifetime",
-      "note": ""
-    }
+    null
   ]
 }
