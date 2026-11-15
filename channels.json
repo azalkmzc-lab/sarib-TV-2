@@ -33,7 +33,6 @@
   "sliders": [
     {
       "isActive": true,
-      "title": "تجربة",
       "backdropUrl": "https://i.pinimg.com/736x/52/5a/6c/525a6c00bb2d0d6e78d67076ff549ca0.jpg",
       "streamUrl": "http://185.191.126.127:8080///live/0566084413/1394394776132208/463533"
     }
