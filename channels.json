@@ -5,7 +5,17 @@
       "logo": ""
     }
   ],
-  "channels": [],
+  "channels": [
+    {
+      "name": "beIN Sports 1",
+      "logo": "",
+      "url": "http://185.191.126.127:8080///live/0566084413/1394394776132208/325793",
+      "urls": [
+        "http://185.191.126.127:8080///live/0566084413/1394394776132208/325793"
+      ],
+      "group": "beIN Sports"
+    }
+  ],
   "xtream_accounts": {
     "live_channels": {
       "enabled": true,
