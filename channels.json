@@ -14,6 +14,15 @@
         "http://185.191.126.127:8080///live/0566084413/1394394776132208/325793"
       ],
       "group": "beIN Sports"
+    },
+    {
+      "name": "مبارة سبانيا X نجلتر",
+      "logo": "",
+      "url": "https://a11.kora-plus.li/live/b1.m3u8?token=2s22WJm6UxjjfFUnpjFy8pGCkv8&exp=1794777403",
+      "urls": [
+        "https://a11.kora-plus.li/live/b1.m3u8?token=2s22WJm6UxjjfFUnpjFy8pGCkv8&exp=1794777403"
+      ],
+      "group": "beIN Sports"
     }
   ],
   "xtream_accounts": {
