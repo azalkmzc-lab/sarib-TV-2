@@ -1,5 +1,10 @@
 {
-  "categories": [],
+  "categories": [
+    {
+      "name": "beIN Sports",
+      "logo": ""
+    }
+  ],
   "channels": [],
   "xtream_accounts": {
     "live_channels": {
