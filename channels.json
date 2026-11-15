@@ -60,7 +60,7 @@
     "telegram_link": ""
   },
   "popup": {
-    "enabled": true
+    "enabled": false
   },
   "match_streams": {
     "ys86873926": {
