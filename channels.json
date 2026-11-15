@@ -33,5 +33,9 @@
     "apk_url": "",
     "update_notes": "",
     "report_url": ""
+  },
+  "stream_config": {
+    "announcement": "تحديات جديدة",
+    "telegram_link": ""
   }
 }
