@@ -43,6 +43,24 @@
         "https://blcco.linkip.org/live/899_.m3u8"
       ],
       "group": "تجربة"
+    },
+    {
+      "name": "Max kids",
+      "logo": "",
+      "url": "https://blcco.linkip.org/live/899_.m3u8",
+      "urls": [
+        "https://blcco.linkip.org/live/899_.m3u8"
+      ],
+      "group": "entertainment"
+    },
+    {
+      "name": "Max kids",
+      "logo": "",
+      "url": "https://blcco.linkip.org/live/899_.m3u8",
+      "urls": [
+        "https://blcco.linkip.org/live/899_.m3u8"
+      ],
+      "group": "entertainment"
     }
   ]
 }
