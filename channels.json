@@ -8,5 +8,13 @@
       "username": "0566084413",
       "password": "1394394776132208"
     }
-  }
+  },
+  "sliders": [
+    {
+      "isActive": true,
+      "title": "تجربة",
+      "backdropUrl": "https://upload.wikimedia.org/wikipedia/commons/2/20/Bein_sport_logo.png?utm_source=ar.wikipedia.org&utm_campaign=index&utm_content=original",
+      "streamUrl": "https://upload.wikimedia.org/wikipedia/commons/2/20/Bein_sport_logo.png?utm_source=ar.wikipedia.org&utm_campaign=index&utm_content=original"
+    }
+  ]
 }
