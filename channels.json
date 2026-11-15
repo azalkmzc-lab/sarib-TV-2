@@ -62,10 +62,5 @@
   "popup": {
     "enabled": false
   },
-  "match_streams": {
-    "ys86873926": {
-      "match_id": "ys86873926",
-      "server1": "http://185.191.126.127:8080//live/0566084413/1394394776132208/472604"
-    }
-  }
+  "match_streams": {}
 }
