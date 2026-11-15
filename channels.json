@@ -52,5 +52,8 @@
   "stream_config": {
     "announcement": "تحديات جديدة",
     "telegram_link": ""
+  },
+  "popup": {
+    "enabled": true
   }
 }
