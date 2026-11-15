@@ -16,5 +16,16 @@
       "backdropUrl": "https://upload.wikimedia.org/wikipedia/commons/2/20/Bein_sport_logo.png?utm_source=ar.wikipedia.org&utm_campaign=index&utm_content=original",
       "streamUrl": "https://upload.wikimedia.org/wikipedia/commons/2/20/Bein_sport_logo.png?utm_source=ar.wikipedia.org&utm_campaign=index&utm_content=original"
     }
-  ]
+  ],
+  "app_control": {
+    "maintenance_mode": true,
+    "maintenance_message": "",
+    "min_version": 0,
+    "latest_version": 0,
+    "latest_name": "",
+    "update_url": "",
+    "apk_url": "",
+    "update_notes": "",
+    "report_url": ""
+  }
 }
