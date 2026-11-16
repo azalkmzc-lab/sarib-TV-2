@@ -18,6 +18,15 @@
         "http://185.191.126.127:8080///live/0566084413/1394394776132208/325793"
       ],
       "group": "beIN Sports"
+    },
+    {
+      "name": "Max kids",
+      "logo": "",
+      "url": "https://blcco.linkip.org/live/899_.m3u8",
+      "urls": [
+        "https://blcco.linkip.org/live/899_.m3u8"
+      ],
+      "group": "Children's channels"
     }
   ],
   "xtream_accounts": {
