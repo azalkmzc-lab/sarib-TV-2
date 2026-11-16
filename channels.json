@@ -40,6 +40,15 @@
         "https://blc2cr.linkip.org/live/90154_.m3u8"
       ],
       "group": "Steers"
+    },
+    {
+      "name": "Star children",
+      "logo": "",
+      "url": "https://blc2cr.linkip.org/live/90151_.m3u8",
+      "urls": [
+        "https://blc2cr.linkip.org/live/90151_.m3u8"
+      ],
+      "group": "Steers"
     }
   ],
   "xtream_accounts": {
