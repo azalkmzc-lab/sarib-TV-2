@@ -107,9 +107,9 @@
   "channel_sources": {
     "server4_channels": {
       "enabled": true,
-      "url": "http://uruk.optikl.ink/b2.m3u",
+      "url": "http://uruk.optikl.ink/b1.m3u",
       "urls": [
-        "http://uruk.optikl.ink/b1.m3u"
+        "http://uruk.optikl.ink/b2.m3u"
       ]
     }
   }
