@@ -31,6 +31,15 @@
         "https://blcco.linkip.org/live/899_.m3u8"
       ],
       "group": "Children's channels"
+    },
+    {
+      "name": "Star com",
+      "logo": "",
+      "url": "https://blc2cr.linkip.org/live/90154_.m3u8",
+      "urls": [
+        "https://blc2cr.linkip.org/live/90154_.m3u8"
+      ],
+      "group": "Steers"
     }
   ],
   "xtream_accounts": {
