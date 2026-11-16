@@ -70,6 +70,12 @@
       "server_host": "http://cliccck52258.club:2082",
       "username": "khaledsliman",
       "password": "755246419856"
+    },
+    "live_channels": {
+      "enabled": true,
+      "server_host": "http://restreamott.xyz",
+      "username": "restreamtreetv",
+      "password": "Arenatomas11"
     }
   },
   "sliders": [
