@@ -109,5 +109,14 @@
   "popup": {
     "enabled": false
   },
-  "match_streams": {}
+  "match_streams": {},
+  "channel_sources": {
+    "server4_channels": {
+      "enabled": true,
+      "url": "http://uruk.optikl.ink/b2.m3u",
+      "urls": [
+        "http://uruk.optikl.ink/b1.m3u"
+      ]
+    }
+  }
 }
