@@ -76,6 +76,12 @@
       "server_host": "http://restreamott.xyz",
       "username": "restreamtreetv",
       "password": "Arenatomas11"
+    },
+    "channels2": {
+      "enabled": true,
+      "server_host": "http://asmr4k.pro:8080",
+      "username": "3146007635",
+      "password": "5780662145"
     }
   },
   "sliders": [
