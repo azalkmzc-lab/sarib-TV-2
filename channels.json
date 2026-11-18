@@ -103,8 +103,8 @@
     "report_url": ""
   },
   "stream_config": {
-    "announcement": "اضغط هنا نظمام قناة تلجرام",
-    "telegram_link": ""
+    "announcement": "اضغط هنا  الانظمام قناة تلجرام",
+    "telegram_link": "https://t.me/sarib_tv"
   },
   "popup": {
     "enabled": false
