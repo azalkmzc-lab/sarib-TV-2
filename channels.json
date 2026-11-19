@@ -57,9 +57,9 @@
     {
       "name": "XTV  Sport 1",
       "logo": "https://prod-media.beinsports.com/image/1681434540853_62e93e43-2e3d-4189-96e7-be622ac1d4ca.jpg",
-      "url": "http://d12xh5ppj9sxwj.cloudfront.net/b1_1080/2026/11/19/09/29/50-06000.png?token=039f01662ec7fa2c82c3da3f13b3899b",
+      "url": "https://d12xh5ppj9sxwj.cloudfront.net/b1_1080/tracks-v1a1/mono.json?token=039f01662ec7fa2c82c3da3f13b3899b&ip=150.228.11.43",
       "urls": [
-        "http://d12xh5ppj9sxwj.cloudfront.net/b1_1080/2026/11/19/09/29/50-06000.png?token=039f01662ec7fa2c82c3da3f13b3899b"
+        "https://d12xh5ppj9sxwj.cloudfront.net/b1_1080/tracks-v1a1/mono.json?token=039f01662ec7fa2c82c3da3f13b3899b&ip=150.228.11.43"
       ],
       "group": "beIN Sports"
     }
