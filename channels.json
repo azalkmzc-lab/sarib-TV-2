@@ -62,6 +62,15 @@
         "https://d12xh5ppj9sxwj.cloudfront.net/b1_1080/tracks-v1a1/mono.json?token=039f01662ec7fa2c82c3da3f13b3899b&ip=150.228.11.43"
       ],
       "group": "beIN Sports"
+    },
+    {
+      "name": "beIN Sports 2",
+      "logo": "",
+      "url": "https://d12xh5ppj9sxwj.cloudfront.net/b2_480/tracks-v1a1/mono.json?token=039f01662ec7fa2c82c3da3f13b3899b&ip=150.228.11.43",
+      "urls": [
+        "https://d12xh5ppj9sxwj.cloudfront.net/b2_480/tracks-v1a1/mono.json?token=039f01662ec7fa2c82c3da3f13b3899b&ip=150.228.11.43"
+      ],
+      "group": "beIN Sports"
     }
   ],
   "xtream_accounts": {
