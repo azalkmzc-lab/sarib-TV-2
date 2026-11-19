@@ -92,7 +92,7 @@
     }
   ],
   "app_control": {
-    "maintenance_mode": true,
+    "maintenance_mode": false,
     "maintenance_message": "",
     "min_version": 10,
     "latest_version": 10,
