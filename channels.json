@@ -71,6 +71,15 @@
         "https://d12xh5ppj9sxwj.cloudfront.net/b2_480/tracks-v1a1/mono.json?token=039f01662ec7fa2c82c3da3f13b3899b&ip=150.228.11.43"
       ],
       "group": "beIN Sports"
+    },
+    {
+      "name": "Star Masr",
+      "logo": "",
+      "url": "https://blc2cr.linkip.org/live/90152_.m3u8",
+      "urls": [
+        "https://blc2cr.linkip.org/live/90152_.m3u8"
+      ],
+      "group": "Steers"
     }
   ],
   "xtream_accounts": {
