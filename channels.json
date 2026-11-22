@@ -80,6 +80,15 @@
         "https://blc2cr.linkip.org/live/90152_.m3u8"
       ],
       "group": "Steers"
+    },
+    {
+      "name": "XTV Sport News",
+      "logo": "",
+      "url": "http://asmr4k.pro:8080/0505330371/7348754332/497109",
+      "urls": [
+        "http://asmr4k.pro:8080/0505330371/7348754332/497109"
+      ],
+      "group": "beIN Sports"
     }
   ],
   "xtream_accounts": {
