@@ -120,6 +120,15 @@
         "https://shd-gcp-live.edgenextcdn.net/live/bitmovin-mbc-1/15cf99af5de54063fdabfefe66adc075/manifest/video/1080p2400kbps/video.m3u8"
       ],
       "group": "MBC"
+    },
+    {
+      "name": "الكاس سبورت 1",
+      "logo": "",
+      "url": "https://blcco.linkip.org/live/1133_.m3u8",
+      "urls": [
+        "https://blcco.linkip.org/live/1133_.m3u8"
+      ],
+      "group": "الكاس سبورت"
     }
   ],
   "xtream_accounts": {
