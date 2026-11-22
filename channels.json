@@ -129,6 +129,15 @@
         "https://blcco.linkip.org/live/1133_.m3u8"
       ],
       "group": "الكاس سبورت"
+    },
+    {
+      "name": "الكاس سبورت 2",
+      "logo": "",
+      "url": "https://blcco.linkip.org/live/1132_.m3u8",
+      "urls": [
+        "https://blcco.linkip.org/live/1132_.m3u8"
+      ],
+      "group": "الكاس سبورت"
     }
   ],
   "xtream_accounts": {
