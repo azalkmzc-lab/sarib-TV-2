@@ -1,7 +1,7 @@
 {
   "categories": [
     {
-      "name": "beIN Sports",
+      "name": "XTV Sport",
       "logo": "https://prod-media.beinsports.com/image/1681434540853_62e93e43-2e3d-4189-96e7-be622ac1d4ca.jpg"
     },
     {
@@ -78,7 +78,7 @@
         "http://tv.scorpioniptv.org/live/d4db77120/beffd50de/44389.ts",
         "http://1748036.765419437.growthtry.com/live/harsh2026mar/harshmar2026/652310?token=ShJdY2ZmQQNHCmMZCDZXUh9GSHAWGFMD.ZDsGQVN.WGBFNX013GR9YV1QbGBp0QE9SWmpcXlQXXlUHWlcbRxFACmcDY1tXEVkbVAoAAQJUFxUbRFldAxdeUAdaVAFcUwcHAhwWQlpXQQMLTFhUG0FQQU1VQl4HWTsFVBQLVABGCVxEXFgeEVwNZgFcWVlZBxcDGwESHERcFxETWAxCCQgfEFNZQEBSRwYbX1dBVFtPF1pWRV5EFExGWxMmJxVJRlZKRVVaQVpcDRtfG0BLFU8XUEpvQlUVQRYEUA8HRUdeEQITHBZfUks8WgpXWl1UF1xWV0MSCkQERk0TDw1ZDBBcQG5AXVYRCQ1MCVVJ"
       ],
-      "group": "beIN Sports"
+      "group": "XTV Sport"
     },
     {
       "name": "XTV Sport2",
@@ -87,7 +87,7 @@
       "urls": [
         "http://194.76.0.163/8zpo3GsVY7/beneficial2concern/652351?token=ShJdY2ZmQQNHCmMZCDZXUh9GSHAWGFMD.ZDsGQVN.WGBFNX013GR9YV1QbGBp0QE9SWmpcXlQXXlUHWlcbRxFACmcDY1tXEVkbVAoAAQJUFxUbRFldAxdeUAdaVAFcUwcHAhwWQlpXQQMLTFhUG0FQQU1VQl4HWTsFVBQLVABGCVxEXFgeEVwNZgFcWVlZBxcDGwESHERcFxETWAxCCQgfEFNZQEBSRwYbX1dBVFtPF1pWRV5EFExGWxMmJxVJRlZKRVVaQVpcDRtfG0BLFU8XUEpvQlUVQRYEUA8HRUdeEQITHBZfUks8WgpXWl1UF1xWV0MSCkQERk0TDw1ZDBBcQG5AXVYRCQ1MCVVJ"
       ],
-      "group": "beIN Sports"
+      "group": "XTV Sport"
     },
     {
       "name": "Star Masr",
@@ -105,7 +105,7 @@
       "urls": [
         "http://asmr4k.pro:8080/0505330371/7348754332/497109"
       ],
-      "group": "beIN Sports"
+      "group": "XTV Sport"
     },
     {
       "name": "8sport 1",
@@ -204,7 +204,7 @@
       "urls": [
         "http://line.tvdsz.cc/play/live.php?mac=00:1A:79:fd:56:0d&stream=798830&extension=ts"
       ],
-      "group": "beIN Sports"
+      "group": "XTV Sport"
     },
     {
       "name": "Wanwan Time Sports",
@@ -213,7 +213,7 @@
       "urls": [
         "https://fastly.live.brightcove.com/6386028928112/us-east-1/6416013238001/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJob3N0IjoieWN3Ymx1LmVncmVzcy5zenkzeHgiLCJhY2NvdW50X2lkIjoiNjQxNjAxMzIzODAwMSIsImVobiI6ImZhc3RseS5saXZlLmJyaWdodGNvdmUuY29tIiwiaXNzIjoiYmxpdmUtcGxheWJhY2stc291cmNlLWFwaSIsInN1YiI6InBhdGhtYXB0b2tlbiIsImF1ZCI6WyI2NDE2MDEzMjM4MDAxIl0sImp0aSI6IjYzODYwMjg5MjgxMTIifQ.7pBZHXb93BJ47HBrEiPQvSquoHi92NStYSX3JKYcznQ/playlist-hls.m3u8"
       ],
-      "group": "beIN Sports"
+      "group": "XTV Sport"
     }
   ],
   "xtream_accounts": {
