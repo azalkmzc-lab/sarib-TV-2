@@ -151,6 +151,15 @@
         "https://blc2cr.linkip.org/live/90013_.m3u8"
       ],
       "group": "BOX"
+    },
+    {
+      "name": "الكاس سبورت 3",
+      "logo": "",
+      "url": "https://blcco.linkip.org/live/1131_.m3u8",
+      "urls": [
+        "https://blcco.linkip.org/live/1131_.m3u8"
+      ],
+      "group": "الكاس سبورت"
     }
   ],
   "xtream_accounts": {
