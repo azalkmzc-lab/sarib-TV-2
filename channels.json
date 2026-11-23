@@ -196,6 +196,15 @@
         "https://blcco.linkip.org/live/1127_.m3u8"
       ],
       "group": "الكاس سبورت"
+    },
+    {
+      "name": "beIN Sports 3",
+      "logo": "",
+      "url": "http://31.43.191.125:8080/live/restream/restream/843.m3u8",
+      "urls": [
+        "http://31.43.191.125:8080/live/restream/restream/843.m3u8"
+      ],
+      "group": "beIN Sports"
     }
   ],
   "xtream_accounts": {
