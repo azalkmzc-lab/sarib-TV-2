@@ -160,6 +160,15 @@
         "https://blcco.linkip.org/live/1131_.m3u8"
       ],
       "group": "الكاس سبورت"
+    },
+    {
+      "name": "الكاس سبورت 4",
+      "logo": "",
+      "url": "https://blcco.linkip.org/live/1130_.m3u8",
+      "urls": [
+        "https://blcco.linkip.org/live/1130_.m3u8"
+      ],
+      "group": "الكاس سبورت"
     }
   ],
   "xtream_accounts": {
