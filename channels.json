@@ -227,6 +227,12 @@
       "server_host": "http://tv.scorpioniptv.org",
       "username": "d4db77120",
       "password": "beffd50de"
+    },
+    "series": {
+      "enabled": true,
+      "server_host": "http://1.sharkpro.ink",
+      "username": "6470135317",
+      "password": "2880249323"
     }
   },
   "sliders": [
