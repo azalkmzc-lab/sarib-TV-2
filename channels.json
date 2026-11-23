@@ -223,6 +223,15 @@
         "https://blcco.linkip.org/live/3461_.m3u8"
       ],
       "group": "XTV Sport"
+    },
+    {
+      "name": "الوان سبورت 2",
+      "logo": "",
+      "url": "https://blcco.linkip.org/live/3460_.m3u8",
+      "urls": [
+        "https://blcco.linkip.org/live/3460_.m3u8"
+      ],
+      "group": "XTV Sport"
     }
   ],
   "xtream_accounts": {
