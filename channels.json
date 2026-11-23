@@ -200,11 +200,9 @@
     {
       "name": "beIN Sports 3",
       "logo": "",
-      "url": "https://scorezone.fun/api/AboAli/Alabody/3ailtna/script/gn/tv/live/play.m3u8?r=1&cat=bein&ci=1&si=2",
+      "url": "http://line.tvdsz.cc/play/live.php?mac=00:1A:79:fd:56:0d&stream=798830&extension=ts",
       "urls": [
-        "https://scorezone.fun/api/AboAli/Alabody/3ailtna/script/gn/tv/live/play.m3u8?r=1&cat=bein&ci=1&si=2",
-        "https://scorezone.fun/api/AboAli/Alabody/3ailtna/script/gn/tv/live/play.m3u8?r=1&cat=bein&ci=1&si=1",
-        "https://scorezone.fun/api/AboAli/Alabody/3ailtna/script/gn/tv/live/play.m3u8?r=1&cat=bein&ci=1&si=0"
+        "http://line.tvdsz.cc/play/live.php?mac=00:1A:79:fd:56:0d&stream=798830&extension=ts"
       ],
       "group": "beIN Sports"
     },
