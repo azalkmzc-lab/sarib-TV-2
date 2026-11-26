@@ -244,7 +244,7 @@
     },
     {
       "name": "XTV Sport 5",
-      "logo": "",
+      "logo": "https://prod-media.beinsports.com/image/1681434540853_62e93e43-2e3d-4189-96e7-be622ac1d4ca.jpg",
       "url": "http://31.43.191.125:8080/live/restream/restream/845.m3u8",
       "urls": [
         "http://31.43.191.125:8080/live/restream/restream/845.m3u8"
