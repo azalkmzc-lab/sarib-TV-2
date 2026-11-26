@@ -250,6 +250,15 @@
         "http://31.43.191.125:8080/live/restream/restream/845.m3u8"
       ],
       "group": "XTV Sport"
+    },
+    {
+      "name": "Alliance Action",
+      "logo": "",
+      "url": "https://blc2cr.linkip.org/live/90055_.m3u8",
+      "urls": [
+        "https://blc2cr.linkip.org/live/90055_.m3u8"
+      ],
+      "group": "Movies"
     }
   ],
   "xtream_accounts": {
