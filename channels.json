@@ -13,7 +13,7 @@
       "logo": ""
     },
     {
-      "name": "Netflix",
+      "name": "Movies",
       "logo": "https://cdn.enabbaladi.net/arabic/wp-content/uploads/2019/04/Netflix.jpg"
     },
     {
@@ -68,7 +68,7 @@
       "urls": [
         "https://blcco.linkip.org/live/921_.m3u8"
       ],
-      "group": "Netflix"
+      "group": "Movies"
     },
     {
       "name": "XTV  Sport 1",
