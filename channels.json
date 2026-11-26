@@ -232,6 +232,15 @@
         "https://blcco.linkip.org/live/3460_.m3u8"
       ],
       "group": "XTV Sport"
+    },
+    {
+      "name": "XTV Sport 4",
+      "logo": "",
+      "url": "http://me.mdmfista.com/play/live.php?mac=00:1B:79:49:14:81&stream=1744954&extension=ts",
+      "urls": [
+        "http://me.mdmfista.com/play/live.php?mac=00:1B:79:49:14:81&stream=1744954&extension=ts"
+      ],
+      "group": "XTV Sport"
     }
   ],
   "xtream_accounts": {
