@@ -241,6 +241,15 @@
         "http://me.mdmfista.com/play/live.php?mac=00:1B:79:49:14:81&stream=1744954&extension=ts"
       ],
       "group": "XTV Sport"
+    },
+    {
+      "name": "XTV Sport 5",
+      "logo": "",
+      "url": "http://31.43.191.125:8080/live/restream/restream/845.m3u8",
+      "urls": [
+        "http://31.43.191.125:8080/live/restream/restream/845.m3u8"
+      ],
+      "group": "XTV Sport"
     }
   ],
   "xtream_accounts": {
