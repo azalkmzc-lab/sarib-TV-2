@@ -193,7 +193,8 @@
       "logo": "",
       "url": "https://blcco.linkip.org/live/1127_.m3u8",
       "urls": [
-        "https://blcco.linkip.org/live/1127_.m3u8"
+        "https://blcco.linkip.org/live/1127_.m3u8",
+        "http://87.229.95.188:80/live/19080/19080/262.ts"
       ],
       "group": "الكاس سبورت"
     },
